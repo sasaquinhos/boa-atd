@@ -1,1 +1,44 @@
+<!DOCTYPE html>
+<html lang="ja">
 
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ボアソルチ出欠確認</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Sans+JP:wght@400;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header class="header">
+        <div class="container header-container">
+            <h1 class="app-title">ボアソルチ出欠確認</h1>
+        </div>
+    </header>
+
+    <main class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <div class="user-select-container">
+                <label for="current-user-select" style="font-weight:bold; margin-right:0.5rem;">ユーザー選択:</label>
+                <select id="current-user-select"
+                    style="padding:0.5rem; border-radius:4px; border:1px solid #ddd; font-size:1rem;">
+                    <option value="">-- 選択してください --</option>
+                </select>
+            </div>
+            <a href="admin.html" style="color: #666; font-size: 0.8rem; text-decoration: none;">管理者ページへ</a>
+        </div>
+
+        <!-- Match List -->
+        <div id="matches-container" class="matches-list">
+            <!-- Matches will be injected here -->
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
