@@ -1,0 +1,39 @@
+# Reysol Attendance App Walkthrough
+
+柏レイソル観戦メンバー管理アプリの実装が完了しました。
+
+## 成果物
+- **[index.html](file:///C:/Users/sasak/.gemini/antigravity/reysol-attendance/index.html)**: アプリのメイン画面
+- **[app.js](file:///C:/Users/sasak/.gemini/antigravity/reysol-attendance/app.js)**: ロジック（LocalStorage保存、動的レンダリング）
+- **[style.css](file:///C:/Users/sasak/.gemini/antigravity/reysol-attendance/style.css)**: デザイン（レイソルイエロー＆ブラック）
+
+## 機能概要
+
+### 1. メンバー管理
+- 初期メンバーとして「佐々木賢」「佐々木利恵」が登録されています。
+- 「メンバー・試合管理」パネルから新しいメンバー（名前）を追加できます。
+
+### 2. 試合管理
+- 「メンバー・試合管理」パネルから試合日と対戦相手を入力して追加します。
+- 試合は日付順（新しい順）に並びます。
+
+### 3. 出欠・ステータス管理
+- 各試合カードにメンバーリストが表示されます
+- **ステータス（ラジオボタン）**:
+    1. 列整理まで
+    2. 開場まで
+    3. 開場後
+    4. 柏熱以外で
+    5. 欠席
+- **同伴者数**:
+    - 「自分以外の人数」として任意の数値を入力保存できます（例：家族分など）。
+- **データ保存**:
+    - すべての入力内容は自動的にブラウザ（LocalStorage）に保存されるため、ページを閉じてもデータは保持されます。
+
+## デザイン
+- 柏レイソルのチームカラー（イエロー `#FCD116` とブラック）を基調としたデザイン。
+- スマートフォンでも操作しやすいカード型レイアウト。
+
+## 確認方法
+1. **[index.html](file:///C:/Users/sasak/.gemini/antigravity/reysol-attendance/index.html)** をブラウザで開いてください。
+2. 試しに試合を追加し、ステータスを変更した後にページをリロードして、データが残っているか確認してください。

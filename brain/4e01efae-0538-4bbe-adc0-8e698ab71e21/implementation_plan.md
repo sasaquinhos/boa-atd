@@ -1,0 +1,64 @@
+# Implementation Plan - Reysol Attendance App
+
+柏レイソルの試合観戦メンバーと同伴者数、当日の予定（列整理、開場など）を管理するWebアプリを作成します。
+
+## Requirements
+- **Members**: Ken Sasaki, Rie Sasaki (Default). Allow adding new members.
+- **Matches**: Manage list of match days.
+- **Status Options (Radio)**:
+    1. 列整理まで (Until line organization)
+    2. 開場まで (Until doors open)
+    3. 開場後 (After doors open)
+    4. 柏熱以外で (Outside Hakunetsu zone)
+    5. 欠席 (Absent)
+- **Extra Info**:
+    - 自分以外の人数 (Number of guests/others) - Optional Number Input.
+
+## Architecture
+- **Tech Stack**: HTML, CSS, Vanilla JavaScript.
+- **Storage**: `localStorage` to persist data (members, matches, statuses).
+- **Directory**: `reysol-attendance/`
+
+## Proposed Changes
+
+### 1. Data Structure (in `app.js`)
+```json
+{
+  "members": ["佐々木賢", "佐々木利恵", ...],
+  "matches": [
+    { "id": 1, "date": "2024-XX-XX", "opponent": "Versus XXX" }
+  ],
+  "attendance": {
+    "matchId_memberIndex": {
+        "status": 1, // 1-5
+        "guests": 0  // Count
+    }
+  }
+}
+```
+
+### 2. UI Components (`index.html`)
+- **Header**: App Title (Reysol Colors).
+- **Match Section**:
+    - Date/Opponent Input (or predefined list).
+    - List of Matches (Cards).
+- **Attendance Form (inside Match Card)**:
+    - Loop through Members.
+    - Display Name.
+    - Radio Buttons (1-5).
+    - Number Input (Guests).
+- **Management Section**:
+    - "Add Member" Form.
+
+### 3. Styling (`style.css`)
+- **Theme**: Yellow (`#FCD116`) and Black.
+- **Layout**: Clean, Card-based, Touch-friendly (large tap targets for radios).
+
+## Verification Plan
+1.  **Manual Test**:
+    - Add a new match.
+    - Select statuses for Ken and Rie.
+    - Enter guest counts.
+    - Refresh page (verify persistence).
+    - Add a new member "New Person".
+    - Verify they appear in the list.

@@ -1,0 +1,6 @@
+{
+  "artifactType":  "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary":  "柏レイソル観戦メンバー管理アプリの実装計画。\nVanilla JS + LocalStorageを使用し、試合ごとのメンバー参加状況（ステータス1-5、同伴者数）を管理するシングルページアプリケーションを構築する。",
+  "updatedAt":  "2026-01-08T05:13:42.644208400Z",
+  "version":  "1"
+}

@@ -1,0 +1,22 @@
+# Tasks - Reysol Attendance App
+
+- [ ] Project Initialization
+    - [ ] Create directory `reysol-attendance`
+    - [ ] Setup [index.html](file:///C:/Users/sasak/.gemini/antigravity/portfolio/index.html), [style.css](file:///C:/Users/sasak/.gemini/antigravity/portfolio/style.css), `app.js`
+- [ ] Core Logic Implementation
+    - [ ] Member Management (Initial: Ken, Rie, Add feature)
+    - [ ] Match/Event Management (Add matches)
+    - [ ] Attendance Status Logic (Radios 1-5, Extra count)
+    - [ ] Data Persistence (LocalStorage)
+- [ ] UI Implementation
+    - [ ] Main Dashboard (List of matches)
+    - [ ] Match Detail View (Member list with inputs)
+    - [ ] "Add Member" Interface
+    - [ ] "Add Match" Interface
+- [ ] Styling & UX
+    - [ ] Kashiwa Reysol Theme (Yellow/Black)
+    - [ ] Mobile-first Responsive Design
+- [ ] Verification
+    - [ ] Verify attendance status saving
+    - [ ] Verify member addition
+    - [ ] Check responsive layout

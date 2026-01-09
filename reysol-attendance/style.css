@@ -1,0 +1,337 @@
+:root {
+    --reysol-yellow: #FCD116;
+    --reysol-black: #111111;
+    --text-color: #333;
+    --bg-color: #f4f4f4;
+    --card-bg: #fff;
+    --border-radius: 8px;
+    --spacing: 1rem;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', 'Noto Sans JP', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    padding-bottom: 2rem;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 var(--spacing);
+}
+
+/* Header */
+.header {
+    background-color: var(--reysol-black);
+    color: var(--reysol-yellow);
+    padding: 1rem 0;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.app-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    text-align: center;
+    letter-spacing: 0.1em;
+}
+
+/* Controls */
+.controls-section {
+    margin-bottom: 2rem;
+}
+
+details {
+    background: var(--card-bg);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+summary {
+    cursor: pointer;
+    font-weight: bold;
+    color: var(--reysol-black);
+}
+
+.admin-panel {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.control-group h3 {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.input-group {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+input[type="text"],
+input[type="date"],
+input[type="number"] {
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+    flex: 1;
+}
+
+.btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.9rem;
+    transition: opacity 0.2s;
+}
+
+.btn-primary {
+    background-color: var(--reysol-yellow);
+    color: var(--reysol-black);
+}
+
+.btn:hover {
+    opacity: 0.8;
+}
+
+/* Match Card */
+.match-card {
+    background: var(--card-bg);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border-top: 4px solid var(--reysol-yellow);
+}
+
+.match-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #eee;
+}
+
+.match-info h2 {
+    font-size: 1.25rem;
+    margin-bottom: 0.25rem;
+}
+
+.match-date {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.match-controls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.delete-match-btn {
+    background: #ffcccc;
+    border: 1px solid #ff9999;
+    color: #cc0000;
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 0.3rem 0.8rem;
+    border-radius: 4px;
+    font-weight: bold;
+    transition: background 0.2s;
+}
+
+.edit-match-btn {
+    background: #e6f7ff;
+    border: 1px solid #99ccff;
+    color: #0066cc;
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 0.3rem 0.8rem;
+    border-radius: 4px;
+    font-weight: bold;
+    transition: background 0.2s;
+}
+
+.edit-match-btn:hover {
+    background: #99ccff;
+    color: #fff;
+}
+
+.delete-match-btn:hover {
+    background: #ff9999;
+    color: #fff;
+}
+
+/* Member Attendance Row */
+.attendance-row {
+    padding: 1rem 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.attendance-row:last-child {
+    border-bottom: none;
+}
+
+.member-name {
+    font-weight: bold;
+    margin-bottom: 0.75rem;
+    font-size: 1.1rem;
+}
+
+.status-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.radio-label {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 0.4rem 0.6rem;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.radio-label:has(input:checked) {
+    background-color: #fff9db;
+    /* Light yellow */
+    border-color: var(--reysol-yellow);
+    font-weight: bold;
+}
+
+.extra-guests {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.extra-guests label {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+/* Guest Inputs */
+.guest-inputs-container {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.guest-input-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.guest-input {
+    width: 60px;
+    padding: 0.4rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+/* Admin Member List */
+.members-admin-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.member-admin-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.member-actions button {
+    margin-left: 0.5rem;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+.delete-btn {
+    background-color: #ffcccc;
+    border: 1px solid #ff9999;
+    color: #cc0000;
+    border-radius: 4px;
+}
+
+.edit-btn {
+    background-color: #e6f7ff;
+    border: 1px solid #99ccff;
+    color: #0066cc;
+    border-radius: 4px;
+}
+
+/* Match Summary */
+.match-summary {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background-color: #fcfcfc;
+    border-top: 2px solid #eee;
+    font-size: 0.95rem;
+}
+
+.summary-title {
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    color: var(--reysol-black);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.summary-title::before {
+    content: '📊';
+}
+
+.summary-item {
+    margin-bottom: 0.4rem;
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+}
+
+.summary-count {
+    font-weight: bold;
+    min-width: 30px;
+}
+
+.summary-names {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.summary-item.active {
+    background-color: #fffae6;
+    /* Highlight if has people */
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+}

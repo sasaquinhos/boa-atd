@@ -1,0 +1,31 @@
+# Tasks - Reysol Attendance App
+
+- [x] Project Initialization
+    - [x] Create directory `reysol-attendance`
+    - [x] Setup [index.html](file:///C:/Users/sasak/.gemini/antigravity/portfolio/index.html), [style.css](file:///C:/Users/sasak/.gemini/antigravity/portfolio/style.css), [app.js](file:///C:/Users/sasak/.gemini/antigravity/reysol-attendance/app.js)
+- [x] Core Logic Implementation
+    - [x] Member Management (Initial: Ken, Rie, Add feature)
+    - [x] Match/Event Management (Add matches)
+    - [x] Attendance Status Logic (Radios 1-5, Extra count)
+    - [x] Data Persistence (LocalStorage)
+- [x] UI Implementation
+    - [x] Main Dashboard (List of matches)
+    - [x] Match Detail View (Member list with inputs)
+    - [x] "Add Member" Interface
+    - [x] "Add Match" Interface
+- [x] Styling & UX
+    - [x] Kashiwa Reysol Theme (Yellow/Black)
+    - [x] Mobile-first Responsive Design
+- [x] Feature Updates
+    - [x] Separate Admin View ([admin.html](file:///C:/Users/sasak/.gemini/antigravity/reysol-attendance/admin.html)) from User View ([index.html](file:///C:/Users/sasak/.gemini/antigravity/portfolio/index.html))
+    - [x] Admin: Member Edit/Delete Functions
+    - [x] User: Attendance Summary (Counts & Names)
+    - [x] Admin: Password Protection
+    - [x] User: Individual User View (Select User -> Edit Only Self)
+- [x] Verification
+    - [x] Verify attendance status saving (Manual)
+    - [x] Verify member addition (Manual)
+    - [x] Check responsive layout (Manual)
+    - [x] Verify Admin member management (Manual)
+    - [x] Verify User summary display (Manual)
+    - [x] Verify User selection and filtered view (Manual)
