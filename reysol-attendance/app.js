@@ -103,6 +103,8 @@ async function apiCall(action, payload = {}) {
         await fetch(API_URL, {
             method: 'POST',
             mode: 'no-cors',
+            cache: 'no-cache',
+            keepalive: true,
             body: JSON.stringify(body)
         });
     } catch (e) {
