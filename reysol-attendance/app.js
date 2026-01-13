@@ -1,22 +1,12 @@
 // App State
 const state = {
-    members: loadMembers(),
-    matches: JSON.parse(localStorage.getItem('reysol_matches')) || [], // { id, date, opponent }
-    attendance: JSON.parse(localStorage.getItem('reysol_attendance')) || {} // { "matchId_memberName": { status, guests, guestsMain, guestsBack } }
+    members: [],
+    matches: [],
+    attendance: {}, // { "matchId_memberName": { status, guestsMain, guestsBack } }
+    loading: false
 };
 
-function loadMembers() {
-    const raw = JSON.parse(localStorage.getItem('reysol_members'));
-    if (!raw) return [{ name: '佐々木賢', section: 1 }, { name: '佐々木利恵', section: 1 }];
-
-    // Migration: Convert strings to objects if needed
-    if (raw.length > 0 && typeof raw[0] === 'string') {
-        const migrated = raw.map(name => ({ name, section: 1 }));
-        localStorage.setItem('reysol_members', JSON.stringify(migrated));
-        return migrated;
-    }
-    return raw;
-}
+const API_URL = 'https://script.google.com/macros/s/AKfycbz-eVXth8EfR60nrbmWODcYr4BnqbGdehWMKKzsT3coLuRVmLBeQOqz1xvHEsTel8kO_Q/exec';
 
 // DOM Elements
 const matchesContainer = document.getElementById('matches-container');
@@ -42,10 +32,48 @@ const SECTION_LABELS = {
 };
 
 // Initialization
-function init() {
-    setupUserSelect();
-    renderMatches();
-    setupEventListeners();
+async function init() {
+    setLoading(true);
+    try {
+        await loadData();
+        setupUserSelect();
+        renderMatches();
+        setupEventListeners();
+    } catch (e) {
+        alert('データの読み込みに失敗しました: ' + e.message);
+    } finally {
+        setLoading(false);
+    }
+}
+
+async function loadData() {
+    const res = await fetch(`${API_URL}?t=${new Date().getTime()}`);
+    const data = await res.json();
+
+    if (data.members) state.members = data.members;
+    else state.members = [];
+
+    if (data.matches) state.matches = data.matches;
+    else state.matches = [];
+
+    if (data.attendance) state.attendance = data.attendance;
+    else state.attendance = {};
+}
+
+function setLoading(isLoading) {
+    state.loading = isLoading;
+    if (isLoading) {
+        if (!document.getElementById('loading-overlay')) {
+            const overlay = document.createElement('div');
+            overlay.id = 'loading-overlay';
+            overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.7);display:flex;justify-content:center;align-items:center;z-index:9999;font-size:1.5rem;';
+            overlay.innerText = '読み込み中...';
+            document.body.appendChild(overlay);
+        }
+    } else {
+        const overlay = document.getElementById('loading-overlay');
+        if (overlay) overlay.remove();
+    }
 }
 
 function setupUserSelect() {
@@ -65,11 +93,21 @@ function setupUserSelect() {
     });
 }
 
-// Saving Data
-function saveData() {
-    localStorage.setItem('reysol_members', JSON.stringify(state.members));
-    localStorage.setItem('reysol_matches', JSON.stringify(state.matches));
-    localStorage.setItem('reysol_attendance', JSON.stringify(state.attendance));
+// API Interaction
+async function apiCall(action, payload = {}) {
+    console.log('API Call:', action, payload);
+    const body = { action, ...payload };
+
+    try {
+        await fetch(API_URL, {
+            method: 'POST',
+            mode: 'cors', // Changed from no-cors to cors for better error handling
+            body: JSON.stringify(body)
+        });
+    } catch (e) {
+        console.error('API Error:', e);
+        alert('保存に失敗しました: ' + (e.message || e.toString()));
+    }
 }
 
 // Render Functions
@@ -132,6 +170,9 @@ function renderMatches() {
             <div id="summary-${match.id}" class="match-summary-container">
                 ${generateMatchSummaryContent(match.id)}
             </div>
+            <div id="table-${match.id}" class="attendance-table-container">
+                ${generateAttendanceTable(match.id)}
+            </div>
         `;
         matchesContainer.appendChild(matchEl);
     });
@@ -192,11 +233,13 @@ function setupEventListeners() {
             const section = parseInt(sectionRadio ? sectionRadio.value : 1);
 
             if (name && !state.members.some(m => m.name === name)) {
+                // Optimistic Update
                 state.members.push({ name, section });
-                saveData();
                 renderMatches();
                 newMemberNameInput.value = '';
-                // Reset radios to default if desired
+
+                // API Call
+                apiCall('add_member', { name, section });
             } else if (state.members.some(m => m.name === name)) {
                 alert('そのメンバーは既に存在します');
             }
@@ -204,126 +247,53 @@ function setupEventListeners() {
     }
 
     // Add Match
-    addMatchBtn.addEventListener('click', () => {
-        const date = newMatchDateInput.value;
-        const opponent = newMatchOpponentInput.value.trim();
+    if (addMatchBtn) {
+        addMatchBtn.addEventListener('click', () => {
+            const date = newMatchDateInput.value;
+            const opponent = newMatchOpponentInput.value.trim();
 
-        if (date && opponent) {
-            const newMatch = {
-                id: Date.now(),
-                date,
-                opponent
-            };
-            state.matches.push(newMatch);
-            saveData();
-            renderMatches();
-            newMatchDateInput.value = '';
-            newMatchOpponentInput.value = '';
-        } else {
-            alert('日付と対戦相手を入力してください');
-        }
-    });
-}
-
-function attachMatchListeners() {
-    // Attendance Changes
-    document.querySelectorAll('input[type="radio"]').forEach(radio => {
-        radio.addEventListener('change', (e) => {
-            const row = e.target.closest('.attendance-row');
-            const key = row.dataset.key;
-            // Extract match ID from key (format: timestamp_Name)
-            const matchId = key.split('_')[0];
-            const status = parseInt(e.target.value);
-
-            if (!state.attendance[key]) state.attendance[key] = { status: null, guestsMain: '', guestsBack: '' };
-            state.attendance[key].status = status;
-            saveData();
-
-            // Update Summary Live
-            updateMatchSummary(matchId);
-        });
-    });
-
-    // Guest Count Changes (Unified)
-    document.querySelectorAll('.guest-input-unified').forEach(input => {
-        input.addEventListener('input', (e) => {
-            const row = e.target.closest('.attendance-row');
-            const key = row.dataset.key;
-            const matchId = key.split('_')[0];
-            const memberName = key.split('_')[1]; // Fragile if name has underscore, but key generation uses identifier
-            // Better: extract name by removing matchId_ prefix? Or use data attribute if simpler. 
-            // Current key format: `${matchId}_${member.name}`. 
-            // Let's look up member object by name.
-
-            // Re-find member object
-            // Note: key might be 123456_Name.
-            const namePart = key.substring(matchId.length + 1);
-            const member = state.members.find(m => m.name === namePart);
-            const section = member ? (member.section || 1) : 1;
-
-            if (!state.attendance[key]) state.attendance[key] = { status: null, guestsMain: '', guestsBack: '' };
-
-            const val = e.target.value;
-
-            if (section === 2) { // Back
-                state.attendance[key].guestsMain = ''; // Clear other
-                state.attendance[key].guestsBack = val;
-            } else { // Main (default)
-                state.attendance[key].guestsMain = val;
-                state.attendance[key].guestsBack = ''; // Clear other
-            }
-
-            saveData();
-            updateMatchSummary(matchId);
-        });
-    });
-
-    // Delete Match
-    document.querySelectorAll('.delete-match-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            if (confirm('この試合を削除しますか？')) {
-                const id = parseInt(e.target.dataset.id);
-                state.matches = state.matches.filter(m => m.id !== id);
-                // Optional: Cleanup attendance data
-                saveData();
+            if (date && opponent) {
+                const newMatch = {
+                    id: Date.now(),
+                    date,
+                    opponent
+                };
+                // Optimistic Update
+                state.matches.push(newMatch);
                 renderMatches();
+                newMatchDateInput.value = '';
+                newMatchOpponentInput.value = '';
+
+                // API Call
+                apiCall('add_match', newMatch);
+            } else {
+                alert('日付と対戦相手を入力してください');
             }
         });
-    });
+    }
 
-    // Edit Match
-    document.querySelectorAll('.edit-match-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const id = parseInt(e.target.dataset.id);
-            const match = state.matches.find(m => m.id === id);
-            if (match) {
-                const newOpponent = prompt('新しい対戦相手を入力してください:', match.opponent);
-                if (newOpponent && newOpponent.trim() !== '') {
-                    match.opponent = newOpponent.trim();
-                    saveData();
-                    renderMatches();
-                }
-            }
-        });
-    });
-
-    // Admin Member Actions
-    if (document.getElementById('members-list-admin')) {
-        document.querySelectorAll('.delete-member-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+    // Admin Member Actions (Delete/Edit)
+    const adminList = document.getElementById('members-list-admin');
+    if (adminList) {
+        // Use delegation for dynamic list
+        adminList.addEventListener('click', (e) => {
+            if (e.target.classList.contains('delete-member-btn')) {
                 const memberName = e.target.dataset.name;
                 if (confirm(`メンバー「${memberName}」を削除しますか？\n(過去の出欠データからも削除されます)`)) {
                     state.members = state.members.filter(m => m.name !== memberName);
-                    // Cleanup attendance data for this member
+                    // Cleanup attendance data for this member locally
                     Object.keys(state.attendance).forEach(key => {
                         if (key.endsWith(`_${memberName}`)) {
                             delete state.attendance[key];
                         }
                     });
-                    saveData();
                     renderMatches();
+                    apiCall('delete_member', { name: memberName });
                 }
-            });
+            } else if (e.target.classList.contains('edit-member-btn')) {
+                const name = e.target.dataset.name;
+                openEditMemberModal(name);
+            }
         });
 
         // Edit Member Modal Elements
@@ -333,30 +303,20 @@ function attachMatchListeners() {
         const cancelEditBtn = document.getElementById('cancel-edit-member');
         let currentEditingMemberName = null;
 
-        document.querySelectorAll('.edit-member-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const name = e.target.dataset.name;
-                const member = state.members.find(m => m.name === name);
-                if (member) {
-                    currentEditingMemberName = name;
-                    editNameInput.value = member.name;
-                    // Set radio
-                    const radios = document.getElementsByName('edit-member-section');
-                    radios.forEach(r => {
-                        r.checked = (parseInt(r.value) === (member.section || 1));
-                    });
-
-                    editModal.style.display = 'flex';
-                }
-            });
-        });
+        function openEditMemberModal(name) {
+            const member = state.members.find(m => m.name === name);
+            if (member) {
+                currentEditingMemberName = name;
+                editNameInput.value = member.name;
+                const radios = document.getElementsByName('edit-member-section');
+                radios.forEach(r => {
+                    r.checked = (parseInt(r.value) === (member.section || 1));
+                });
+                editModal.style.display = 'flex';
+            }
+        }
 
         if (saveEditBtn) {
-            // Remove old listeners to prevent duplicates if this runs multiple times (though init runs once)
-            // A cleaner way is to defining this outside, but for now inside init/setupEventListeners is fine 
-            // as long as we don't duplicate. replacing the node clone is a trick or just simple state check.
-            // For this simple app, we assume setupEventListeners runs once.
-
             saveEditBtn.onclick = () => {
                 const newName = editNameInput.value.trim();
                 const sectionRadio = document.querySelector('input[name="edit-member-section"]:checked');
@@ -374,7 +334,7 @@ function attachMatchListeners() {
 
                 const member = state.members.find(m => m.name === currentEditingMemberName);
                 if (member) {
-                    // Update attendance keys if name changed
+                    // Update attendance keys if name changed locally
                     if (newName !== currentEditingMemberName) {
                         const newAttendance = {};
                         Object.keys(state.attendance).forEach(key => {
@@ -392,9 +352,15 @@ function attachMatchListeners() {
                     member.name = newName;
                     member.section = newSection;
 
-                    saveData();
                     renderMatches();
                     editModal.style.display = 'none';
+
+                    apiCall('update_member', {
+                        originalName: currentEditingMemberName,
+                        name: newName,
+                        section: newSection
+                    });
+
                     currentEditingMemberName = null;
                 }
             };
@@ -407,6 +373,98 @@ function attachMatchListeners() {
             };
         }
     }
+}
+
+function attachMatchListeners() {
+    // Attendance Changes
+    document.querySelectorAll('input[type="radio"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            const row = e.target.closest('.attendance-row');
+            const key = row.dataset.key;
+            const matchId = key.split('_')[0];
+            const memberName = key.split('_')[1]; // Fragile but works for now
+            const status = parseInt(e.target.value);
+
+            if (!state.attendance[key]) state.attendance[key] = { status: null, guestsMain: '', guestsBack: '' };
+            state.attendance[key].status = status;
+
+            updateMatchSummary(matchId);
+
+            // API Call
+            apiCall('update_attendance', {
+                matchId: matchId,
+                memberName: memberName, // We need to extract this reliably
+                status: status,
+                guestsMain: state.attendance[key].guestsMain,
+                guestsBack: state.attendance[key].guestsBack
+            });
+        });
+    });
+
+    // Guest Count Changes (Unified)
+    document.querySelectorAll('.guest-input-unified').forEach(input => {
+        input.addEventListener('input', (e) => {
+            const row = e.target.closest('.attendance-row');
+            const key = row.dataset.key;
+            const matchId = key.split('_')[0];
+            const namePart = key.substring(matchId.length + 1);
+
+            const member = state.members.find(m => m.name === namePart);
+            const section = member ? (member.section || 1) : 1;
+
+            if (!state.attendance[key]) state.attendance[key] = { status: null, guestsMain: '', guestsBack: '' };
+
+            const val = e.target.value;
+
+            if (section === 2) { // Back
+                state.attendance[key].guestsMain = '';
+                state.attendance[key].guestsBack = val;
+            } else { // Main
+                state.attendance[key].guestsMain = val;
+                state.attendance[key].guestsBack = '';
+            }
+
+            updateMatchSummary(matchId);
+
+            // API Call
+            // Debounce? For now direct call.
+            apiCall('update_attendance', {
+                matchId: matchId,
+                memberName: namePart,
+                status: state.attendance[key].status,
+                guestsMain: state.attendance[key].guestsMain,
+                guestsBack: state.attendance[key].guestsBack
+            });
+        });
+    });
+
+    // Delete Match
+    document.querySelectorAll('.delete-match-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            if (confirm('この試合を削除しますか？')) {
+                const id = parseInt(e.target.dataset.id);
+                state.matches = state.matches.filter(m => m.id !== id);
+                renderMatches();
+                apiCall('delete_match', { id: id });
+            }
+        });
+    });
+
+    // Edit Match
+    document.querySelectorAll('.edit-match-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = parseInt(e.target.dataset.id);
+            const match = state.matches.find(m => m.id === id);
+            if (match) {
+                const newOpponent = prompt('新しい対戦相手を入力してください:', match.opponent);
+                if (newOpponent && newOpponent.trim() !== '') {
+                    match.opponent = newOpponent.trim();
+                    renderMatches();
+                    apiCall('update_match', { id: id, opponent: match.opponent });
+                }
+            }
+        });
+    });
 }
 
 function renderMembersAdmin() {
@@ -428,6 +486,10 @@ function updateMatchSummary(matchId) {
     const container = document.getElementById(`summary-${matchId}`);
     if (container) {
         container.innerHTML = generateMatchSummaryContent(matchId);
+    }
+    const tableContainer = document.getElementById(`table-${matchId}`);
+    if (tableContainer) {
+        tableContainer.innerHTML = generateAttendanceTable(matchId);
     }
 }
 
@@ -496,6 +558,67 @@ function generateMatchSummaryContent(matchId) {
     });
 
     html += '</div>';
+    return html;
+}
+
+function generateAttendanceTable(matchId) {
+    let html = `
+        <details class="attendance-table-details">
+            <summary>詳細リストを表示</summary>
+            <table class="attendance-table">
+                <thead>
+                    <tr>
+                        <th>名前</th>
+                        <th>区分</th>
+                        <th>回答</th>
+                        <th>同伴(Main)</th>
+                        <th>同伴(Back)</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+
+    // Sort members for consistency (e.g. by Section then Name)
+    const sortedMembers = [...state.members].sort((a, b) => {
+        if (a.section !== b.section) return a.section - b.section; // 1 (TOP) then 2 (FRONT)
+        return a.name.localeCompare(b.name);
+    });
+
+    sortedMembers.forEach(member => {
+        const key = `${matchId}_${member.name}`;
+        const data = state.attendance[key] || {};
+
+        let statusLabel = '-';
+        if (data.status) {
+            const statusObj = STATUS_OPTIONS.find(s => s.id == data.status);
+            statusLabel = statusObj ? statusObj.label : '-';
+        }
+
+        const sectionLabel = SECTION_LABELS[member.section] || 'TOP';
+        const guestsMain = data.guestsMain || '-';
+        const guestsBack = data.guestsBack || '-';
+
+        // Row highlighting based on status
+        let rowClass = '';
+        if (data.status === 5) rowClass = 'status-absent'; // 欠席
+        else if (data.status) rowClass = 'status-attending'; // 出席
+
+        html += `
+            <tr class="${rowClass}">
+                <td>${member.name}</td>
+                <td><span class="badge section-${member.section}">${sectionLabel}</span></td>
+                <td>${statusLabel}</td>
+                <td style="text-align:center;">${guestsMain}</td>
+                <td style="text-align:center;">${guestsBack}</td>
+            </tr>
+        `;
+    });
+
+    html += `
+                </tbody>
+            </table>
+        </details>
+    `;
     return html;
 }
 
