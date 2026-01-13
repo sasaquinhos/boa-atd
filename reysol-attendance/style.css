@@ -335,3 +335,61 @@ input[type="number"] {
     padding: 0.2rem 0.5rem;
     border-radius: 4px;
 }
+/* Attendance Table */
+.attendance-table-details {
+    margin-top: 1rem;
+    border-top: 1px solid #eee;
+    padding-top: 0.5rem;
+}
+
+.attendance-table-details summary {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 0.5rem;
+}
+
+.attendance-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+.attendance-table th,
+.attendance-table td {
+    padding: 0.5rem;
+    border: 1px solid #eee;
+    text-align: left;
+}
+
+.attendance-table th {
+    background-color: #f9f9f9;
+    font-weight: 600;
+}
+
+.attendance-table tr.status-attending {
+    background-color: #f0fff4; /* Light green for attending */
+}
+
+.attendance-table tr.status-absent {
+    background-color: #fff0f0; /* Light red for absent */
+}
+
+.badge {
+    display: inline-block;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+.badge.section-1 { /* TOP */
+    background-color: #ffec99;
+    color: #8c6d1f;
+}
+
+.badge.section-2 { /* FRONT */
+    background-color: #d0ebff;
+    color: #1c7ed6;
+}
+
