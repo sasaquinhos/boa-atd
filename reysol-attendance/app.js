@@ -597,33 +597,7 @@ function generateMatchSummaryContent(matchId) {
         `;
     }
 
-    STATUS_OPTIONS.forEach(opt => {
-        const names = summary[opt.id];
-        if (names && names.length > 0) {
-            html += `
-                <div class="summary-item active">
-                    <span class="summary-count">${opt.label}: ${names.length}名</span>
-                    <span class="summary-names">(${names.join(', ')})</span>
-                </div>
-            `;
-        }
-    });
 
-    // Big Flag Summary
-    const bigFlagMembers = state.members.filter(member => {
-        const key = `${matchId}_${member.name}`;
-        const data = state.attendance[key];
-        return data && data.bigFlag;
-    }).map(m => m.name);
-
-    if (bigFlagMembers.length > 0) {
-        html += `
-            <div class="summary-item active" style="background-color: #e3f2fd; margin-top: 0.5rem;">
-                <span class="summary-count">ビックフラッグ搬入: ${bigFlagMembers.length}名</span>
-                <span class="summary-names">(${bigFlagMembers.join(', ')})</span>
-            </div>
-        `;
-    }
 
     html += '</div>';
     return html;
