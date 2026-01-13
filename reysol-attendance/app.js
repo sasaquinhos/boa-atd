@@ -6,7 +6,7 @@ const state = {
     loading: false
 };
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbzcDKj159nviYqw75bGHC6Gq7HYPd8TnWnEi95b4rXJ2RgrWuQe8R65Sj_6G6V_s90kNA/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbynfmWO5PLkTPb5e2wqN8Vx0CUhHV-0auo4PPdYVsGpWFI9IEzqPaxTAvh2R8GJZTG0uA/exec';
 
 // DOM Elements
 const matchesContainer = document.getElementById('matches-container');
@@ -33,6 +33,7 @@ const SECTION_LABELS = {
 
 // Initialization
 async function init() {
+    console.log('Current API URL:', API_URL);
     setLoading(true);
     try {
         await loadData();
