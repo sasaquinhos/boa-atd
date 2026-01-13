@@ -6,7 +6,7 @@ const state = {
     loading: false
 };
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbz-eVXth8EfR60nrbmWODcYr4BnqbGdehWMKKzsT3coLuRVmLBeQOqz1xvHEsTel8kO_Q/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbzcDKj159nviYqw75bGHC6Gq7HYPd8TnWnEi95b4rXJ2RgrWuQe8R65Sj_6G6V_s90kNA/exec';
 
 // DOM Elements
 const matchesContainer = document.getElementById('matches-container');
@@ -101,7 +101,7 @@ async function apiCall(action, payload = {}) {
     try {
         await fetch(API_URL, {
             method: 'POST',
-            mode: 'cors', // Changed from no-cors to cors for better error handling
+            mode: 'no-cors',
             body: JSON.stringify(body)
         });
     } catch (e) {
