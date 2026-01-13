@@ -170,9 +170,6 @@ function renderMatches() {
             <div id="summary-${match.id}" class="match-summary-container">
                 ${generateMatchSummaryContent(match.id)}
             </div>
-            <div id="table-${match.id}" class="attendance-table-container">
-                ${generateAttendanceTable(match.id)}
-            </div>
         `;
         matchesContainer.appendChild(matchEl);
     });
@@ -218,6 +215,12 @@ function createMemberRow(matchId, member, hideName = false) {
                         <span style="font-size: 0.8rem; color: #666; margin-left: 0.5rem;">名 (${SECTION_LABELS[member.section] || 'TOP'})</span>
                     </div>
                 </div>
+            </div>
+            <div class="big-flag-section">
+                <label class="checkbox-label">
+                    <input type="checkbox" class="big-flag-checkbox" ${data.bigFlag ? 'checked' : ''}>
+                    ビックフラッグ搬入可
+                </label>
             </div>
         </div>
     `;
@@ -438,6 +441,31 @@ function attachMatchListeners() {
         });
     });
 
+    // Big Flag Checkbox
+    document.querySelectorAll('.big-flag-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', (e) => {
+            const row = e.target.closest('.attendance-row');
+            const key = row.dataset.key;
+            const matchId = key.split('_')[0];
+            const namePart = key.substring(matchId.length + 1);
+
+            if (!state.attendance[key]) state.attendance[key] = { status: null, guestsMain: '', guestsBack: '', bigFlag: false };
+            state.attendance[key].bigFlag = e.target.checked;
+
+            updateMatchSummary(matchId);
+
+            // API Call
+            apiCall('update_attendance', {
+                matchId: matchId,
+                memberName: namePart,
+                status: state.attendance[key].status,
+                guestsMain: state.attendance[key].guestsMain,
+                guestsBack: state.attendance[key].guestsBack,
+                bigFlag: state.attendance[key].bigFlag
+            });
+        });
+    });
+
     // Delete Match
     document.querySelectorAll('.delete-match-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -486,10 +514,6 @@ function updateMatchSummary(matchId) {
     const container = document.getElementById(`summary-${matchId}`);
     if (container) {
         container.innerHTML = generateMatchSummaryContent(matchId);
-    }
-    const tableContainer = document.getElementById(`table-${matchId}`);
-    if (tableContainer) {
-        tableContainer.innerHTML = generateAttendanceTable(matchId);
     }
 }
 
@@ -557,9 +581,54 @@ function generateMatchSummaryContent(matchId) {
         }
     });
 
+    // Big Flag Summary
+    const bigFlagMembers = state.members.filter(member => {
+        const key = `${matchId}_${member.name}`;
+        const data = state.attendance[key];
+        return data && data.bigFlag;
+    }).map(m => m.name);
+
+    if (bigFlagMembers.length > 0) {
+        html += `
+            <div class="summary-item active" style="background-color: #e3f2fd; margin-top: 0.5rem;">
+                <span class="summary-count">ビックフラッグ搬入: ${bigFlagMembers.length}名</span>
+                <span class="summary-names">(${bigFlagMembers.join(', ')})</span>
+            </div>
+        `;
+    }
+
+    STATUS_OPTIONS.forEach(opt => {
+        const names = summary[opt.id];
+        if (names && names.length > 0) {
+            html += `
+                <div class="summary-item active">
+                    <span class="summary-count">${opt.label}: ${names.length}名</span>
+                    <span class="summary-names">(${names.join(', ')})</span>
+                </div>
+            `;
+        }
+    });
+
+    // Big Flag Summary
+    const bigFlagMembers = state.members.filter(member => {
+        const key = `${matchId}_${member.name}`;
+        const data = state.attendance[key];
+        return data && data.bigFlag;
+    }).map(m => m.name);
+
+    if (bigFlagMembers.length > 0) {
+        html += `
+            <div class="summary-item active" style="background-color: #e3f2fd; margin-top: 0.5rem;">
+                <span class="summary-count">ビックフラッグ搬入: ${bigFlagMembers.length}名</span>
+                <span class="summary-names">(${bigFlagMembers.join(', ')})</span>
+            </div>
+        `;
+    }
+
     html += '</div>';
     return html;
 }
+
 
 function generateAttendanceTable(matchId) {
     let html = `
