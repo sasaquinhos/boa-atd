@@ -100,15 +100,29 @@ async function apiCall(action, payload = {}) {
     const body = { action, ...payload };
 
     try {
-        await fetch(API_URL, {
+        const res = await fetch(API_URL, {
             method: 'POST',
-            mode: 'no-cors',
+            mode: 'cors',
             cache: 'no-cache',
             keepalive: true,
+            headers: {
+                'Content-Type': 'text/plain;charset=utf-8', // GAS handles text/plain best for POST bodies
+            },
             body: JSON.stringify(body)
         });
+
+        if (!res.ok) {
+            throw new Error(`Server returned ${res.status} ${res.statusText}`);
+        }
+
+        const json = await res.json();
+        if (json.result !== 'success') {
+            throw new Error(json.error || 'Unknown server error');
+        }
+
     } catch (e) {
         console.error('API Error:', e);
+        // Only alert if it's not a generic "Failed to fetch" on unload (optional, but good for UX)
         alert('保存に失敗しました: ' + (e.message || e.toString()));
     }
 }
