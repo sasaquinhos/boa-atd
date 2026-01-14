@@ -333,12 +333,21 @@ function createMemberRow(matchId, member, hideName = false) {
     const currentGuests = (parseInt(data.guestsMain) || 0) + (parseInt(data.guestsBack) || 0);
     const guestValue = currentGuests > 0 ? currentGuests : '';
 
+    const matchDate = match ? new Date(match.date) : null;
+    let jankenLabelSuffix = '';
+    if (matchDate) {
+        const prevDate = new Date(matchDate);
+        prevDate.setDate(matchDate.getDate() - 1);
+        const mmdd = `${prevDate.getMonth() + 1}/${prevDate.getDate()}`;
+        jankenLabelSuffix = ` 日立台公園 ${mmdd} 15:00`;
+    }
+
     return `
         <div class="attendance-row" data-key="${key}">
             <div class="janken-section" style="margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px dashed #eee;">
                 <label class="checkbox-label" style="font-weight:bold; color:#d32f2f;">
                     <input type="checkbox" class="janken-participate-checkbox" ${data.jankenParticipate ? 'checked' : ''}>
-                    じゃんけん大会参加可
+                    じゃんけん大会参加可${jankenLabelSuffix}
                 </label>
                 <div class="janken-confirmed-display" style="font-size: 0.9rem; color: #333; margin-top: 0.2rem; background: #fbe9e7; padding: 0.2rem 0.5rem; border-radius: 4px;">
                     <span style="font-weight:bold;">参加確定:</span> ${jankenConfirmedText || 'なし'}
@@ -775,7 +784,7 @@ function generateMatchSummaryContent(matchId) {
     if (jankenParticipants.length > 0) {
         html += `
             <div class="summary-item active" style="background-color: #ffebee; border: 1px solid #ef5350;">
-                <span class="summary-count" style="color: #c62828;">じゃんけん大会: ${jankenParticipants.length}名</span>
+                <span class="summary-count" style="color: #c62828;">じゃんけん大会立候補者: ${jankenParticipants.length}名</span>
                 <span class="summary-names">(${jankenParticipants.join(', ')})</span>
             </div>
         `;
