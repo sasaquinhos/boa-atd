@@ -78,20 +78,34 @@ async function init() {
 }
 
 async function loadData() {
-    const res = await fetch(`${API_URL}?t=${new Date().getTime()}`);
-    const data = await res.json();
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
-    if (data.members) state.members = data.members;
-    else state.members = [];
+    try {
+        const res = await fetch(`${API_URL}?t=${new Date().getTime()}`, {
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
 
-    if (data.matches) state.matches = data.matches;
-    else state.matches = [];
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
 
-    if (data.attendance) state.attendance = data.attendance;
-    else state.attendance = {};
+        const data = await res.json();
 
-    // Save to local storage
-    saveToLocal();
+        if (data.members) state.members = data.members;
+        else state.members = [];
+
+        if (data.matches) state.matches = data.matches;
+        else state.matches = [];
+
+        if (data.attendance) state.attendance = data.attendance;
+        else state.attendance = {};
+
+        // Save to local storage
+        saveToLocal();
+    } catch (e) {
+        clearTimeout(timeoutId);
+        throw e;
+    }
 }
 
 function loadFromLocal() {
