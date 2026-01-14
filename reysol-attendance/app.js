@@ -31,17 +31,47 @@ const SECTION_LABELS = {
     2: 'FRONT'
 };
 
+// Caching Constants
+const STORAGE_KEY = 'reysol_attendance_data';
+
 // Initialization
 async function init() {
     console.log('Current API URL:', API_URL);
-    setLoading(true);
-    try {
-        await loadData();
+
+    // 1. Try to load from local storage (Stale)
+    const hasLocalData = loadFromLocal();
+
+    if (hasLocalData) {
+        // If we have local data, render immediately and setup listeners
         setupUserSelect();
         renderMatches();
         setupEventListeners();
+
+        // Show subtle loading indicator
+        setLoading(true, 'background');
+    } else {
+        // First time load: show full blocker
+        setLoading(true, 'full');
+    }
+
+    try {
+        // 2. Fetch fresh data (Revalidate)
+        await loadData();
+
+        // Update UI with fresh data
+        setupUserSelect();
+        renderMatches();
+
+        // If listeners weren't set up yet (no local data), do it now
+        if (!hasLocalData) {
+            setupEventListeners();
+        }
+
     } catch (e) {
-        alert('データの読み込みに失敗しました: ' + e.message);
+        console.error('Data sync failed:', e);
+        if (!hasLocalData) {
+            alert('データの読み込みに失敗しました: ' + e.message);
+        }
     } finally {
         setLoading(false);
     }
@@ -59,21 +89,70 @@ async function loadData() {
 
     if (data.attendance) state.attendance = data.attendance;
     else state.attendance = {};
+
+    // Save to local storage
+    saveToLocal();
 }
 
-function setLoading(isLoading) {
+function loadFromLocal() {
+    try {
+        const json = localStorage.getItem(STORAGE_KEY);
+        if (!json) return false;
+
+        const data = JSON.parse(json);
+        if (!data) return false;
+
+        if (data.members) state.members = data.members;
+        if (data.matches) state.matches = data.matches;
+        if (data.attendance) state.attendance = data.attendance;
+
+        return true;
+    } catch (e) {
+        console.error('Error loading from local storage:', e);
+        return false;
+    }
+}
+
+function saveToLocal() {
+    try {
+        const data = {
+            members: state.members,
+            matches: state.matches,
+            attendance: state.attendance,
+            timestamp: new Date().getTime()
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch (e) {
+        console.error('Error saving to local storage:', e);
+    }
+}
+
+function setLoading(isLoading, mode = 'full') {
     state.loading = isLoading;
+    const overlayId = 'loading-overlay';
+    const indicatorId = 'loading-indicator-subtle';
+
+    // Cleanup existing
+    const existingOverlay = document.getElementById(overlayId);
+    if (existingOverlay) existingOverlay.remove();
+
+    const existingIndicator = document.getElementById(indicatorId);
+    if (existingIndicator) existingIndicator.remove();
+
     if (isLoading) {
-        if (!document.getElementById('loading-overlay')) {
+        if (mode === 'full') {
             const overlay = document.createElement('div');
-            overlay.id = 'loading-overlay';
+            overlay.id = overlayId;
             overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.7);display:flex;justify-content:center;align-items:center;z-index:9999;font-size:1.5rem;';
             overlay.innerText = '読み込み中...';
             document.body.appendChild(overlay);
+        } else {
+            const indicator = document.createElement('div');
+            indicator.id = indicatorId;
+            indicator.style.cssText = 'position:fixed;bottom:10px;right:10px;padding:5px 10px;background:rgba(0,0,0,0.7);color:white;border-radius:4px;font-size:0.8rem;z-index:9999;';
+            indicator.innerText = '更新中...';
+            document.body.appendChild(indicator);
         }
-    } else {
-        const overlay = document.getElementById('loading-overlay');
-        if (overlay) overlay.remove();
     }
 }
 
