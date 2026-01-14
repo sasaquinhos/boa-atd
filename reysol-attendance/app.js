@@ -47,8 +47,8 @@ async function init() {
         renderMatches();
         setupEventListeners();
 
-        // Show subtle loading indicator
-        setLoading(true, 'background');
+        // Background loading indicator removed per user request
+        // setLoading(true, 'background');
     } else {
         // First time load: show full blocker
         setLoading(true, 'full');
