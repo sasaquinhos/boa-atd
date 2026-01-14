@@ -630,22 +630,41 @@ function attachMatchListeners() {
     });
 
     // Save Janken Confirmed (Admin)
-    document.querySelectorAll('.save-janken-confirmed-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const matchId = e.target.dataset.id;
-            const checkboxes = document.querySelectorAll(`.janken-confirmed-chk[data-match-id="${matchId}"]:checked`);
-
-            // Gather selected names
-            const selectedNames = Array.from(checkboxes).map(cb => cb.value);
-            const val = selectedNames.join(', ');
+    // Janken Admin Actions (Dropdown & Tags)
+    // Add Member
+    document.querySelectorAll('.janken-add-select').forEach(select => {
+        select.addEventListener('change', (e) => {
+            const matchId = e.target.dataset.matchId;
+            const name = e.target.value;
+            if (!name) return;
 
             const match = state.matches.find(m => m.id == matchId);
             if (match) {
-                match.jankenConfirmed = val;
-                // Optimistic update? User might be viewing currently. Reload needed?
-                // Admin is editing, so no immediate user view update needed on same screen unless verifying.
-                alert('保存しました');
-                apiCall('update_match', { id: matchId, jankenConfirmed: val });
+                const current = (match.jankenConfirmed || '').split(',').map(s => s.trim()).filter(s => s);
+                if (!current.includes(name)) {
+                    current.push(name);
+                    const val = current.join(', ');
+                    match.jankenConfirmed = val;
+                    renderMatches(); // Re-render to update UI
+                    apiCall('update_match', { id: matchId, jankenConfirmed: val });
+                }
+            }
+        });
+    });
+
+    // Remove Tag
+    document.querySelectorAll('.remove-janken-tag').forEach(span => {
+        span.addEventListener('click', (e) => {
+            const matchId = e.target.dataset.matchId;
+            const name = e.target.dataset.name;
+
+            const match = state.matches.find(m => m.id == matchId);
+            if (match) {
+                const current = (match.jankenConfirmed || '').split(',').map(s => s.trim()).filter(s => s);
+                const newVal = current.filter(n => n !== name).join(', ');
+                match.jankenConfirmed = newVal;
+                renderMatches();
+                apiCall('update_match', { id: matchId, jankenConfirmed: newVal });
             }
         });
     });
