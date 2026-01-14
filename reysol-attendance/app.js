@@ -237,24 +237,27 @@ function renderMatches() {
         const adminControlsHtml = isAdmin ? `
             <div class="match-controls">
                 <button class="edit-match-btn" data-id="${match.id}">編集</button>
-                <div class="janken-admin-section" style="margin-top:0.5rem; width:100%;">
-                    <label style="font-size:0.8rem;">じゃんけん大会参加確定者</label>
-                    <div class="janken-tags-container" style="display:flex; flex-wrap:wrap; gap:0.2rem; margin-bottom:0.2rem; padding:0.2rem; border:1px solid #ddd; background:#fff; min-height:2rem;">
-                        ${(match.jankenConfirmed || '').split(',').map(s => s.trim()).filter(s => s).map(name => `
-                            <span class="janken-tag" style="background:#e3f2fd; padding:0.1rem 0.4rem; border-radius:10px; font-size:0.8rem; display:inline-flex; align-items:center;">
-                                ${name}
-                                <span class="remove-janken-tag" data-match-id="${match.id}" data-name="${name}" style="margin-left:0.3rem; cursor:pointer; color:#d32f2f; font-weight:bold;">×</span>
-                            </span>
-                        `).join('')}
-                    </div>
-                    <select class="janken-add-select" data-match-id="${match.id}" style="width:100%; padding:0.2rem; font-size:0.9rem; border-radius:4px; border:1px solid #ddd;">
-                        <option value="">＋ メンバーを追加</option>
-                        ${state.members.filter(m => !(match.jankenConfirmed || '').split(',').map(s => s.trim()).includes(m.name)).map(m => `
-                            <option value="${m.name}">${m.name}</option>
-                        `).join('')}
-                    </select>
+                <button class="delete-match-btn" data-id="${match.id}" style="margin-left:0.5rem;">削除</button>
+            </div>
+        ` : '';
+
+        const jankenAdminHtml = isAdmin ? `
+            <div class="janken-admin-section" style="margin: 0.5rem 1rem; padding-top: 0.5rem; border-top: 1px dashed #eee;">
+                <label style="font-size:0.8rem; font-weight:bold; color:#555;">じゃんけん大会参加確定者</label>
+                <div class="janken-tags-container" style="display:flex; flex-wrap:wrap; gap:0.2rem; margin-bottom:0.2rem; padding:0.2rem; border:1px solid #ddd; background:#fff; min-height:2rem; border-radius:4px;">
+                    ${(match.jankenConfirmed || '').split(',').map(s => s.trim()).filter(s => s).map(name => `
+                        <span class="janken-tag" style="background:#e3f2fd; padding:0.1rem 0.4rem; border-radius:10px; font-size:0.8rem; display:inline-flex; align-items:center;">
+                            ${name}
+                            <span class="remove-janken-tag" data-match-id="${match.id}" data-name="${name}" style="margin-left:0.3rem; cursor:pointer; color:#d32f2f; font-weight:bold;">×</span>
+                        </span>
+                    `).join('')}
                 </div>
-                <button class="delete-match-btn" data-id="${match.id}" style="margin-top:0.5rem;">削除</button>
+                <select class="janken-add-select" data-match-id="${match.id}" style="width:100%; padding:0.2rem; font-size:0.9rem; border-radius:4px; border:1px solid #ddd;">
+                    <option value="">＋ メンバーを追加</option>
+                    ${state.members.filter(m => !(match.jankenConfirmed || '').split(',').map(s => s.trim()).includes(m.name)).map(m => `
+                        <option value="${m.name}">${m.name}</option>
+                    `).join('')}
+                </select>
             </div>
         ` : '';
 
