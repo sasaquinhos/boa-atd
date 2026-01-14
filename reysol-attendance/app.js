@@ -6,7 +6,7 @@ const state = {
     loading: false
 };
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbynfmWO5PLkTPb5e2wqN8Vx0CUhHV-0auo4PPdYVsGpWFI9IEzqPaxTAvh2R8GJZTG0uA/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbz7QceYlRnAiexvo7QukezcMwMWG2vLxVkIcRvd7Z8z9qHXbT-_HVaTJBEqg2MAceSx/exec';
 
 // DOM Elements
 const matchesContainer = document.getElementById('matches-container');
@@ -588,7 +588,6 @@ function attachMatchListeners() {
                 memberName: namePart,
                 status: state.attendance[key].status,
                 guestsMain: state.attendance[key].guestsMain,
-                guestsBack: state.attendance[key].guestsBack,
                 guestsBack: state.attendance[key].guestsBack,
                 bigFlag: state.attendance[key].bigFlag,
                 jankenParticipate: state.attendance[key].jankenParticipate
