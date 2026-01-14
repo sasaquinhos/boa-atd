@@ -144,29 +144,21 @@ function saveToLocal() {
 function setLoading(isLoading, mode = 'full') {
     state.loading = isLoading;
     const overlayId = 'loading-overlay';
-    const indicatorId = 'loading-indicator-subtle';
+    // Removed indicatorId as we no longer show subtle updates
 
     // Cleanup existing
     const existingOverlay = document.getElementById(overlayId);
     if (existingOverlay) existingOverlay.remove();
 
-    const existingIndicator = document.getElementById(indicatorId);
+    const existingIndicator = document.getElementById('loading-indicator-subtle');
     if (existingIndicator) existingIndicator.remove();
 
-    if (isLoading) {
-        if (mode === 'full') {
-            const overlay = document.createElement('div');
-            overlay.id = overlayId;
-            overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.7);display:flex;justify-content:center;align-items:center;z-index:9999;font-size:1.5rem;';
-            overlay.innerText = '読み込み中...';
-            document.body.appendChild(overlay);
-        } else {
-            const indicator = document.createElement('div');
-            indicator.id = indicatorId;
-            indicator.style.cssText = 'position:fixed;bottom:10px;right:10px;padding:5px 10px;background:rgba(0,0,0,0.7);color:white;border-radius:4px;font-size:0.8rem;z-index:9999;';
-            indicator.innerText = '更新中...';
-            document.body.appendChild(indicator);
-        }
+    if (isLoading && mode === 'full') {
+        const overlay = document.createElement('div');
+        overlay.id = overlayId;
+        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.7);display:flex;justify-content:center;align-items:center;z-index:9999;font-size:1.5rem;';
+        overlay.innerText = '読み込み中...';
+        document.body.appendChild(overlay);
     }
 }
 
