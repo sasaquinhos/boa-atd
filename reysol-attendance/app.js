@@ -428,12 +428,25 @@ function setupEventListeners() {
     }
 
     // Admin Member Actions (Delete/Edit)
-    const adminList = document.getElementById('members-list-admin');
-    if (adminList) {
-        // Use delegation for dynamic list
-        adminList.addEventListener('click', (e) => {
-            if (e.target.classList.contains('delete-member-btn')) {
-                const memberName = e.target.dataset.name;
+    const membersSelect = document.getElementById('members-select-admin');
+    const editBtn = document.getElementById('edit-member-btn-admin');
+    const deleteBtn = document.getElementById('delete-member-btn-admin');
+
+    if (editBtn && membersSelect) {
+        editBtn.addEventListener('click', () => {
+            const memberName = membersSelect.value;
+            if (memberName) {
+                openEditMemberModal(memberName);
+            } else {
+                alert('編集するメンバーを選択してください');
+            }
+        });
+    }
+
+    if (deleteBtn && membersSelect) {
+        deleteBtn.addEventListener('click', () => {
+            const memberName = membersSelect.value;
+            if (memberName) {
                 if (confirm(`メンバー「${memberName}」を削除しますか？\n(過去の出欠データからも削除されます)`)) {
                     state.members = state.members.filter(m => m.name !== memberName);
                     // Cleanup attendance data for this member locally
@@ -445,88 +458,87 @@ function setupEventListeners() {
                     renderMatches();
                     apiCall('delete_member', { name: memberName });
                 }
-            } else if (e.target.classList.contains('edit-member-btn')) {
-                const name = e.target.dataset.name;
-                openEditMemberModal(name);
+            } else {
+                alert('削除するメンバーを選択してください');
             }
         });
+    }
 
-        // Edit Member Modal Elements
-        const editModal = document.getElementById('edit-member-modal');
-        const editNameInput = document.getElementById('edit-member-name');
-        const saveEditBtn = document.getElementById('save-edit-member');
-        const cancelEditBtn = document.getElementById('cancel-edit-member');
-        let currentEditingMemberName = null;
+    // Edit Member Modal Elements
+    const editModal = document.getElementById('edit-member-modal');
+    const editNameInput = document.getElementById('edit-member-name');
+    const saveEditBtn = document.getElementById('save-edit-member');
+    const cancelEditBtn = document.getElementById('cancel-edit-member');
+    let currentEditingMemberName = null;
 
-        function openEditMemberModal(name) {
-            const member = state.members.find(m => m.name === name);
-            if (member) {
-                currentEditingMemberName = name;
-                editNameInput.value = member.name;
-                const radios = document.getElementsByName('edit-member-section');
-                radios.forEach(r => {
-                    r.checked = (parseInt(r.value) === (member.section || 1));
-                });
-                editModal.style.display = 'flex';
+    function openEditMemberModal(name) {
+        const member = state.members.find(m => m.name === name);
+        if (member) {
+            currentEditingMemberName = name;
+            editNameInput.value = member.name;
+            const radios = document.getElementsByName('edit-member-section');
+            radios.forEach(r => {
+                r.checked = (parseInt(r.value) === (member.section || 1));
+            });
+            editModal.style.display = 'flex';
+        }
+    }
+
+    if (saveEditBtn) {
+        saveEditBtn.onclick = () => {
+            const newName = editNameInput.value.trim();
+            const sectionRadio = document.querySelector('input[name="edit-member-section"]:checked');
+            const newSection = parseInt(sectionRadio ? sectionRadio.value : 1);
+
+            if (!newName) {
+                alert('名前を入力してください');
+                return;
             }
-        }
 
-        if (saveEditBtn) {
-            saveEditBtn.onclick = () => {
-                const newName = editNameInput.value.trim();
-                const sectionRadio = document.querySelector('input[name="edit-member-section"]:checked');
-                const newSection = parseInt(sectionRadio ? sectionRadio.value : 1);
+            if (newName !== currentEditingMemberName && state.members.some(m => m.name === newName)) {
+                alert('その名前は既に使用されています');
+                return;
+            }
 
-                if (!newName) {
-                    alert('名前を入力してください');
-                    return;
-                }
-
-                if (newName !== currentEditingMemberName && state.members.some(m => m.name === newName)) {
-                    alert('その名前は既に使用されています');
-                    return;
-                }
-
-                const member = state.members.find(m => m.name === currentEditingMemberName);
-                if (member) {
-                    // Update attendance keys if name changed locally
-                    if (newName !== currentEditingMemberName) {
-                        const newAttendance = {};
-                        Object.keys(state.attendance).forEach(key => {
-                            if (key.endsWith(`_${currentEditingMemberName}`)) {
-                                const matchId = key.split('_')[0];
-                                newAttendance[`${matchId}_${newName}`] = state.attendance[key];
-                            } else {
-                                newAttendance[key] = state.attendance[key];
-                            }
-                        });
-                        state.attendance = newAttendance;
-                    }
-
-                    // Update member data
-                    member.name = newName;
-                    member.section = newSection;
-
-                    renderMatches();
-                    editModal.style.display = 'none';
-
-                    apiCall('update_member', {
-                        originalName: currentEditingMemberName,
-                        name: newName,
-                        section: newSection
+            const member = state.members.find(m => m.name === currentEditingMemberName);
+            if (member) {
+                // Update attendance keys if name changed locally
+                if (newName !== currentEditingMemberName) {
+                    const newAttendance = {};
+                    Object.keys(state.attendance).forEach(key => {
+                        if (key.endsWith(`_${currentEditingMemberName}`)) {
+                            const matchId = key.split('_')[0];
+                            newAttendance[`${matchId}_${newName}`] = state.attendance[key];
+                        } else {
+                            newAttendance[key] = state.attendance[key];
+                        }
                     });
-
-                    currentEditingMemberName = null;
+                    state.attendance = newAttendance;
                 }
-            };
-        }
 
-        if (cancelEditBtn) {
-            cancelEditBtn.onclick = () => {
+                // Update member data
+                member.name = newName;
+                member.section = newSection;
+
+                renderMatches();
                 editModal.style.display = 'none';
+
+                apiCall('update_member', {
+                    originalName: currentEditingMemberName,
+                    name: newName,
+                    section: newSection
+                });
+
                 currentEditingMemberName = null;
-            };
-        }
+            }
+        };
+    }
+
+    if (cancelEditBtn) {
+        cancelEditBtn.onclick = () => {
+            editModal.style.display = 'none';
+            currentEditingMemberName = null;
+        };
     }
 }
 
@@ -716,18 +728,14 @@ function attachMatchListeners() {
 }
 
 function renderMembersAdmin() {
-    const container = document.getElementById('members-list-admin');
-    if (!container) return;
+    const select = document.getElementById('members-select-admin');
+    if (!select) return;
 
-    container.innerHTML = state.members.map(member => `
-        <div class="member-admin-row">
-            <span>${member.name} <small class="text-muted">(${SECTION_LABELS[member.section] || 'TOP'})</small></span>
-            <div class="member-actions">
-                <button class="edit-member-btn" data-name="${member.name}">編集</button>
-                <button class="delete-member-btn" data-name="${member.name}">削除</button>
-            </div>
-        </div>
-    `).join('');
+    const currentValue = select.value;
+    select.innerHTML = '<option value="">-- メンバーを選択 --</option>' +
+        state.members.sort((a, b) => a.name.localeCompare(b.name)).map(member => `
+            <option value="${member.name}" ${member.name === currentValue ? 'selected' : ''}>${member.name} (${SECTION_LABELS[member.section] || 'TOP'})</option>
+        `).join('');
 }
 
 function updateMatchSummary(matchId) {
