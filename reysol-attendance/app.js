@@ -371,7 +371,7 @@ function createMemberRow(matchId, member, hideName = false) {
             <div class="big-flag-section">
                 <label class="checkbox-label">
                     <input type="checkbox" class="big-flag-checkbox" ${data.bigFlag ? 'checked' : ''}>
-                    ビックフラッグ搬入可
+                    ビッグフラッグ搬入可
                 </label>
             </div>
         </div>
@@ -827,7 +827,7 @@ function generateMatchSummaryContent(matchId) {
     if (bigFlagMembers.length > 0) {
         html += `
             <div class="summary-item active" style="background-color: #e3f2fd; margin-top: 0.5rem;">
-                <span class="summary-count">ビックフラッグ搬入: ${bigFlagMembers.length}名</span>
+                <span class="summary-count">ビッグフラッグ搬入: ${bigFlagMembers.length}名</span>
                 <span class="summary-names">(${bigFlagMembers.join(', ')})</span>
             </div>
         `;
