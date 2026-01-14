@@ -283,6 +283,7 @@ function renderMatches() {
                 </div>
                 ${adminControlsHtml}
             </div>
+            ${jankenAdminHtml}
             <div class="members-list">
                 ${membersToRender.map(member => createMemberRow(match.id, member, hideName)).join('')}
             </div>
