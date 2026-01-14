@@ -574,8 +574,6 @@ function attachMatchListeners() {
             const matchId = key.split('_')[0];
             const namePart = key.substring(matchId.length + 1);
 
-            const namePart = key.substring(matchId.length + 1);
-
             if (!state.attendance[key]) state.attendance[key] = { status: null, guestsMain: '', guestsBack: '', bigFlag: false, jankenParticipate: false };
             state.attendance[key].bigFlag = e.target.checked;
 
