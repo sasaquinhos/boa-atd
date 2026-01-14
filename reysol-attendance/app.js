@@ -341,7 +341,7 @@ function createMemberRow(matchId, member, hideName = false) {
         const mmdd = `${prevDate.getMonth() + 1}/${prevDate.getDate()}`;
         const days = ['日', '月', '火', '水', '木', '金', '土'];
         const dayStr = days[prevDate.getDay()];
-        jankenLabelSuffix = `（日立台公園 ${mmdd}(${dayStr}) 15:00）`;
+        jankenLabelSuffix = `<br>（日立台公園 ${mmdd}(${dayStr}) 15:00）`;
     }
 
     return `
