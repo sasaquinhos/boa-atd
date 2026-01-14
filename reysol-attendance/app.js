@@ -239,7 +239,17 @@ function renderMatches() {
                 <button class="edit-match-btn" data-id="${match.id}">編集</button>
                 <div class="janken-admin-section" style="margin-top:0.5rem; width:100%;">
                     <label style="font-size:0.8rem;">じゃんけん大会参加確定者</label>
-                    <textarea class="janken-confirmed-input" data-id="${match.id}" placeholder="確定者名を入力" style="width:100%; height:3rem; font-size:0.9rem;">${match.jankenConfirmed || ''}</textarea>
+                    <div class="janken-checkbox-list" style="max-height: 150px; overflow-y: auto; border: 1px solid #ddd; padding: 0.5rem; font-size: 0.9rem; background: #fff;">
+                        ${state.members.map(m => {
+            const isChecked = (match.jankenConfirmed || '').split(',').map(s => s.trim()).includes(m.name);
+            return `
+                                <label style="display: block; margin-bottom: 0.2rem;">
+                                    <input type="checkbox" class="janken-confirmed-chk" data-match-id="${match.id}" value="${m.name}" ${isChecked ? 'checked' : ''}>
+                                    ${m.name}
+                                </label>
+                            `;
+        }).join('')}
+                    </div>
                     <button class="save-janken-confirmed-btn" data-id="${match.id}" style="margin-top:0.2rem; font-size:0.8rem; padding:0.2rem 0.5rem;">保存</button>
                 </div>
                 <button class="delete-match-btn" data-id="${match.id}" style="margin-top:0.5rem;">削除</button>
@@ -623,17 +633,19 @@ function attachMatchListeners() {
     document.querySelectorAll('.save-janken-confirmed-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const matchId = e.target.dataset.id;
-            const input = document.querySelector(`.janken-confirmed-input[data-id="${matchId}"]`);
-            if (input) {
-                const val = input.value;
-                const match = state.matches.find(m => m.id == matchId);
-                if (match) {
-                    match.jankenConfirmed = val;
-                    // Optimistic update? User might be viewing currently. Reload needed?
-                    // Admin is editing, so no immediate user view update needed on same screen unless verifying.
-                    alert('保存しました');
-                    apiCall('update_match', { id: matchId, jankenConfirmed: val });
-                }
+            const checkboxes = document.querySelectorAll(`.janken-confirmed-chk[data-match-id="${matchId}"]:checked`);
+
+            // Gather selected names
+            const selectedNames = Array.from(checkboxes).map(cb => cb.value);
+            const val = selectedNames.join(', ');
+
+            const match = state.matches.find(m => m.id == matchId);
+            if (match) {
+                match.jankenConfirmed = val;
+                // Optimistic update? User might be viewing currently. Reload needed?
+                // Admin is editing, so no immediate user view update needed on same screen unless verifying.
+                alert('保存しました');
+                apiCall('update_match', { id: matchId, jankenConfirmed: val });
             }
         });
     });
