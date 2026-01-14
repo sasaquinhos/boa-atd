@@ -237,7 +237,12 @@ function renderMatches() {
         const adminControlsHtml = isAdmin ? `
             <div class="match-controls">
                 <button class="edit-match-btn" data-id="${match.id}">編集</button>
-                <button class="delete-match-btn" data-id="${match.id}">削除</button>
+                <div class="janken-admin-section" style="margin-top:0.5rem; width:100%;">
+                    <label style="font-size:0.8rem;">じゃんけん大会参加確定者</label>
+                    <textarea class="janken-confirmed-input" data-id="${match.id}" placeholder="確定者名を入力" style="width:100%; height:3rem; font-size:0.9rem;">${match.jankenConfirmed || ''}</textarea>
+                    <button class="save-janken-confirmed-btn" data-id="${match.id}" style="margin-top:0.2rem; font-size:0.8rem; padding:0.2rem 0.5rem;">保存</button>
+                </div>
+                <button class="delete-match-btn" data-id="${match.id}" style="margin-top:0.5rem;">削除</button>
             </div>
         ` : '';
 
@@ -286,7 +291,16 @@ function renderMatches() {
 function createMemberRow(matchId, member, hideName = false) {
     const memberName = member.name;
     const key = `${matchId}_${memberName}`;
-    const data = state.attendance[key] || { status: null, guestsMain: '', guestsBack: '' };
+    const data = state.attendance[key] || { status: null, guestsMain: '', guestsBack: '', jankenParticipate: false };
+    const match = state.matches.find(m => m.id == matchId); // Ensure loose equality just in case, or cast
+    const jankenConfirmedText = match ? (match.jankenConfirmed || '') : '';
+    const isJankenConfirmed = jankenConfirmedText.includes(memberName); // Basic checks needed? Or just show text? User asked to display "confirmed members entered by admin".
+    // Requirement: "Display 'Rock-Paper-Scissors Participation Confirmed' field... display member names entered by admin".
+    // So assume we show the text area content or check if user is in it.
+    // If it's a global text for the match, maybe we show "Participating Confirmed: [List]"?
+    // User request: "create a 'Participation Confirmed' field under it... display member names entered by admin".
+    // Let's show the text that admin entered.
+
 
     let radiosHtml = STATUS_OPTIONS.map(opt => `
         <label class="radio-label">
@@ -305,6 +319,15 @@ function createMemberRow(matchId, member, hideName = false) {
 
     return `
         <div class="attendance-row" data-key="${key}">
+            <div class="janken-section" style="margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px dashed #eee;">
+                <label class="checkbox-label" style="font-weight:bold; color:#d32f2f;">
+                    <input type="checkbox" class="janken-participate-checkbox" ${data.jankenParticipate ? 'checked' : ''}>
+                    じゃんけん大会参加可
+                </label>
+                <div class="janken-confirmed-display" style="font-size: 0.9rem; color: #333; margin-top: 0.2rem; background: #fbe9e7; padding: 0.2rem 0.5rem; border-radius: 4px;">
+                    <span style="font-weight:bold;">参加確定:</span> ${jankenConfirmedText || 'なし'}
+                </div>
+            </div>
             ${nameHtml}
             <div class="status-options">
                 ${radiosHtml}
@@ -551,8 +574,11 @@ function attachMatchListeners() {
             const matchId = key.split('_')[0];
             const namePart = key.substring(matchId.length + 1);
 
-            if (!state.attendance[key]) state.attendance[key] = { status: null, guestsMain: '', guestsBack: '', bigFlag: false };
+            const namePart = key.substring(matchId.length + 1);
+
+            if (!state.attendance[key]) state.attendance[key] = { status: null, guestsMain: '', guestsBack: '', bigFlag: false, jankenParticipate: false };
             state.attendance[key].bigFlag = e.target.checked;
+
 
             updateMatchSummary(matchId);
 
@@ -563,8 +589,55 @@ function attachMatchListeners() {
                 status: state.attendance[key].status,
                 guestsMain: state.attendance[key].guestsMain,
                 guestsBack: state.attendance[key].guestsBack,
-                bigFlag: state.attendance[key].bigFlag
+                guestsBack: state.attendance[key].guestsBack,
+                bigFlag: state.attendance[key].bigFlag,
+                jankenParticipate: state.attendance[key].jankenParticipate
             });
+        });
+    });
+
+    // Janken Participate Checkbox
+    document.querySelectorAll('.janken-participate-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', (e) => {
+            const row = e.target.closest('.attendance-row');
+            const key = row.dataset.key;
+            const matchId = key.split('_')[0];
+            const namePart = key.substring(matchId.length + 1);
+
+            if (!state.attendance[key]) state.attendance[key] = { status: null, guestsMain: '', guestsBack: '', bigFlag: false, jankenParticipate: false };
+            state.attendance[key].jankenParticipate = e.target.checked;
+
+            updateMatchSummary(matchId);
+
+            // API Call
+            apiCall('update_attendance', {
+                matchId: matchId,
+                memberName: namePart,
+                status: state.attendance[key].status,
+                guestsMain: state.attendance[key].guestsMain,
+                guestsBack: state.attendance[key].guestsBack,
+                bigFlag: state.attendance[key].bigFlag,
+                jankenParticipate: state.attendance[key].jankenParticipate
+            });
+        });
+    });
+
+    // Save Janken Confirmed (Admin)
+    document.querySelectorAll('.save-janken-confirmed-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const matchId = e.target.dataset.id;
+            const input = document.querySelector(`.janken-confirmed-input[data-id="${matchId}"]`);
+            if (input) {
+                const val = input.value;
+                const match = state.matches.find(m => m.id == matchId);
+                if (match) {
+                    match.jankenConfirmed = val;
+                    // Optimistic update? User might be viewing currently. Reload needed?
+                    // Admin is editing, so no immediate user view update needed on same screen unless verifying.
+                    alert('保存しました');
+                    apiCall('update_match', { id: matchId, jankenConfirmed: val });
+                }
+            }
         });
     });
 
@@ -657,6 +730,22 @@ function generateMatchSummaryContent(matchId) {
     });
 
     let html = '<div class="match-summary"><div class="summary-title">集計</div>';
+
+    // Janken Summary (Top Priority)
+    const jankenParticipants = state.members.filter(member => {
+        const key = `${matchId}_${member.name}`;
+        const data = state.attendance[key];
+        return data && data.jankenParticipate;
+    }).map(m => m.name);
+
+    if (jankenParticipants.length > 0) {
+        html += `
+            <div class="summary-item active" style="background-color: #ffebee; border: 1px solid #ef5350;">
+                <span class="summary-count" style="color: #c62828;">じゃんけん大会: ${jankenParticipants.length}名</span>
+                <span class="summary-names">(${jankenParticipants.join(', ')})</span>
+            </div>
+        `;
+    }
 
     const totalMain = memberMain + guestMain;
     const totalBack = memberBack + guestBack;
