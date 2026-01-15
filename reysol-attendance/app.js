@@ -836,7 +836,7 @@ function generateMatchSummaryContent(matchId) {
         let sectionTotalsHtml = '';
         if (totalMain > 0) sectionTotalsHtml += `<div>TOP 合計${totalMain}名 <small style="font-weight:normal;">(メンバー${memberMain} / 同伴${guestMain})</small></div>`;
         if (totalBack > 0) sectionTotalsHtml += `<div>FRONT 合計${totalBack}名 <small style="font-weight:normal;">(メンバー${memberBack} / 同伴${guestBack})</small></div>`;
-        if (outsideTotal > 0) sectionTotalsHtml += `<div style="color: #666; padding-top: 0.2rem; border-top: 1px dotted #ccc; margin-top: 0.2rem;">柏熱以外で 合計${outsideTotal}名</div>`;
+        if (outsideTotal > 0) sectionTotalsHtml += `<div style="padding-top: 0.2rem; border-top: 1px dotted #ccc; margin-top: 0.2rem;">柏熱以外 合計${outsideTotal}名</div>`;
 
         html += `
             <div class="summary-item active" style="font-weight: bold; background-color: #fff8e1; flex-direction: column; align-items: flex-start; gap: 0.2rem;">
