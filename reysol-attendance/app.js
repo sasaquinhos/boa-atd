@@ -777,6 +777,7 @@ function generateMatchSummaryContent(matchId) {
     let memberBack = 0;
     let guestMain = 0;
     let guestBack = 0;
+    let outsideTotal = 0;
 
     // Initialize map
     STATUS_OPTIONS.forEach(opt => summary[opt.id] = []);
@@ -785,26 +786,27 @@ function generateMatchSummaryContent(matchId) {
         const key = `${matchId}_${member.name}`;
         const data = state.attendance[key];
 
-        // Count member attendance
-        if (data && data.status && data.status !== 5) { // 5 is Absent
-            // If member is attending (status 1-4)
-            if (member.section === 2) {
-                memberBack += 1;
-            } else {
-                memberMain += 1;
-            }
-        }
-
         if (data && data.status) {
             if (summary[data.status]) {
                 summary[data.status].push(member.name);
             }
-        }
 
-        // Count guests
-        if (data) {
-            if (data.guestsMain) guestMain += parseInt(data.guestsMain) || 0;
-            if (data.guestsBack) guestBack += parseInt(data.guestsBack) || 0;
+            // Exclude Absent (5) and Outside Hakunetsu (4) from section totals
+            if (data.status !== 5 && data.status !== 4) {
+                if (member.section === 2) {
+                    memberBack += 1;
+                } else {
+                    memberMain += 1;
+                }
+
+                // Count guests for section totals
+                if (data.guestsMain) guestMain += parseInt(data.guestsMain) || 0;
+                if (data.guestsBack) guestBack += parseInt(data.guestsBack) || 0;
+            } else if (data.status === 4) {
+                // Count status 4 ("柏熱以外で") separately
+                outsideTotal += 1; // The member themselves
+                outsideTotal += (parseInt(data.guestsMain) || 0) + (parseInt(data.guestsBack) || 0);
+            }
         }
     });
 
@@ -830,11 +832,15 @@ function generateMatchSummaryContent(matchId) {
     const totalBack = memberBack + guestBack;
 
     // Add Total Count Breakdown
-    if (totalMain > 0 || totalBack > 0) {
+    if (totalMain > 0 || totalBack > 0 || outsideTotal > 0) {
+        let sectionTotalsHtml = '';
+        if (totalMain > 0) sectionTotalsHtml += `<div>TOP 合計${totalMain}名 <small style="font-weight:normal;">(メンバー${memberMain} / 同伴${guestMain})</small></div>`;
+        if (totalBack > 0) sectionTotalsHtml += `<div>FRONT 合計${totalBack}名 <small style="font-weight:normal;">(メンバー${memberBack} / 同伴${guestBack})</small></div>`;
+        if (outsideTotal > 0) sectionTotalsHtml += `<div style="color: #666; padding-top: 0.2rem; border-top: 1px dotted #ccc; margin-top: 0.2rem;">柏熱以外で 合計${outsideTotal}名</div>`;
+
         html += `
             <div class="summary-item active" style="font-weight: bold; background-color: #fff8e1; flex-direction: column; align-items: flex-start; gap: 0.2rem;">
-                <div>TOP 合計${totalMain}名 <small style="font-weight:normal;">(メンバー${memberMain} / 同伴${guestMain})</small></div>
-                <div>FRONT 合計${totalBack}名 <small style="font-weight:normal;">(メンバー${memberBack} / 同伴${guestBack})</small></div>
+                ${sectionTotalsHtml}
             </div>
         `;
     }
