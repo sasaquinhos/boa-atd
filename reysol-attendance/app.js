@@ -380,8 +380,8 @@ function createMemberRow(matchId, member, hideName = false) {
                     <input type="checkbox" class="big-flag-checkbox" ${data.bigFlag ? 'checked' : ''}>
                     ビッグフラッグ搬入可
                 </label>
-                <div class="big-flag-note" style="font-size: 0.8rem; color: #666; margin-left: 1.6rem; font-weight: normal;">
-                    開場30分後にGATE9前集合
+                <div class="big-flag-note" style="font-size: 0.9rem; color: #444; margin-left: 1.6rem; font-weight: bold;">
+                    （開場30分後にGATE9前集合）
                 </div>
             </div>
         </div>
