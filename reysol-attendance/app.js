@@ -190,7 +190,6 @@ async function apiCall(action, payload = {}) {
             method: 'POST',
             mode: 'cors',
             cache: 'no-cache',
-            keepalive: true,
             headers: {
                 'Content-Type': 'text/plain;charset=utf-8', // GAS handles text/plain best for POST bodies
             },
