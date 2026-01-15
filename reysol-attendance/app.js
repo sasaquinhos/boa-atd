@@ -3,6 +3,7 @@ const state = {
     members: [],
     matches: [],
     attendance: {}, // { "matchId_memberName": { status, guestsMain, guestsBack } }
+    expandedMatches: new Set(), // Set of match IDs that are expanded
     loading: false
 };
 
@@ -219,6 +220,11 @@ function renderMatches() {
     // Sort matches by date (descending)
     const sortedMatches = [...state.matches].sort((a, b) => new Date(b.date) - new Date(a.date));
 
+    // Initialize expandedMatches if empty and we have matches
+    if (state.expandedMatches.size === 0 && sortedMatches.length > 0) {
+        state.expandedMatches.add(sortedMatches[0].id);
+    }
+
     const isAdmin = !!document.getElementById('add-member-btn');
     const currentUser = currentUserSelect ? currentUserSelect.value : null;
 
@@ -229,7 +235,8 @@ function renderMatches() {
 
     sortedMatches.forEach(match => {
         const matchEl = document.createElement('div');
-        matchEl.className = 'match-card';
+        const isExpanded = state.expandedMatches.has(match.id);
+        matchEl.className = `match-card ${isExpanded ? '' : 'collapsed'}`;
         matchEl.dataset.matchId = match.id;
 
         // Admin: Show "Edit Match" and "Delete Match" buttons
@@ -543,6 +550,25 @@ function setupEventListeners() {
 }
 
 function attachMatchListeners() {
+    // Match Header Toggle (Expand/Collapse)
+    document.querySelectorAll('.match-header').forEach(header => {
+        header.addEventListener('click', (e) => {
+            // Don't toggle if clicking on admin buttons
+            if (e.target.closest('.match-controls')) return;
+
+            const matchEl = e.target.closest('.match-card');
+            const matchId = parseInt(matchEl.dataset.matchId);
+
+            if (state.expandedMatches.has(matchId)) {
+                state.expandedMatches.delete(matchId);
+                matchEl.classList.add('collapsed');
+            } else {
+                state.expandedMatches.add(matchId);
+                matchEl.classList.remove('collapsed');
+            }
+        });
+    });
+
     // Attendance Changes
     document.querySelectorAll('input[type="radio"]').forEach(radio => {
         radio.addEventListener('change', (e) => {
