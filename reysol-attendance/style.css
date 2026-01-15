@@ -381,6 +381,7 @@ input[type="number"] {
     color: #444;
 }
 
+.janken-participate-checkbox,
 .big-flag-checkbox {
     width: 18px;
     height: 18px;
