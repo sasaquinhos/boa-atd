@@ -400,6 +400,7 @@ function setupEventListeners() {
             if (name && !state.members.some(m => m.name === name)) {
                 // Optimistic Update
                 state.members.push({ name, section });
+                saveToLocal();
                 renderMatches();
                 newMemberNameInput.value = '';
 
@@ -425,6 +426,7 @@ function setupEventListeners() {
                 };
                 // Optimistic Update
                 state.matches.push(newMatch);
+                saveToLocal();
                 renderMatches();
                 newMatchDateInput.value = '';
                 newMatchOpponentInput.value = '';
@@ -465,6 +467,7 @@ function setupEventListeners() {
                             delete state.attendance[key];
                         }
                     });
+                    saveToLocal();
                     renderMatches();
                     apiCall('delete_member', { name: memberName });
                 }
@@ -530,6 +533,7 @@ function setupEventListeners() {
                 member.name = newName;
                 member.section = newSection;
 
+                saveToLocal();
                 renderMatches();
                 editModal.style.display = 'none';
 
@@ -584,6 +588,7 @@ function attachMatchListeners() {
             if (!state.attendance[key]) state.attendance[key] = { status: null, guestsMain: '', guestsBack: '' };
             state.attendance[key].status = status;
 
+            saveToLocal();
             updateMatchSummary(matchId);
 
             // API Call
@@ -620,6 +625,7 @@ function attachMatchListeners() {
                 state.attendance[key].guestsBack = '';
             }
 
+            saveToLocal();
             updateMatchSummary(matchId);
 
             // API Call
@@ -645,7 +651,7 @@ function attachMatchListeners() {
             if (!state.attendance[key]) state.attendance[key] = { status: null, guestsMain: '', guestsBack: '', bigFlag: false, jankenParticipate: false };
             state.attendance[key].bigFlag = e.target.checked;
 
-
+            saveToLocal();
             updateMatchSummary(matchId);
 
             // API Call
@@ -672,6 +678,7 @@ function attachMatchListeners() {
             if (!state.attendance[key]) state.attendance[key] = { status: null, guestsMain: '', guestsBack: '', bigFlag: false, jankenParticipate: false };
             state.attendance[key].jankenParticipate = e.target.checked;
 
+            saveToLocal();
             updateMatchSummary(matchId);
 
             // API Call
@@ -703,6 +710,7 @@ function attachMatchListeners() {
                     current.push(name);
                     const val = current.join(', ');
                     match.jankenConfirmed = val;
+                    saveToLocal();
                     renderMatches(); // Re-render to update UI
                     apiCall('update_match', { id: matchId, jankenConfirmed: val });
                 }
@@ -721,6 +729,7 @@ function attachMatchListeners() {
                 const current = (match.jankenConfirmed || '').split(',').map(s => s.trim()).filter(s => s);
                 const newVal = current.filter(n => n !== name).join(', ');
                 match.jankenConfirmed = newVal;
+                saveToLocal();
                 renderMatches();
                 apiCall('update_match', { id: matchId, jankenConfirmed: newVal });
             }
@@ -733,6 +742,7 @@ function attachMatchListeners() {
             if (confirm('この試合を削除しますか？')) {
                 const id = parseInt(e.target.dataset.id);
                 state.matches = state.matches.filter(m => m.id !== id);
+                saveToLocal();
                 renderMatches();
                 apiCall('delete_match', { id: id });
             }
@@ -748,6 +758,7 @@ function attachMatchListeners() {
                 const newOpponent = prompt('新しい対戦相手を入力してください:', match.opponent);
                 if (newOpponent && newOpponent.trim() !== '') {
                     match.opponent = newOpponent.trim();
+                    saveToLocal();
                     renderMatches();
                     apiCall('update_match', { id: id, opponent: match.opponent });
                 }
