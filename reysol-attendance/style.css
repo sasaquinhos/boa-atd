@@ -125,6 +125,33 @@ input[type="number"] {
     margin-bottom: 1.5rem;
     padding-bottom: 0.5rem;
     border-bottom: 1px solid #eee;
+    cursor: pointer;
+}
+
+.match-header:hover {
+    background-color: #f9f9f9;
+}
+
+.match-header::after {
+    content: '▼';
+    font-size: 0.8rem;
+    color: #999;
+    transition: transform 0.3s;
+}
+
+.match-card.collapsed .match-header::after {
+    transform: rotate(-90deg);
+}
+
+.match-card.collapsed .match-header {
+    margin-bottom: 0;
+    border-bottom: none;
+}
+
+.match-card.collapsed .janken-admin-section,
+.match-card.collapsed .members-list,
+.match-card.collapsed .match-summary-container {
+    display: none;
 }
 
 .match-info h2 {
@@ -140,6 +167,7 @@ input[type="number"] {
 .match-controls {
     display: flex;
     gap: 0.5rem;
+    margin-right: 0.5rem;
 }
 
 .delete-match-btn {
