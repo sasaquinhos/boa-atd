@@ -80,7 +80,7 @@ async function init() {
 
 async function loadData() {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout for GAS cold starts
 
     try {
         const res = await fetch(`${API_URL}?t=${new Date().getTime()}`, {
