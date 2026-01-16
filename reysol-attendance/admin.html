@@ -48,7 +48,7 @@
     <main class="container">
         <!-- Settings / Add Actions -->
         <section class="controls-section">
-            <div class="admin-panel" style="display: flex;"> <!-- Always open for admin -->
+            <div class="admin-panel"> <!-- Always open for admin -->
                 <div class="control-group">
                     <h3>メンバー追加</h3>
                     <div class="input-group" style="flex-wrap: wrap;">
@@ -69,19 +69,18 @@
                         <button id="add-match-btn" class="btn btn-primary">追加</button>
                     </div>
                 </div>
-            </div>
-
-            <div class="admin-panel" style="margin-top: 2rem;">
-                <h3>登録済みメンバー管理</h3>
-                <div class="input-group" style="margin-top: 1rem;">
-                    <select id="members-select-admin"
-                        style="flex: 1; padding: 0.5rem; border-radius: 4px; border: 1px solid #ddd;">
-                        <option value="">-- メンバーを選択 --</option>
-                    </select>
-                    <button id="edit-member-btn-admin" class="btn"
-                        style="background: #e3f2fd; color: #1976d2;">編集</button>
-                    <button id="delete-member-btn-admin" class="btn"
-                        style="background: #ffebee; color: #d32f2f;">削除</button>
+                <div class="control-group">
+                    <h3>登録済みメンバー管理</h3>
+                    <div class="input-group">
+                        <select id="members-select-admin"
+                            style="flex: 1; padding: 0.5rem; border-radius: 4px; border: 1px solid #ddd;">
+                            <option value="">-- メンバーを選択 --</option>
+                        </select>
+                        <button id="edit-member-btn-admin" class="btn"
+                            style="background: #e3f2fd; color: #1976d2;">編集</button>
+                        <button id="delete-member-btn-admin" class="btn"
+                            style="background: #ffebee; color: #d32f2f;">削除</button>
+                    </div>
                 </div>
             </div>
         </section>
