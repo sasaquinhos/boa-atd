@@ -87,7 +87,14 @@
         </section>
 
         <!-- Match List (For deletion management) -->
-        <h2 style="margin-bottom: 1rem; border-bottom: 2px solid #FCD116; display: inline-block;">登録済み試合一覧</h2>
+        <div class="match-list-header">
+            <h2 class="section-title">登録済み試合一覧</h2>
+            <div class="match-limit-control">
+                <span>表示試合数:</span>
+                <input type="number" id="match-limit-input" min="1" value="10">
+                <span>試合</span>
+            </div>
+        </div>
         <div id="matches-container" class="matches-list admin-mode">
             <!-- Matches will be injected here with delete buttons -->
         </div>
@@ -116,7 +123,7 @@
         </div>
     </div>
 
-    <script src="app.js?v=20260114_14"></script>
+    <script src="app.js?v=20260116_1337"></script>
 </body>
 
 </html>
