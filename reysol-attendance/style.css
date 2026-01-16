@@ -382,11 +382,13 @@ input[type="number"] {
 }
 
 .janken-participate-checkbox,
-.big-flag-checkbox {
+.big-flag-checkbox,
+.morning-withdraw-checkbox {
     width: 18px;
     height: 18px;
     cursor: pointer;
 }
+
 
 /* Input Area Restructuring */
 .attendance-input-container {
