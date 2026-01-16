@@ -68,9 +68,47 @@ summary {
     gap: 1.5rem;
 }
 
-.control-group h3 {
-    font-size: 1rem;
+.control-group h3,
+.admin-panel h3,
+.modal-content h3,
+.section-title {
+    font-size: 1.1rem;
+    font-weight: bold;
     margin-bottom: 0.5rem;
+    color: var(--reysol-black);
+}
+
+.section-title {
+    margin-bottom: 0;
+    border-bottom: 2px solid var(--reysol-yellow);
+    display: inline-block;
+}
+
+.match-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.match-limit-control {
+    font-size: 0.9rem;
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+#match-limit-input {
+    width: 60px;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    font-size: 0.9rem;
+    text-align: center;
+    flex: none !important;
 }
 
 .input-group {
