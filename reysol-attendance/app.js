@@ -7,7 +7,7 @@ const state = {
     loading: false
 };
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbwMTYTTKTWYxzVdUp0U1R4BwDr27FVhwP7lhv5W7XhGJHNZHFR4dvT56z0j94a3WWVw2w/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbwtneId8FXB_DlyNGd_AMm55EMt9TrCpD6FqIwROlIheRsd3ltNpldoquPJgxB7uRnEKQ/exec';
 
 // DOM Elements
 const matchesContainer = document.getElementById('matches-container');
@@ -960,18 +960,6 @@ function generateMatchSummaryContent(matchId) {
         `;
     }
 
-    STATUS_OPTIONS.forEach(opt => {
-        const names = summary[opt.id];
-        if (names && names.length > 0) {
-            html += `
-                <div class="summary-item active">
-                    <span class="summary-count">${opt.label}: ${names.length}名</span>
-                    <span class="summary-names">(${names.join(', ')})</span>
-                </div>
-            `;
-        }
-    });
-
     // Morning Withdraw Summary
     const morningMembers = state.members.filter(member => {
         const key = `${matchId}_${member.name}`;
@@ -987,6 +975,19 @@ function generateMatchSummaryContent(matchId) {
             </div>
         `;
     }
+
+    STATUS_OPTIONS.forEach(opt => {
+        const names = summary[opt.id];
+        if (names && names.length > 0) {
+            html += `
+                <div class="summary-item active">
+                    <span class="summary-count">${opt.label}: ${names.length}名</span>
+                    <span class="summary-names">(${names.join(', ')})</span>
+                </div>
+            `;
+        }
+    });
+
 
     // Big Flag Summary
     const bigFlagMembers = state.members.filter(member => {
