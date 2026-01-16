@@ -20,9 +20,9 @@ const currentUserSelect = document.getElementById('current-user-select');
 
 // Constants
 const STATUS_OPTIONS = [
-    { id: 1, label: '列整理まで' },
-    { id: 2, label: '開場まで' },
-    { id: 3, label: '開場後' },
+    { id: 1, label: '開場まで' },
+    { id: 2, label: '開場後' },
+    { id: 3, label: 'キックオフ後' },
     { id: 4, label: '柏熱以外で' },
     { id: 5, label: '欠席' }
 ];
