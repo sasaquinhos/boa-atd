@@ -695,12 +695,14 @@ function attachMatchListeners() {
             if (val === 'absence') {
                 state.attendance[key].status = 5;
                 details.classList.add('disabled-section');
+                details.querySelectorAll('input').forEach(input => input.disabled = true);
             } else {
                 // Return to attendance. Default to 1 if it was 5 or null.
                 if (state.attendance[key].status === 5 || state.attendance[key].status === null) {
                     state.attendance[key].status = 1;
                 }
                 details.classList.remove('disabled-section');
+                details.querySelectorAll('input').forEach(input => input.disabled = false);
 
                 // Also ensure the correct sub-status radio is checked visually
                 const subRadio = row.querySelector(`.status-options input[value="${state.attendance[key].status}"]`);
