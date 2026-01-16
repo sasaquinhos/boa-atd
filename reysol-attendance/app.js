@@ -98,8 +98,12 @@ async function loadData() {
         if (data.matches) state.matches = data.matches;
         else state.matches = [];
 
-        if (data.attendance) state.attendance = data.attendance;
-        else state.attendance = {};
+        if (data.attendance) {
+            state.attendance = data.attendance;
+            sanitizeAttendanceData();
+        } else {
+            state.attendance = {};
+        }
 
         // Save to local storage
         saveToLocal();
@@ -119,7 +123,10 @@ function loadFromLocal() {
 
         if (data.members) state.members = data.members;
         if (data.matches) state.matches = data.matches;
-        if (data.attendance) state.attendance = data.attendance;
+        if (data.attendance) {
+            state.attendance = data.attendance;
+            sanitizeAttendanceData();
+        }
 
         return true;
     } catch (e) {
@@ -140,6 +147,18 @@ function saveToLocal() {
     } catch (e) {
         console.error('Error saving to local storage:', e);
     }
+}
+
+function sanitizeAttendanceData() {
+    Object.keys(state.attendance).forEach(key => {
+        const att = state.attendance[key];
+        if (att.status === undefined) att.status = null;
+        if (att.guestsMain === undefined) att.guestsMain = '';
+        if (att.guestsBack === undefined) att.guestsBack = '';
+        if (att.bigFlag === undefined) att.bigFlag = false;
+        if (att.jankenParticipate === undefined) att.jankenParticipate = false;
+        if (att.morningWithdraw === undefined) att.morningWithdraw = false;
+    });
 }
 
 function setLoading(isLoading, mode = 'full') {
@@ -313,7 +332,12 @@ function renderMatches() {
 function createMemberRow(matchId, member, hideName = false) {
     const memberName = member.name;
     const key = `${matchId}_${memberName}`;
-    const data = state.attendance[key] || { status: null, guestsMain: '', guestsBack: '', jankenParticipate: false };
+    const data = state.attendance[key] || { status: null, guestsMain: '', guestsBack: '', bigFlag: false, jankenParticipate: false, morningWithdraw: false };
+    // Ensure all fields exist for existing records from local storage
+    if (data.bigFlag === undefined) data.bigFlag = false;
+    if (data.jankenParticipate === undefined) data.jankenParticipate = false;
+    if (data.morningWithdraw === undefined) data.morningWithdraw = false;
+
     const match = state.matches.find(m => m.id == matchId); // Ensure loose equality just in case, or cast
     const jankenConfirmedText = match ? (match.jankenConfirmed || '') : '';
     const isJankenConfirmed = jankenConfirmedText.includes(memberName); // Basic checks needed? Or just show text? User asked to display "confirmed members entered by admin".
@@ -948,6 +972,22 @@ function generateMatchSummaryContent(matchId) {
         }
     });
 
+    // Morning Withdraw Summary
+    const morningMembers = state.members.filter(member => {
+        const key = `${matchId}_${member.name}`;
+        const data = state.attendance[key];
+        return data && data.morningWithdraw;
+    }).map(m => m.name);
+
+    if (morningMembers.length > 0) {
+        html += `
+            <div class="summary-item active" style="background-color: #f1f8e9; border: 1px solid #8bc34a; margin-top: 0.5rem;">
+                <span class="summary-count" style="color: #33691e;">朝の引き込み可: ${morningMembers.length}名</span>
+                <span class="summary-names">(${morningMembers.join(', ')})</span>
+            </div>
+        `;
+    }
+
     // Big Flag Summary
     const bigFlagMembers = state.members.filter(member => {
         const key = `${matchId}_${member.name}`;
@@ -957,12 +997,13 @@ function generateMatchSummaryContent(matchId) {
 
     if (bigFlagMembers.length > 0) {
         html += `
-            <div class="summary-item active" style="background-color: #e3f2fd; margin-top: 0.5rem;">
-                <span class="summary-count">ビッグフラッグ搬入: ${bigFlagMembers.length}名</span>
+            <div class="summary-item active" style="background-color: #e3f2fd; border: 1px solid #64b5f6; margin-top: 0.5rem;">
+                <span class="summary-count" style="color: #0d47a1;">ビッグフラッグ搬入: ${bigFlagMembers.length}名</span>
                 <span class="summary-names">(${bigFlagMembers.join(', ')})</span>
             </div>
         `;
     }
+
 
 
 
