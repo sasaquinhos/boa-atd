@@ -257,7 +257,10 @@ function renderMatches() {
     // Apply limit (global sync)
     let matchesToRender = sortedMatches;
     const limitInput = document.getElementById('match-limit-input');
-    if (limitInput) limitInput.value = state.matchLimit;
+    // Only update value if the user isn't currently typing to avoid cursor jumps/reversion
+    if (limitInput && document.activeElement !== limitInput) {
+        limitInput.value = state.matchLimit;
+    }
 
     const limitCount = parseInt(state.matchLimit);
     if (!isNaN(limitCount)) {
@@ -510,12 +513,15 @@ function setupEventListeners() {
     // Match Limit Change
     const limitInput = document.getElementById('match-limit-input');
     if (limitInput) {
+        // Immediate local update
         limitInput.addEventListener('input', (e) => {
             state.matchLimit = e.target.value;
             saveToLocal();
             renderMatches();
+        });
 
-            // Global Sync: Update setting on server
+        // Sync to server only on blur/change to avoid race conditions and excessive calls
+        limitInput.addEventListener('change', (e) => {
             apiCall('update_setting', {
                 key: 'matchLimit',
                 value: state.matchLimit
