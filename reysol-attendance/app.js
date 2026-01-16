@@ -362,6 +362,16 @@ function createMemberRow(matchId, member, hideName = false) {
         jankenTitle = `参加可能な方は ${mmdd}(${dayStr}) 20:00までに回答ください`;
     }
 
+    let generalTitle = '出欠情報';
+    if (matchDate) {
+        const prevDate = new Date(matchDate);
+        prevDate.setDate(matchDate.getDate() - 1);
+        const mmdd = `${prevDate.getMonth() + 1}/${prevDate.getDate()}`;
+        const days = ['日', '月', '火', '水', '木', '金', '土'];
+        const dayStr = days[prevDate.getDay()];
+        generalTitle = `前日中（${mmdd}(${dayStr})）に回答ください`;
+    }
+
     return `
         <div class="attendance-row" data-key="${key}">
             <div class="attendance-input-container">
@@ -386,8 +396,14 @@ function createMemberRow(matchId, member, hideName = false) {
                 <div class="general-box-wrapper">
                     <div class="janken-outside-header">【当日】</div>
                     <div class="input-box general-box" style="margin-top:0;">
-                        <div class="input-box-title">出欠情報</div>
+                        <div class="input-box-title">${generalTitle}</div>
                         ${nameHtml}
+                        <div class="morning-withdraw-section" style="margin-bottom: 0.75rem;">
+                            <label class="checkbox-label">
+                                <input type="checkbox" class="morning-withdraw-checkbox" ${data.morningWithdraw ? 'checked' : ''}>
+                                朝の引き込み可(9:00)
+                            </label>
+                        </div>
                         <div class="status-options">
                             ${radiosHtml}
                         </div>
@@ -414,6 +430,7 @@ function createMemberRow(matchId, member, hideName = false) {
             </div>
         </div>
     `;
+
 }
 
 // Event Listeners
@@ -613,7 +630,7 @@ function attachMatchListeners() {
             const memberName = key.split('_')[1]; // Fragile but works for now
             const status = parseInt(e.target.value);
 
-            if (!state.attendance[key]) state.attendance[key] = { status: null, guestsMain: '', guestsBack: '' };
+            if (!state.attendance[key]) state.attendance[key] = { status: null, guestsMain: '', guestsBack: '', bigFlag: false, jankenParticipate: false, morningWithdraw: false };
             state.attendance[key].status = status;
 
             saveToLocal();
@@ -625,7 +642,8 @@ function attachMatchListeners() {
                 memberName: memberName, // We need to extract this reliably
                 status: status,
                 guestsMain: state.attendance[key].guestsMain,
-                guestsBack: state.attendance[key].guestsBack
+                guestsBack: state.attendance[key].guestsBack,
+                morningWithdraw: state.attendance[key].morningWithdraw
             });
         });
     });
@@ -641,7 +659,7 @@ function attachMatchListeners() {
             const member = state.members.find(m => m.name === namePart);
             const section = member ? (member.section || 1) : 1;
 
-            if (!state.attendance[key]) state.attendance[key] = { status: null, guestsMain: '', guestsBack: '' };
+            if (!state.attendance[key]) state.attendance[key] = { status: null, guestsMain: '', guestsBack: '', bigFlag: false, jankenParticipate: false, morningWithdraw: false };
 
             const val = e.target.value;
 
@@ -663,7 +681,8 @@ function attachMatchListeners() {
                 memberName: namePart,
                 status: state.attendance[key].status,
                 guestsMain: state.attendance[key].guestsMain,
-                guestsBack: state.attendance[key].guestsBack
+                guestsBack: state.attendance[key].guestsBack,
+                morningWithdraw: state.attendance[key].morningWithdraw
             });
         });
     });
@@ -676,7 +695,7 @@ function attachMatchListeners() {
             const matchId = key.split('_')[0];
             const namePart = key.substring(matchId.length + 1);
 
-            if (!state.attendance[key]) state.attendance[key] = { status: null, guestsMain: '', guestsBack: '', bigFlag: false, jankenParticipate: false };
+            if (!state.attendance[key]) state.attendance[key] = { status: null, guestsMain: '', guestsBack: '', bigFlag: false, jankenParticipate: false, morningWithdraw: false };
             state.attendance[key].bigFlag = e.target.checked;
 
             saveToLocal();
@@ -690,7 +709,8 @@ function attachMatchListeners() {
                 guestsMain: state.attendance[key].guestsMain,
                 guestsBack: state.attendance[key].guestsBack,
                 bigFlag: state.attendance[key].bigFlag,
-                jankenParticipate: state.attendance[key].jankenParticipate
+                jankenParticipate: state.attendance[key].jankenParticipate,
+                morningWithdraw: state.attendance[key].morningWithdraw
             });
         });
     });
@@ -703,7 +723,7 @@ function attachMatchListeners() {
             const matchId = key.split('_')[0];
             const namePart = key.substring(matchId.length + 1);
 
-            if (!state.attendance[key]) state.attendance[key] = { status: null, guestsMain: '', guestsBack: '', bigFlag: false, jankenParticipate: false };
+            if (!state.attendance[key]) state.attendance[key] = { status: null, guestsMain: '', guestsBack: '', bigFlag: false, jankenParticipate: false, morningWithdraw: false };
             state.attendance[key].jankenParticipate = e.target.checked;
 
             saveToLocal();
@@ -717,7 +737,36 @@ function attachMatchListeners() {
                 guestsMain: state.attendance[key].guestsMain,
                 guestsBack: state.attendance[key].guestsBack,
                 bigFlag: state.attendance[key].bigFlag,
-                jankenParticipate: state.attendance[key].jankenParticipate
+                jankenParticipate: state.attendance[key].jankenParticipate,
+                morningWithdraw: state.attendance[key].morningWithdraw
+            });
+        });
+    });
+
+    // Morning Withdraw Checkbox
+    document.querySelectorAll('.morning-withdraw-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', (e) => {
+            const row = e.target.closest('.attendance-row');
+            const key = row.dataset.key;
+            const matchId = key.split('_')[0];
+            const namePart = key.substring(matchId.length + 1);
+
+            if (!state.attendance[key]) state.attendance[key] = { status: null, guestsMain: '', guestsBack: '', bigFlag: false, jankenParticipate: false, morningWithdraw: false };
+            state.attendance[key].morningWithdraw = e.target.checked;
+
+            saveToLocal();
+            updateMatchSummary(matchId);
+
+            // API Call
+            apiCall('update_attendance', {
+                matchId: matchId,
+                memberName: namePart,
+                status: state.attendance[key].status,
+                guestsMain: state.attendance[key].guestsMain,
+                guestsBack: state.attendance[key].guestsBack,
+                bigFlag: state.attendance[key].bigFlag,
+                jankenParticipate: state.attendance[key].jankenParticipate,
+                morningWithdraw: state.attendance[key].morningWithdraw
             });
         });
     });
