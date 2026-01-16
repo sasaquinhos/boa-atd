@@ -352,35 +352,46 @@ function createMemberRow(matchId, member, hideName = false) {
 
     return `
         <div class="attendance-row" data-key="${key}">
-            <div class="janken-section" style="margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px dashed #eee;">
-                <label class="checkbox-label" style="font-weight:bold; color:#d32f2f;">
-                    <input type="checkbox" class="janken-participate-checkbox" ${data.jankenParticipate ? 'checked' : ''}>
-                    じゃんけん大会参加可${jankenLabelSuffix}
-                </label>
-                <div class="janken-confirmed-display" style="font-size: 0.9rem; color: #333; margin-top: 0.2rem; background: #fbe9e7; padding: 0.2rem 0.5rem; border-radius: 4px;">
-                    <span style="font-weight:bold;">参加確定:</span> ${jankenConfirmedText || 'なし'}
-                </div>
-            </div>
-            ${nameHtml}
-            <div class="status-options">
-                ${radiosHtml}
-            </div>
-            <div class="extra-guests">
-                <label>自分以外の人数:</label>
-                <div class="guest-inputs-container">
-                    <div class="guest-input-group">
-                        <input type="number" class="guest-input guest-input-unified" min="0" value="${guestValue}" placeholder="0" style="width: 60px;">
-                        <span style="font-size: 0.8rem; color: #666; margin-left: 0.5rem;">名 (${SECTION_LABELS[member.section] || 'TOP'})</span>
+            <div class="attendance-input-container">
+                <!-- Janken Box -->
+                <div class="input-box janken-box">
+                    <div class="input-box-title">じゃんけん大会</div>
+                    <div class="janken-section">
+                        <label class="checkbox-label" style="font-weight:bold; color:#d32f2f;">
+                            <input type="checkbox" class="janken-participate-checkbox" ${data.jankenParticipate ? 'checked' : ''}>
+                            じゃんけん大会参加可${jankenLabelSuffix}
+                        </label>
+                        <div class="janken-confirmed-display" style="font-size: 0.9rem; color: #333; margin-top: 0.5rem; background: #fbe9e7; padding: 0.5rem; border-radius: 4px; border: 1px solid #ffccbc;">
+                            <span style="font-weight:bold;">参加確定:</span> ${jankenConfirmedText || 'なし'}
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="big-flag-section">
-                <label class="checkbox-label">
-                    <input type="checkbox" class="big-flag-checkbox" ${data.bigFlag ? 'checked' : ''}>
-                    ビッグフラッグ搬入可
-                </label>
-                <div class="big-flag-note" style="font-size: 0.9rem; color: #444; margin-left: 1.6rem; font-weight: bold;">
-                    （開場30分後にGATE9前集合）
+
+                <!-- General Box -->
+                <div class="input-box general-box">
+                    <div class="input-box-title">出欠情報</div>
+                    ${nameHtml}
+                    <div class="status-options">
+                        ${radiosHtml}
+                    </div>
+                    <div class="extra-guests">
+                        <label>自分以外の人数:</label>
+                        <div class="guest-inputs-container" style="margin-top:0;">
+                            <div class="guest-input-group">
+                                <input type="number" class="guest-input guest-input-unified" min="0" value="${guestValue}" placeholder="0" style="width: 60px;">
+                                <span style="font-size: 0.8rem; color: #666; margin-left: 0.5rem;">名 (${SECTION_LABELS[member.section] || 'TOP'})</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="big-flag-section">
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="big-flag-checkbox" ${data.bigFlag ? 'checked' : ''}>
+                            ビッグフラッグ搬入可
+                        </label>
+                        <div class="big-flag-note" style="font-size: 0.8rem; color: #666; margin-left: 1.6rem;">
+                            （開場30分後にGATE9前集合）
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
