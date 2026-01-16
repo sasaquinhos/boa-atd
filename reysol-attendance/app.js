@@ -407,7 +407,7 @@ function createMemberRow(matchId, member, hideName = false) {
         const mmdd = `${prevDate.getMonth() + 1}/${prevDate.getDate()}`;
         const days = ['日', '月', '火', '水', '木', '金', '土'];
         const dayStr = days[prevDate.getDay()];
-        generalTitle = `回答期限：前日中（${mmdd}(${dayStr})）`;
+        generalTitle = `回答期限：${mmdd}(${dayStr}) 20:00`;
     }
 
     return `
