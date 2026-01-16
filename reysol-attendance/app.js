@@ -383,28 +383,31 @@ function createMemberRow(matchId, member, hideName = false) {
                 </div>
 
                 <!-- General Box -->
-                <div class="input-box general-box">
-                    <div class="input-box-title">出欠情報</div>
-                    ${nameHtml}
-                    <div class="status-options">
-                        ${radiosHtml}
-                    </div>
-                    <div class="extra-guests">
-                        <label>自分以外の人数:</label>
-                        <div class="guest-inputs-container" style="margin-top:0;">
-                            <div class="guest-input-group">
-                                <input type="number" class="guest-input guest-input-unified" min="0" value="${guestValue}" placeholder="0" style="width: 60px;">
-                                <span style="font-size: 0.8rem; color: #666; margin-left: 0.5rem;">名 (${SECTION_LABELS[member.section] || 'TOP'})</span>
+                <div class="general-box-wrapper">
+                    <div class="janken-outside-header">【当日】</div>
+                    <div class="input-box general-box" style="margin-top:0;">
+                        <div class="input-box-title">出欠情報</div>
+                        ${nameHtml}
+                        <div class="status-options">
+                            ${radiosHtml}
+                        </div>
+                        <div class="extra-guests">
+                            <label>自分以外の人数:</label>
+                            <div class="guest-inputs-container" style="margin-top:0;">
+                                <div class="guest-input-group">
+                                    <input type="number" class="guest-input guest-input-unified" min="0" value="${guestValue}" placeholder="0" style="width: 60px;">
+                                    <span style="font-size: 0.8rem; color: #666; margin-left: 0.5rem;">名 (${SECTION_LABELS[member.section] || 'TOP'})</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="big-flag-section">
-                        <label class="checkbox-label">
-                            <input type="checkbox" class="big-flag-checkbox" ${data.bigFlag ? 'checked' : ''}>
-                            ビッグフラッグ搬入可
-                        </label>
-                        <div class="big-flag-note" style="font-size: 0.8rem; color: #666; margin-left: 1.6rem;">
-                            （開場30分後にGATE9前集合）
+                        <div class="big-flag-section">
+                            <label class="checkbox-label">
+                                <input type="checkbox" class="big-flag-checkbox" ${data.bigFlag ? 'checked' : ''}>
+                                ビッグフラッグ搬入可
+                            </label>
+                            <div class="big-flag-note" style="font-size: 0.8rem; color: #666; margin-left: 1.6rem;">
+                                （開場30分後にGATE9前集合）
+                            </div>
                         </div>
                     </div>
                 </div>
