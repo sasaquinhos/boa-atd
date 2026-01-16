@@ -333,33 +333,26 @@ function createMemberRow(matchId, member, hideName = false) {
     const memberName = member.name;
     const key = `${matchId}_${memberName}`;
     const data = state.attendance[key] || { status: null, guestsMain: '', guestsBack: '', bigFlag: false, jankenParticipate: false, morningWithdraw: false };
-    // Ensure all fields exist for existing records from local storage
+
+    // Ensure default values
     if (data.bigFlag === undefined) data.bigFlag = false;
     if (data.jankenParticipate === undefined) data.jankenParticipate = false;
     if (data.morningWithdraw === undefined) data.morningWithdraw = false;
 
-    const match = state.matches.find(m => m.id == matchId); // Ensure loose equality just in case, or cast
+    const match = state.matches.find(m => m.id == matchId);
     const jankenConfirmedText = match ? (match.jankenConfirmed || '') : '';
-    const isJankenConfirmed = jankenConfirmedText.includes(memberName); // Basic checks needed? Or just show text? User asked to display "confirmed members entered by admin".
-    // Requirement: "Display 'Rock-Paper-Scissors Participation Confirmed' field... display member names entered by admin".
-    // So assume we show the text area content or check if user is in it.
-    // If it's a global text for the match, maybe we show "Participating Confirmed: [List]"?
-    // User request: "create a 'Participation Confirmed' field under it... display member names entered by admin".
-    // Let's show the text that admin entered.
+    const isAbsent = data.status == 5;
 
-
-    let radiosHtml = STATUS_OPTIONS.map(opt => `
+    const subStatuses = STATUS_OPTIONS.filter(opt => opt.id !== 5);
+    let radiosHtml = subStatuses.map(opt => `
         <label class="radio-label">
-            <input type="radio" name="status_${key}" value="${opt.id}" ${data.status == opt.id ? 'checked' : ''}>
+            <input type="radio" name="status_${key}" value="${opt.id}" ${data.status == opt.id ? 'checked' : ''} ${isAbsent ? 'disabled' : ''}>
             ${opt.label}
         </label>
     `).join('');
 
     const nameHtml = hideName ? '' : `<div class="member-name">${memberName}</div>`;
 
-    // Determined default value to show: sum of both or just the relevant one? 
-    // To be safe and show existing data, let's sum them or show the one matching section.
-    // If we assume mutually exclusive, sum is fine.
     const currentGuests = (parseInt(data.guestsMain) || 0) + (parseInt(data.guestsBack) || 0);
     const guestValue = currentGuests > 0 ? currentGuests : '';
 
@@ -428,25 +421,41 @@ function createMemberRow(matchId, member, hideName = false) {
                                 朝の引き込み可(9:00)
                             </label>
                         </div>
-                        <div class="status-options">
-                            ${radiosHtml}
+
+                        <!-- Attend or Absent -->
+                        <div class="presence-selection">
+                            <label class="radio-label">
+                                <input type="radio" class="presence-radio" name="presence_${key}" value="attendance" ${!isAbsent ? 'checked' : ''}>
+                                出席
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" class="presence-radio" name="presence_${key}" value="absence" ${isAbsent ? 'checked' : ''}>
+                                欠席
+                            </label>
                         </div>
-                        <div class="extra-guests">
-                            <label>自分以外の人数:</label>
-                            <div class="guest-inputs-container" style="margin-top:0;">
-                                <div class="guest-input-group">
-                                    <input type="number" class="guest-input guest-input-unified" min="0" value="${guestValue}" placeholder="0" style="width: 60px;">
-                                    <span style="font-size: 0.8rem; color: #666; margin-left: 0.5rem;">名 (${SECTION_LABELS[member.section] || 'TOP'})</span>
+
+                        <!-- Details (Only enabled if Attendance is selected) -->
+                        <div class="attendance-details ${isAbsent ? 'disabled-section' : ''}">
+                            <div class="status-options">
+                                ${radiosHtml}
+                            </div>
+                            <div class="extra-guests">
+                                <label>自分以外の人数:</label>
+                                <div class="guest-inputs-container" style="margin-top:0;">
+                                    <div class="guest-input-group">
+                                        <input type="number" class="guest-input guest-input-unified" min="0" value="${guestValue}" placeholder="0" style="width: 60px;" ${isAbsent ? 'disabled' : ''}>
+                                        <span style="font-size: 0.8rem; color: #666; margin-left: 0.5rem;">名 (${SECTION_LABELS[member.section] || 'TOP'})</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="big-flag-section">
-                            <label class="checkbox-label">
-                                <input type="checkbox" class="big-flag-checkbox" ${data.bigFlag ? 'checked' : ''}>
-                                ビッグフラッグ搬入可
-                            </label>
-                            <div class="big-flag-note" style="font-size: 0.8rem; color: #666; margin-left: 1.6rem;">
-                                （開場30分後にGATE9前集合）
+                            <div class="big-flag-section">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" class="big-flag-checkbox" ${data.bigFlag ? 'checked' : ''} ${isAbsent ? 'disabled' : ''}>
+                                    ビッグフラッグ搬入可
+                                </label>
+                                <div class="big-flag-note" style="font-size: 0.8rem; color: #666; margin-left: 1.6rem;">
+                                    （開場30分後にGATE9前集合）
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -454,7 +463,6 @@ function createMemberRow(matchId, member, hideName = false) {
             </div>
         </div>
     `;
-
 }
 
 // Event Listeners
@@ -532,7 +540,7 @@ function setupEventListeners() {
                     state.members = state.members.filter(m => m.name !== memberName);
                     // Cleanup attendance data for this member locally
                     Object.keys(state.attendance).forEach(key => {
-                        if (key.endsWith(`_${memberName}`)) {
+                        if (key.endsWith(`_${memberName} `)) {
                             delete state.attendance[key];
                         }
                     });
@@ -588,9 +596,9 @@ function setupEventListeners() {
                 if (newName !== currentEditingMemberName) {
                     const newAttendance = {};
                     Object.keys(state.attendance).forEach(key => {
-                        if (key.endsWith(`_${currentEditingMemberName}`)) {
+                        if (key.endsWith(`_${currentEditingMemberName} `)) {
                             const matchId = key.split('_')[0];
-                            newAttendance[`${matchId}_${newName}`] = state.attendance[key];
+                            newAttendance[`${matchId}_${newName} `] = state.attendance[key];
                         } else {
                             newAttendance[key] = state.attendance[key];
                         }
@@ -645,13 +653,13 @@ function attachMatchListeners() {
         });
     });
 
-    // Attendance Changes
-    document.querySelectorAll('input[type="radio"]').forEach(radio => {
+    // Attendance Changes (Sub-status)
+    document.querySelectorAll('.status-options input[type="radio"]').forEach(radio => {
         radio.addEventListener('change', (e) => {
             const row = e.target.closest('.attendance-row');
             const key = row.dataset.key;
             const matchId = key.split('_')[0];
-            const memberName = key.split('_')[1]; // Fragile but works for now
+            const memberName = key.split('_')[1];
             const status = parseInt(e.target.value);
 
             if (!state.attendance[key]) state.attendance[key] = { status: null, guestsMain: '', guestsBack: '', bigFlag: false, jankenParticipate: false, morningWithdraw: false };
@@ -663,10 +671,54 @@ function attachMatchListeners() {
             // API Call
             apiCall('update_attendance', {
                 matchId: matchId,
-                memberName: memberName, // We need to extract this reliably
+                memberName: memberName,
                 status: status,
                 guestsMain: state.attendance[key].guestsMain,
                 guestsBack: state.attendance[key].guestsBack,
+                morningWithdraw: state.attendance[key].morningWithdraw
+            });
+        });
+    });
+
+    // Presence Changes (Attendance vs Absence)
+    document.querySelectorAll('.presence-radio').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            const row = e.target.closest('.attendance-row');
+            const details = row.querySelector('.attendance-details');
+            const key = row.dataset.key;
+            const matchId = key.split('_')[0];
+            const namePart = key.substring(matchId.length + 1);
+            const val = e.target.value;
+
+            if (!state.attendance[key]) state.attendance[key] = { status: null, guestsMain: '', guestsBack: '', bigFlag: false, jankenParticipate: false, morningWithdraw: false };
+
+            if (val === 'absence') {
+                state.attendance[key].status = 5;
+                details.classList.add('disabled-section');
+            } else {
+                // Return to attendance. Default to 1 if it was 5 or null.
+                if (state.attendance[key].status === 5 || state.attendance[key].status === null) {
+                    state.attendance[key].status = 1;
+                }
+                details.classList.remove('disabled-section');
+
+                // Also ensure the correct sub-status radio is checked visually
+                const subRadio = row.querySelector(`.status-options input[value="${state.attendance[key].status}"]`);
+                if (subRadio) subRadio.checked = true;
+            }
+
+            saveToLocal();
+            updateMatchSummary(matchId);
+
+            // API Call
+            apiCall('update_attendance', {
+                matchId: matchId,
+                memberName: namePart,
+                status: state.attendance[key].status,
+                guestsMain: state.attendance[key].guestsMain,
+                guestsBack: state.attendance[key].guestsBack,
+                bigFlag: state.attendance[key].bigFlag,
+                jankenParticipate: state.attendance[key].jankenParticipate,
                 morningWithdraw: state.attendance[key].morningWithdraw
             });
         });
@@ -875,12 +927,12 @@ function renderMembersAdmin() {
     const currentValue = select.value;
     select.innerHTML = '<option value="">-- メンバーを選択 --</option>' +
         state.members.sort((a, b) => a.name.localeCompare(b.name)).map(member => `
-            <option value="${member.name}" ${member.name === currentValue ? 'selected' : ''}>${member.name} (${SECTION_LABELS[member.section] || 'TOP'})</option>
-        `).join('');
+        < option value = "${member.name}" ${member.name === currentValue ? 'selected' : ''}> ${member.name} (${SECTION_LABELS[member.section] || 'TOP'})</option >
+            `).join('');
 }
 
 function updateMatchSummary(matchId) {
-    const container = document.getElementById(`summary-${matchId}`);
+    const container = document.getElementById(`summary - ${matchId} `);
     if (container) {
         container.innerHTML = generateMatchSummaryContent(matchId);
     }
@@ -898,7 +950,7 @@ function generateMatchSummaryContent(matchId) {
     STATUS_OPTIONS.forEach(opt => summary[opt.id] = []);
 
     state.members.forEach(member => {
-        const key = `${matchId}_${member.name}`;
+        const key = `${matchId}_${member.name} `;
         const data = state.attendance[key];
 
         if (data && data.status) {
@@ -929,17 +981,17 @@ function generateMatchSummaryContent(matchId) {
 
     // Janken Summary (Top Priority)
     const jankenParticipants = state.members.filter(member => {
-        const key = `${matchId}_${member.name}`;
+        const key = `${matchId}_${member.name} `;
         const data = state.attendance[key];
         return data && data.jankenParticipate;
     }).map(m => m.name);
 
     if (jankenParticipants.length > 0) {
         html += `
-            <div class="summary-item active" style="background-color: #ffebee; border: 1px solid #ef5350;">
+        < div class="summary-item active" style = "background-color: #ffebee; border: 1px solid #ef5350;" >
                 <span class="summary-count" style="color: #c62828;">じゃんけん大会立候補者: ${jankenParticipants.length}名</span>
                 <span class="summary-names">(${jankenParticipants.join(', ')})</span>
-            </div>
+            </div >
         `;
     }
 
@@ -949,30 +1001,30 @@ function generateMatchSummaryContent(matchId) {
     // Add Total Count Breakdown
     if (totalMain > 0 || totalBack > 0 || outsideTotal > 0) {
         let sectionTotalsHtml = '';
-        if (totalMain > 0) sectionTotalsHtml += `<div>TOP 合計${totalMain}名 <small style="font-weight:normal;">(メンバー${memberMain} / 同伴${guestMain})</small></div>`;
-        if (totalBack > 0) sectionTotalsHtml += `<div>FRONT 合計${totalBack}名 <small style="font-weight:normal;">(メンバー${memberBack} / 同伴${guestBack})</small></div>`;
-        if (outsideTotal > 0) sectionTotalsHtml += `<div style="padding-top: 0.1rem; margin-top: 0.1rem;">柏熱以外 合計${outsideTotal}名</div>`;
+        if (totalMain > 0) sectionTotalsHtml += `< div > TOP 合計${totalMain} 名 < small style = "font-weight:normal;" > (メンバー${memberMain} / 同伴${guestMain})</small ></div > `;
+        if (totalBack > 0) sectionTotalsHtml += `< div > FRONT 合計${totalBack} 名 < small style = "font-weight:normal;" > (メンバー${memberBack} / 同伴${guestBack})</small ></div > `;
+        if (outsideTotal > 0) sectionTotalsHtml += `< div style = "padding-top: 0.1rem; margin-top: 0.1rem;" > 柏熱以外 合計${outsideTotal}名</div > `;
 
         html += `
-            <div class="summary-item active" style="font-weight: bold; background-color: #fff8e1; border: 2px solid #FCD116; border-radius: 4px; flex-direction: column; align-items: flex-start; gap: 0.2rem;">
-                ${sectionTotalsHtml}
-            </div>
+        < div class="summary-item active" style = "font-weight: bold; background-color: #fff8e1; border: 2px solid #FCD116; border-radius: 4px; flex-direction: column; align-items: flex-start; gap: 0.2rem;" >
+            ${sectionTotalsHtml}
+            </div >
         `;
     }
 
     // Morning Withdraw Summary
     const morningMembers = state.members.filter(member => {
-        const key = `${matchId}_${member.name}`;
+        const key = `${matchId}_${member.name} `;
         const data = state.attendance[key];
         return data && data.morningWithdraw;
     }).map(m => m.name);
 
     if (morningMembers.length > 0) {
         html += `
-            <div class="summary-item active" style="background-color: #f1f8e9; border: 1px solid #8bc34a; margin-top: 0.5rem;">
+        < div class="summary-item active" style = "background-color: #f1f8e9; border: 1px solid #8bc34a; margin-top: 0.5rem;" >
                 <span class="summary-count" style="color: #33691e;">朝の引き込み可: ${morningMembers.length}名</span>
                 <span class="summary-names">(${morningMembers.join(', ')})</span>
-            </div>
+            </div >
         `;
     }
 
@@ -980,28 +1032,28 @@ function generateMatchSummaryContent(matchId) {
         const names = summary[opt.id];
         if (names && names.length > 0) {
             html += `
-                <div class="summary-item active">
+        < div class="summary-item active" >
                     <span class="summary-count">${opt.label}: ${names.length}名</span>
                     <span class="summary-names">(${names.join(', ')})</span>
-                </div>
-            `;
+                </div >
+        `;
         }
     });
 
 
     // Big Flag Summary
     const bigFlagMembers = state.members.filter(member => {
-        const key = `${matchId}_${member.name}`;
+        const key = `${matchId}_${member.name} `;
         const data = state.attendance[key];
         return data && data.bigFlag;
     }).map(m => m.name);
 
     if (bigFlagMembers.length > 0) {
         html += `
-            <div class="summary-item active" style="background-color: #e3f2fd; border: 1px solid #64b5f6; margin-top: 0.5rem;">
+        < div class="summary-item active" style = "background-color: #e3f2fd; border: 1px solid #64b5f6; margin-top: 0.5rem;" >
                 <span class="summary-count" style="color: #0d47a1;">ビッグフラッグ搬入: ${bigFlagMembers.length}名</span>
                 <span class="summary-names">(${bigFlagMembers.join(', ')})</span>
-            </div>
+            </div >
         `;
     }
 
@@ -1015,7 +1067,7 @@ function generateMatchSummaryContent(matchId) {
 
 function generateAttendanceTable(matchId) {
     let html = `
-        <details class="attendance-table-details">
+        < details class="attendance-table-details" >
             <summary>詳細リストを表示</summary>
             <table class="attendance-table">
                 <thead>
@@ -1069,8 +1121,8 @@ function generateAttendanceTable(matchId) {
     html += `
                 </tbody>
             </table>
-        </details>
-    `;
+        </details >
+        `;
     return html;
 }
 
