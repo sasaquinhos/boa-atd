@@ -694,6 +694,16 @@ function attachMatchListeners() {
 
             if (val === 'absence') {
                 state.attendance[key].status = 5;
+                state.attendance[key].guestsMain = '';
+                state.attendance[key].guestsBack = '';
+                state.attendance[key].bigFlag = false;
+
+                // UI Reset
+                const guestInput = row.querySelector('.guest-input-unified');
+                if (guestInput) guestInput.value = '';
+                const bigFlagCheckbox = row.querySelector('.big-flag-checkbox');
+                if (bigFlagCheckbox) bigFlagCheckbox.checked = false;
+
                 details.classList.add('disabled-section');
                 details.querySelectorAll('input').forEach(input => input.disabled = true);
             } else {
