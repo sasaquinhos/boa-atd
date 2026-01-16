@@ -383,7 +383,7 @@ function createMemberRow(matchId, member, hideName = false) {
         const days = ['日', '月', '火', '水', '木', '金', '土'];
         const dayStr = days[twoDaysBefore.getDay()];
         jankenHeader = '【前日】';
-        jankenTitle = `参加可能な方は ${mmdd}(${dayStr}) 20:00までに回答ください`;
+        jankenTitle = `回答期限：${mmdd}(${dayStr}) 20:00`;
     }
 
     let generalTitle = '出欠情報';
@@ -393,7 +393,7 @@ function createMemberRow(matchId, member, hideName = false) {
         const mmdd = `${prevDate.getMonth() + 1}/${prevDate.getDate()}`;
         const days = ['日', '月', '火', '水', '木', '金', '土'];
         const dayStr = days[prevDate.getDay()];
-        generalTitle = `前日中（${mmdd}(${dayStr})）に回答ください`;
+        generalTitle = `回答期限：前日中（${mmdd}(${dayStr})）`;
     }
 
     return `
