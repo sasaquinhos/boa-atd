@@ -24,7 +24,7 @@ const STATUS_OPTIONS = [
     { id: 1, label: '開場まで' },
     { id: 2, label: '開場後' },
     { id: 3, label: 'キックオフ後' },
-    { id: 4, label: '柏熱以外で' },
+    { id: 4, label: '柏熱以外' },
     { id: 5, label: '欠席' }
 ];
 
@@ -1074,7 +1074,7 @@ function generateMatchSummaryContent(matchId) {
     if (morningMembers.length > 0) {
         html += `
             <div class="summary-item active" style="background-color: #f1f8e9; border: 1px solid #8bc34a; margin-top: 0.5rem;">
-                <span class="summary-count" style="color: #33691e;">朝の引き込み可: ${morningMembers.length}名</span>
+                <span class="summary-count" style="color: #33691e;">朝の引き込み: ${morningMembers.length}名</span>
                 <span class="summary-names">(${morningMembers.join(', ')})</span>
             </div>
         `;
