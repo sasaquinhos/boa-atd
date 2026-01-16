@@ -421,3 +421,10 @@ input[type="number"] {
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
+
+.janken-outside-header {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #d32f2f;
+    margin-bottom: 0.2rem;
+}
