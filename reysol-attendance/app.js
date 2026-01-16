@@ -350,6 +350,7 @@ function createMemberRow(matchId, member, hideName = false) {
         jankenLabelSuffix = `<br>（日立台公園 ${mmdd}(${dayStr}) 15:00）`;
     }
 
+    let jankenHeader = '';
     let jankenTitle = 'じゃんけん大会';
     if (matchDate) {
         const twoDaysBefore = new Date(matchDate);
@@ -357,22 +358,26 @@ function createMemberRow(matchId, member, hideName = false) {
         const mmdd = `${twoDaysBefore.getMonth() + 1}/${twoDaysBefore.getDate()}`;
         const days = ['日', '月', '火', '水', '木', '金', '土'];
         const dayStr = days[twoDaysBefore.getDay()];
-        jankenTitle = `【前日】参加可能な方は〔${mmdd}(${dayStr})〕20:00までに回答ください`;
+        jankenHeader = '【前日】';
+        jankenTitle = `参加可能な方は ${mmdd}(${dayStr}) 20:00までに回答ください`;
     }
 
     return `
         <div class="attendance-row" data-key="${key}">
             <div class="attendance-input-container">
                 <!-- Janken Box -->
-                <div class="input-box janken-box">
-                    <div class="input-box-title">${jankenTitle}</div>
-                    <div class="janken-section">
-                        <label class="checkbox-label" style="font-weight:bold; color:#d32f2f;">
-                            <input type="checkbox" class="janken-participate-checkbox" ${data.jankenParticipate ? 'checked' : ''}>
-                            じゃんけん大会参加可${jankenLabelSuffix}
-                        </label>
-                        <div class="janken-confirmed-display" style="font-size: 0.9rem; color: #333; margin-top: 0.5rem; background: #fbe9e7; padding: 0.5rem; border-radius: 4px; border: 1px solid #ffccbc;">
-                            <span style="font-weight:bold;">参加確定:</span> ${jankenConfirmedText || 'なし'}
+                <div class="janken-box-wrapper">
+                    <div class="janken-outside-header">${jankenHeader}</div>
+                    <div class="input-box janken-box" style="margin-top:0;">
+                        <div class="input-box-title">${jankenTitle}</div>
+                        <div class="janken-section">
+                            <label class="checkbox-label" style="font-weight:bold; color:#d32f2f;">
+                                <input type="checkbox" class="janken-participate-checkbox" ${data.jankenParticipate ? 'checked' : ''}>
+                                じゃんけん大会参加可${jankenLabelSuffix}
+                            </label>
+                            <div class="janken-confirmed-display" style="font-size: 0.9rem; color: #333; margin-top: 0.5rem; background: #fbe9e7; padding: 0.5rem; border-radius: 4px; border: 1px solid #ffccbc;">
+                                <span style="font-weight:bold;">参加確定:</span> ${jankenConfirmedText || 'なし'}
+                            </div>
                         </div>
                     </div>
                 </div>
