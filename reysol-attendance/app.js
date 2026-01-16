@@ -7,7 +7,7 @@ const state = {
     loading: false
 };
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbw_89_j2NIa38D3d2a5J9EkSwaeCP9yXrFBsPO3iUqz0O_jSMglvHJJPRc3VzZVjWNotQ/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbwMTYTTKTWYxzVdUp0U1R4BwDr27FVhwP7lhv5W7XhGJHNZHFR4dvT56z0j94a3WWVw2w/exec';
 
 // DOM Elements
 const matchesContainer = document.getElementById('matches-container');
