@@ -350,12 +350,22 @@ function createMemberRow(matchId, member, hideName = false) {
         jankenLabelSuffix = `<br>（日立台公園 ${mmdd}(${dayStr}) 15:00）`;
     }
 
+    let jankenTitle = 'じゃんけん大会';
+    if (matchDate) {
+        const twoDaysBefore = new Date(matchDate);
+        twoDaysBefore.setDate(matchDate.getDate() - 2);
+        const mmdd = `${twoDaysBefore.getMonth() + 1}/${twoDaysBefore.getDate()}`;
+        const days = ['日', '月', '火', '水', '木', '金', '土'];
+        const dayStr = days[twoDaysBefore.getDay()];
+        jankenTitle = `【前日】参加可能な方は〔${mmdd}(${dayStr})〕20:00までに回答ください`;
+    }
+
     return `
         <div class="attendance-row" data-key="${key}">
             <div class="attendance-input-container">
                 <!-- Janken Box -->
                 <div class="input-box janken-box">
-                    <div class="input-box-title">じゃんけん大会</div>
+                    <div class="input-box-title">${jankenTitle}</div>
                     <div class="janken-section">
                         <label class="checkbox-label" style="font-weight:bold; color:#d32f2f;">
                             <input type="checkbox" class="janken-participate-checkbox" ${data.jankenParticipate ? 'checked' : ''}>
