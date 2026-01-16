@@ -4,10 +4,11 @@ const state = {
     matches: [],
     attendance: {}, // { "matchId_memberName": { status, guestsMain, guestsBack } }
     expandedMatches: new Set(), // Set of match IDs that are expanded
-    loading: false
+    loading: false,
+    matchLimit: 10
 };
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbwtneId8FXB_DlyNGd_AMm55EMt9TrCpD6FqIwROlIheRsd3ltNpldoquPJgxB7uRnEKQ/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbz_Fr2aYZPhgv6WKIxWQDht0g6jR4RL2p4N7ceAcScwyENPM6RyYijrg_YCeBEQqcFVig/exec';
 
 // DOM Elements
 const matchesContainer = document.getElementById('matches-container');
@@ -98,6 +99,10 @@ async function loadData() {
         if (data.matches) state.matches = data.matches;
         else state.matches = [];
 
+        if (data.settings && data.settings.matchLimit) {
+            state.matchLimit = data.settings.matchLimit;
+        }
+
         if (data.attendance) {
             state.attendance = data.attendance;
             sanitizeAttendanceData();
@@ -128,6 +133,8 @@ function loadFromLocal() {
             sanitizeAttendanceData();
         }
 
+        if (data.matchLimit) state.matchLimit = data.matchLimit;
+
         return true;
     } catch (e) {
         console.error('Error loading from local storage:', e);
@@ -141,6 +148,7 @@ function saveToLocal() {
             members: state.members,
             matches: state.matches,
             attendance: state.attendance,
+            matchLimit: state.matchLimit,
             timestamp: new Date().getTime()
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -246,12 +254,22 @@ function renderMatches() {
     const isAdmin = !!document.getElementById('add-member-btn');
     const currentUser = currentUserSelect ? currentUserSelect.value : null;
 
+    // Apply limit (global sync)
+    let matchesToRender = sortedMatches;
+    const limitInput = document.getElementById('match-limit-input');
+    if (limitInput) limitInput.value = state.matchLimit;
+
+    const limitCount = parseInt(state.matchLimit);
+    if (!isNaN(limitCount)) {
+        matchesToRender = sortedMatches.slice(0, limitCount);
+    }
+
     if (!isAdmin && currentUserSelect && !currentUser) {
         matchesContainer.innerHTML = '<p style="text-align:center; padding:2rem; color:#666;">ユーザーを選択してください。</p>';
         return;
     }
 
-    sortedMatches.forEach(match => {
+    matchesToRender.forEach(match => {
         const matchEl = document.createElement('div');
         const isExpanded = state.expandedMatches.has(match.id);
         matchEl.className = `match-card ${isExpanded ? '' : 'collapsed'}`;
@@ -486,6 +504,22 @@ function setupEventListeners() {
             } else if (state.members.some(m => m.name === name)) {
                 alert('そのメンバーは既に存在します');
             }
+        });
+    }
+
+    // Match Limit Change
+    const limitInput = document.getElementById('match-limit-input');
+    if (limitInput) {
+        limitInput.addEventListener('input', (e) => {
+            state.matchLimit = e.target.value;
+            saveToLocal();
+            renderMatches();
+
+            // Global Sync: Update setting on server
+            apiCall('update_setting', {
+                key: 'matchLimit',
+                value: state.matchLimit
+            });
         });
     }
 
