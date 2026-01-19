@@ -75,16 +75,24 @@ function renderRankingCard(containerId, counts) {
         return;
     }
 
+    let currentRank = 1;
+    let prevCount = null;
+
     container.innerHTML = sorted.map(([name, count], index) => {
-        const rank = index + 1;
+        // Tie-breaking logic (Standard Competition Ranking)
+        if (prevCount !== null && count < prevCount) {
+            currentRank = index + 1;
+        }
+        prevCount = count;
+
         let rankClass = '';
-        if (rank === 1) rankClass = 'rank-gold';
-        else if (rank === 2) rankClass = 'rank-silver';
-        else if (rank === 3) rankClass = 'rank-bronze';
+        if (currentRank === 1) rankClass = 'rank-gold';
+        else if (currentRank === 2) rankClass = 'rank-silver';
+        else if (currentRank === 3) rankClass = 'rank-bronze';
 
         return `
             <div class="ranking-item">
-                <div class="rank-badge ${rankClass}">${rank}</div>
+                <div class="rank-badge ${rankClass}">${currentRank}</div>
                 <div class="rank-name">${name}</div>
                 <div class="rank-count">${count}回</div>
             </div>
