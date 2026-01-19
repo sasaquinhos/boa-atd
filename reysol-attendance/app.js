@@ -8,7 +8,7 @@ const state = {
     matchLimit: 10
 };
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbwjL6Zii0EdQHzlOvQNS1LprDJ8VfGWQ_yrS8jqj63wMT4erN_RXUNKbKTaBzyoBFLjkA/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbw1dutfDLvVkwzHPb1l2mWyc2FUw4dEPYVzE913fMG1HcnIbd1FLs1OBdFD4lwPaLmNmg/exec';
 
 // DOM Elements
 const matchesContainer = document.getElementById('matches-container');
