@@ -1,1 +1,97 @@
+<!DOCTYPE html>
+<html lang="ja">
 
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>操作マニュアル - ボアソルチ出欠確認</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Sans+JP:wght@400;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .manual-section {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .manual-section h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid var(--reysol-yellow);
+            display: inline-block;
+        }
+
+        .manual-section p {
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .manual-section ul {
+            padding-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .manual-section li {
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .step-badge {
+            display: inline-block;
+            background: var(--reysol-yellow);
+            color: var(--reysol-black);
+            padding: 0.1rem 0.6rem;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-right: 0.5rem;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <div class="container header-container">
+            <h1 class="app-title">操作マニュアル</h1>
+        </div>
+    </header>
+
+    <main class="container">
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 2rem;">
+            <a href="../index.html" style="color: #666; font-size: 0.9rem; text-decoration: none;">← 戻る</a>
+        </div>
+
+        <section class="manual-section">
+            <h2>出欠の入力方法</h2>
+            <ul>
+                <li><span class="step-badge">1</span>トップページで自分の名前を選択してください。</li>
+                <li><span class="step-badge">2</span>各試合の「出席」または「欠席」を選択します。</li>
+                <li><span class="step-badge">3</span>出席の場合は、到着予定時間や自分以外の同行人数を入力してください。</li>
+                <li><span class="step-badge">4</span>入力した内容は即時保存されます。</li>
+            </ul>
+        </section>
+
+        <section class="manual-section">
+            <h2>各種イベント・係</h2>
+            <ul>
+                <li><strong>じゃんけん大会立候補:</strong> じゃんけん大会に参加を希望する場合はチェックを入れてください。</li>
+                <li><strong>朝の引き込み:</strong> 朝の入場準備（引き込み）に参加できる方はチェックを入れてください。</li>
+                <li><strong>ビッグフラッグ搬入:</strong> ビッグフラッグの搬入手伝いに参加できる方はチェックを入れてください。</li>
+            </ul>
+        </section>
+
+        <section class="manual-section">
+            <h2>ランキングについて</h2>
+            <p>「いつもの場所を守ってくれる人たち」ページでは、じゃんけん大会や引き込みなどの参加実績がランキング形式で表示されます。上位を目指して積極的に参加しましょう！</p>
+        </section>
+    </main>
+
+</body>
+
+</html>
