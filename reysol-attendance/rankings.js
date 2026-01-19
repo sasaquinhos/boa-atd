@@ -67,6 +67,8 @@ function renderRankings() {
     const jankenCandidate = {};
     // Morning Withdraw Ranking
     const morningWithdraw = {};
+    // Big Flag Ranking
+    const bigFlag = {};
     const matchIds = new Set(yearMatches.map(m => String(m.id)));
 
     Object.keys(state.attendance).forEach(key => {
@@ -79,11 +81,15 @@ function renderRankings() {
             if (data.morningWithdraw) {
                 morningWithdraw[memberName] = (morningWithdraw[memberName] || 0) + 1;
             }
+            if (data.bigFlag) {
+                bigFlag[memberName] = (bigFlag[memberName] || 0) + 1;
+            }
         }
     });
 
     renderRankingCard('janken-candidate-ranking', jankenCandidate);
     renderRankingCard('morning-withdraw-ranking', morningWithdraw);
+    renderRankingCard('big-flag-ranking', bigFlag);
 }
 
 function renderRankingCard(containerId, counts) {
