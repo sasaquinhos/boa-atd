@@ -1,4 +1,4 @@
-const API_URL = 'https://script.google.com/macros/s/AKfycbwjL6Zii0EdQHzlOvQNS1LprDJ8VfGWQ_yrS8jqj63wMT4erN_RXUNKbKTaBzyoBFLjkA/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbw1dutfDLvVkwzHPb1l2mWyc2FUw4dEPYVzE913fMG1HcnIbd1FLs1OBdFD4lwPaLmNmg/exec';
 
 const state = {
     matches: [],
@@ -46,12 +46,50 @@ function setupYearSelect() {
 }
 
 function renderRankings() {
-    console.log('Year selected:', state.selectedYear);
-    // Rankings rendering is disabled for now
+    const yearMatches = state.matches.filter(m => {
+        const matchYear = new Date(m.date).getFullYear();
+        return matchYear === state.selectedYear;
+    });
+
+    // Janken Confirmed Ranking
+    const jankenConfirmed = {};
+    yearMatches.forEach(m => {
+        if (m.jankenConfirmed) {
+            m.jankenConfirmed.split(',').map(s => s.trim()).filter(s => s).forEach(name => {
+                jankenConfirmed[name] = (jankenConfirmed[name] || 0) + 1;
+            });
+        }
+    });
+
+    renderRankingCard('janken-confirmed-ranking', jankenConfirmed);
 }
 
 function renderRankingCard(containerId, counts) {
-    // Disabled for now
+    const card = document.getElementById(containerId);
+    if (!card) return;
+    const container = card.querySelector('.ranking-body');
+    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+
+    if (sorted.length === 0) {
+        container.innerHTML = '<div class="no-data">データがありません</div>';
+        return;
+    }
+
+    container.innerHTML = sorted.map(([name, count], index) => {
+        const rank = index + 1;
+        let rankClass = '';
+        if (rank === 1) rankClass = 'rank-gold';
+        else if (rank === 2) rankClass = 'rank-silver';
+        else if (rank === 3) rankClass = 'rank-bronze';
+
+        return `
+            <div class="ranking-item">
+                <div class="rank-badge ${rankClass}">${rank}</div>
+                <div class="rank-name">${name}</div>
+                <div class="rank-count">${count}回</div>
+            </div>
+        `;
+    }).join('');
 }
 
 function showLoading(show) {
