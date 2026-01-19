@@ -436,7 +436,7 @@ function createMemberRow(matchId, member, hideName = false) {
                     <div class="input-box general-box" style="margin-top:0;">
                         <div class="input-box-title">${generalTitle}</div>
                         ${nameHtml}
-                        <div class="morning-withdraw-section" style="margin-bottom: 0.75rem;">
+                        <div class="morning-withdraw-section" style="margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid #eee;">
                             <label class="checkbox-label">
                                 <input type="checkbox" class="morning-withdraw-checkbox" ${data.morningWithdraw ? 'checked' : ''}>
                                 朝の引き込み可(9:00)
