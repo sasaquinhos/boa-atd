@@ -62,6 +62,22 @@ function renderRankings() {
     });
 
     renderRankingCard('janken-confirmed-ranking', jankenConfirmed);
+
+    // Janken Candidate Ranking
+    const jankenCandidate = {};
+    const matchIds = new Set(yearMatches.map(m => String(m.id)));
+
+    Object.keys(state.attendance).forEach(key => {
+        const [matchId, memberName] = key.split('_');
+        if (matchIds.has(matchId)) {
+            const data = state.attendance[key];
+            if (data.jankenParticipate) {
+                jankenCandidate[memberName] = (jankenCandidate[memberName] || 0) + 1;
+            }
+        }
+    });
+
+    renderRankingCard('janken-candidate-ranking', jankenCandidate);
 }
 
 function renderRankingCard(containerId, counts) {
