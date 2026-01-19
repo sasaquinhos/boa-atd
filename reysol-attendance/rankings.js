@@ -7,23 +7,93 @@ const state = {
     selectedYear: new Date().getFullYear()
 };
 
+const STORAGE_KEY = 'reysol_attendance_data';
+
 async function init() {
-    showLoading(true);
+    // 1. Try to load from local storage
+    const hasLocalData = loadFromLocal();
+
+    if (hasLocalData) {
+        // If we have local data, render immediately
+        setupYearSelect();
+        renderRankings();
+    } else {
+        // First time load: show blocking loader
+        showLoading(true);
+    }
+
     try {
-        const response = await fetch(API_URL);
+        // 2. Fetch fresh data
+        await loadData();
+
+        // Update UI with fresh data
+        setupYearSelect();
+        renderRankings();
+    } catch (e) {
+        console.error('Data sync failed:', e);
+        if (!hasLocalData) {
+            alert('データの読み込みに失敗しました');
+        }
+    } finally {
+        showLoading(false);
+    }
+}
+
+async function loadData() {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+    try {
+        const response = await fetch(`${API_URL}?t=${new Date().getTime()}`, {
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
 
         state.matches = data.matches || [];
         state.attendance = data.attendance || {};
         state.members = data.members || [];
 
-        setupYearSelect();
-        renderRankings();
+        // Save to local storage
+        saveToLocal();
     } catch (e) {
-        console.error('Failed to load data:', e);
-        alert('データの読み込みに失敗しました');
-    } finally {
-        showLoading(false);
+        clearTimeout(timeoutId);
+        throw e;
+    }
+}
+
+function loadFromLocal() {
+    try {
+        const json = localStorage.getItem(STORAGE_KEY);
+        if (!json) return false;
+
+        const data = JSON.parse(json);
+        if (!data) return false;
+
+        if (data.members) state.members = data.members;
+        if (data.matches) state.matches = data.matches;
+        if (data.attendance) state.attendance = data.attendance;
+
+        return true;
+    } catch (e) {
+        console.error('Error loading from local storage:', e);
+        return false;
+    }
+}
+
+function saveToLocal() {
+    try {
+        const data = {
+            members: state.members,
+            matches: state.matches,
+            attendance: state.attendance,
+            timestamp: new Date().getTime()
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch (e) {
+        console.error('Error saving to local storage:', e);
     }
 }
 
