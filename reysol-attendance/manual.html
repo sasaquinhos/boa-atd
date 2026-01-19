@@ -22,35 +22,112 @@
 
         .manual-section h2 {
             font-size: 1.25rem;
-            margin-bottom: 1rem;
+            margin-bottom: 1.25rem;
             border-bottom: 2px solid var(--reysol-yellow);
             display: inline-block;
+            padding-bottom: 2px;
+        }
+
+        .manual-section h3 {
+            font-size: 1.1rem;
+            margin: 1.5rem 0 0.75rem 0;
+            color: var(--reysol-black);
         }
 
         .manual-section p {
             line-height: 1.6;
             margin-bottom: 1rem;
+            color: #444;
         }
 
         .manual-section ul {
-            padding-left: 1.5rem;
+            padding-left: 0;
+            list-style: none;
             margin-bottom: 1rem;
         }
 
         .manual-section li {
-            margin-bottom: 0.5rem;
-            line-height: 1.4;
+            margin-bottom: 0.75rem;
+            line-height: 1.5;
+            position: relative;
         }
 
         .step-badge {
             display: inline-block;
-            background: var(--reysol-yellow);
-            color: var(--reysol-black);
+            background: var(--reysol-black);
+            color: var(--reysol-yellow);
             padding: 0.1rem 0.6rem;
             border-radius: 4px;
-            font-weight: bold;
+            font-weight: 800;
             margin-right: 0.5rem;
+            font-size: 0.8rem;
+            vertical-align: middle;
+        }
+
+        .qa-item {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+
+        .qa-q {
+            font-weight: 700;
+            color: #d32f2f;
+            margin-bottom: 0.5rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .qa-a {
+            color: #333;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .highlight-box {
+            background: #fffde7;
+            border-left: 4px solid var(--reysol-yellow);
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .accent-title {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .back-link {
+            color: #666;
             font-size: 0.9rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--reysol-black);
+        }
+
+        .step-detail {
+            margin-left: 0;
+            padding-left: 1rem;
+            border-left: 2px solid #eee;
+            margin-top: 0.5rem;
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .sub-text {
+            font-size: 0.85rem;
+            color: #888;
+            margin-top: 0.25rem;
         }
     </style>
 </head>
@@ -64,31 +141,106 @@
 
     <main class="container">
         <div style="display: flex; justify-content: flex-end; margin-bottom: 2rem;">
-            <a href="../index.html" style="color: #666; font-size: 0.9rem; text-decoration: none;">← 戻る</a>
+            <a href="../index.html" class="back-link">← 戻る</a>
         </div>
 
         <section class="manual-section">
-            <h2>出欠の入力方法</h2>
+            <h2>① このページについて</h2>
+            <p>このページでは、出欠確認アプリの使い方やルールをまとめています。<br>
+                操作に迷ったときは、ここを見ればすぐ解決できます。</p>
+        </section>
+
+        <section class="manual-section">
+            <h2>② 基本の使い方（5ステップ）</h2>
+
             <ul>
-                <li><span class="step-badge">1</span>トップページで自分の名前を選択してください。</li>
-                <li><span class="step-badge">2</span>各試合の「出席」または「欠席」を選択します。</li>
-                <li><span class="step-badge">3</span>出席の場合は、到着予定時間や自分以外の同行人数を入力してください。</li>
-                <li><span class="step-badge">4</span>入力した内容は即時保存されます。</li>
+                <li>
+                    <div><span class="step-badge">STEP1</span><strong>自分の名前を選ぶ</strong></div>
+                    <div class="step-detail">
+                        画面上部の「メンバー選択」から自分の名前を選びます。<br>
+                        <div class="sub-text">※名前は佐々木のLINEに登録されている名称を使用しています。</div>
+                    </div>
+                </li>
+                <li>
+                    <div><span class="step-badge">STEP2</span><strong>試合の予定を確認する</strong></div>
+                    <div class="step-detail">日付・相手・集合時間などが表示されます。</div>
+                </li>
+                <li>
+                    <div><span class="step-badge">STEP3</span><strong>前日・当日の予定を入力する</strong></div>
+                    <div class="step-detail">
+                        <strong>【前日】</strong>
+                        <ul>
+                            <li>・じゃんけん大会に参加できる人はチェック</li>
+                        </ul>
+                        <strong>【当日】</strong>
+                        <ul>
+                            <li>・出席 or 欠席</li>
+                            <li>・来る時間を選ぶ</li>
+                            <li>・同伴者がいる場合は人数を入力</li>
+                            <li>・朝の引き込み・ビッグフラッグ搬入に参加できる人はチェック</li>
+                        </ul>
+                    </div>
+                </li>
+                <li>
+                    <div><span class="step-badge">STEP4</span><strong>締切までに入力する</strong></div>
+                    <div class="step-detail">締切日時が書いてあるので、それまでに入力してください。</div>
+                </li>
+                <li>
+                    <div><span class="step-badge">STEP5</span><strong>入力したら完了</strong></div>
+                    <div class="step-detail">チェックや選択をしたら自動で保存されます。</div>
+                </li>
             </ul>
         </section>
 
         <section class="manual-section">
-            <h2>各種イベント・係</h2>
+            <h2>③ じゃんけん大会の決定方法</h2>
+            <p>参加者が複数名になった場合は、今まで通り LINE の「あみだくじ」機能で決定します。</p>
+            <p>決定した結果は：</p>
             <ul>
-                <li><strong>じゃんけん大会立候補:</strong> じゃんけん大会に参加を希望する場合はチェックを入れてください。</li>
-                <li><strong>朝の引き込み:</strong> 朝の入場準備（引き込み）に参加できる方はチェックを入れてください。</li>
-                <li><strong>ビッグフラッグ搬入:</strong> ビッグフラッグの搬入手伝いに参加できる方はチェックを入れてください。</li>
+                <li>・WEBアプリ上に表示</li>
+                <li>・LINEでも通知</li>
             </ul>
+            <p>されます。</p>
         </section>
 
         <section class="manual-section">
-            <h2>ランキングについて</h2>
-            <p>「いつもの場所を守ってくれる人たち」ページでは、じゃんけん大会や引き込みなどの参加実績がランキング形式で表示されます。上位を目指して積極的に参加しましょう！</p>
+            <h2>④ 名前の変更について</h2>
+            <p>メンバー名は佐々木のLINEに登録されている名称を使用しています。<br>
+                名前を変更したい場合は佐々木まで連絡してください。</p>
+        </section>
+
+        <section class="manual-section">
+            <h2>⑤ 困ったときのQ&A</h2>
+            <div class="qa-item">
+                <div class="qa-q"><span>Q：</span>入力を間違えたら？</div>
+                <div class="qa-a"><span>A：</span>何度でも修正できます。</div>
+            </div>
+            <div class="qa-item">
+                <div class="qa-q"><span>Q：</span>他人の名前で入力されてしまったら？</div>
+                <div class="qa-a"><span>A：</span>佐々木に連絡してください。すぐ修正できます。</div>
+            </div>
+            <div class="qa-item">
+                <div class="qa-q"><span>Q：</span>ページが開けない</div>
+                <div class="qa-a"><span>A：</span>URLが変わっている可能性があります。佐々木に連絡してください。</div>
+            </div>
+        </section>
+
+        <div class="highlight-box">
+            <div class="accent-title">👀 ちょっと見てみて</div>
+            <p>「いつもの場所を守ってくれる人たち」というページもあります。<br>
+                みんなの支えが見える、ちょっといいページなので、よかったら押してみてください。</p>
+        </div>
+
+        <section class="manual-section">
+            <div class="accent-title">💬 なぜLINEアンケートからこのアプリに変えたのか</div>
+            <p>理由はシンプルで、管理しやすいからです。</p>
+            <ul>
+                <li>・回答が自動で集計される</li>
+                <li>・過去のデータも残る</li>
+                <li>・追加の作業がいらない</li>
+                <li>・項目が多くても整理しやすい</li>
+            </ul>
+            <p>みんなの負担を減らして、スムーズに運営できるようにするために切り替えました。</p>
         </section>
     </main>
 
