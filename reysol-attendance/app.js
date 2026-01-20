@@ -421,7 +421,7 @@ function createMemberRow(matchId, member, hideName = false) {
                         <div class="janken-section">
                             <label class="checkbox-label" style="font-weight:bold; color:#d32f2f;">
                                 <input type="checkbox" class="janken-participate-checkbox" ${data.jankenParticipate ? 'checked' : ''}>
-                                じゃんけん大会参加可${jankenLabelSuffix}
+                                じゃんけん大会参加${jankenLabelSuffix}
                             </label>
                             <div class="janken-confirmed-display" style="font-size: 0.9rem; color: #333; margin-top: 0.5rem; background: #fbe9e7; padding: 0.5rem; border-radius: 4px; border: 1px solid #ffccbc;">
                                 <span style="font-weight:bold;">参加確定:</span> ${jankenConfirmedText || 'なし'}
@@ -439,7 +439,7 @@ function createMemberRow(matchId, member, hideName = false) {
                         <div class="morning-withdraw-section" style="margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 2px solid #e3f2fd;">
                             <label class="checkbox-label">
                                 <input type="checkbox" class="morning-withdraw-checkbox" ${data.morningWithdraw ? 'checked' : ''}>
-                                朝の引き込み可(9:00)
+                                朝の引き込み(9:00)
                             </label>
                         </div>
 
@@ -472,7 +472,7 @@ function createMemberRow(matchId, member, hideName = false) {
                             <div class="big-flag-section">
                                 <label class="checkbox-label">
                                     <input type="checkbox" class="big-flag-checkbox" ${data.bigFlag ? 'checked' : ''} ${isAbsent ? 'disabled' : ''}>
-                                    ビッグフラッグ搬入可
+                                    ビッグフラッグ搬入手伝い
                                 </label>
                                 <div class="big-flag-note" style="font-size: 0.8rem; color: #666; margin-left: 1.6rem;">
                                     （開場30分後にGATE9前集合）
@@ -1047,6 +1047,22 @@ function generateMatchSummaryContent(matchId) {
         `;
     }
 
+    // Morning Withdraw Summary (Moved below Janken Candidates)
+    const morningMembers = state.members.filter(member => {
+        const key = `${matchId}_${member.name}`;
+        const data = state.attendance[key];
+        return data && data.morningWithdraw;
+    }).map(m => m.name);
+
+    if (morningMembers.length > 0) {
+        html += `
+            <div class="summary-item active" style="background-color: #f1f8e9; border: 1px solid #8bc34a; margin-top: 0.5rem;">
+                <span class="summary-count" style="color: #33691e;">朝の引き込み: ${morningMembers.length}名</span>
+                <span class="summary-names">(${morningMembers.join(', ')})</span>
+            </div>
+        `;
+    }
+
     const totalMain = memberMain + guestMain;
     const totalBack = memberBack + guestBack;
 
@@ -1064,21 +1080,6 @@ function generateMatchSummaryContent(matchId) {
         `;
     }
 
-    // Morning Withdraw Summary
-    const morningMembers = state.members.filter(member => {
-        const key = `${matchId}_${member.name}`;
-        const data = state.attendance[key];
-        return data && data.morningWithdraw;
-    }).map(m => m.name);
-
-    if (morningMembers.length > 0) {
-        html += `
-            <div class="summary-item active" style="background-color: #f1f8e9; border: 1px solid #8bc34a; margin-top: 0.5rem;">
-                <span class="summary-count" style="color: #33691e;">朝の引き込み: ${morningMembers.length}名</span>
-                <span class="summary-names">(${morningMembers.join(', ')})</span>
-            </div>
-        `;
-    }
 
     STATUS_OPTIONS.forEach(opt => {
         const names = summary[opt.id];
@@ -1103,7 +1104,7 @@ function generateMatchSummaryContent(matchId) {
     if (bigFlagMembers.length > 0) {
         html += `
             <div class="summary-item active" style="background-color: #e3f2fd; border: 1px solid #64b5f6; margin-top: 0.5rem;">
-                <span class="summary-count" style="color: #0d47a1;">ビッグフラッグ搬入: ${bigFlagMembers.length}名</span>
+                <span class="summary-count" style="color: #0d47a1;">ビッグフラッグ搬入手伝い: ${bigFlagMembers.length}名</span>
                 <span class="summary-names">(${bigFlagMembers.join(', ')})</span>
             </div>
         `;
