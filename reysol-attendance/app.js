@@ -1279,17 +1279,26 @@ function generateMatchSummaryContent(matchId) {
     // Initialize map
     STATUS_OPTIONS.forEach(opt => summary[opt.id] = []);
 
+    const match = state.matches.find(m => m.id == matchId);
+    if (!match) return '';
+
     state.members.forEach(member => {
         const key = `${matchId}_${member.name}`;
         const data = state.attendance[key];
 
         if (data && data.status) {
-            if (summary[data.status]) {
-                summary[data.status].push(member.name);
+            let effectiveStatus = data.status;
+
+            // Validate away-specific statuses
+            if (effectiveStatus == 6 && !match.queueFlag) effectiveStatus = 1; // Default to 'before opening' if flag removed
+            if (effectiveStatus == 7 && !match.lineOrgFlag) effectiveStatus = 1;
+
+            if (summary[effectiveStatus]) {
+                summary[effectiveStatus].push(member.name);
             }
 
             // Exclude Absent (5) and Outside Hakunetsu (4) from section totals
-            if (data.status !== 5 && data.status !== 4) {
+            if (effectiveStatus !== 5 && effectiveStatus !== 4) {
                 if (member.section === 2) {
                     memberBack += 1;
                 } else {
@@ -1299,7 +1308,7 @@ function generateMatchSummaryContent(matchId) {
                 // Count guests for section totals
                 if (data.guestsMain) guestMain += parseInt(data.guestsMain) || 0;
                 if (data.guestsBack) guestBack += parseInt(data.guestsBack) || 0;
-            } else if (data.status === 4) {
+            } else if (effectiveStatus === 4) {
                 // Count status 4 ("柏熱以外で") separately
                 outsideTotal += 1; // The member themselves
                 outsideTotal += (parseInt(data.guestsMain) || 0) + (parseInt(data.guestsBack) || 0);
@@ -1343,7 +1352,6 @@ function generateMatchSummaryContent(matchId) {
 
     const totalMain = memberMain + guestMain;
     const totalBack = memberBack + guestBack;
-    const match = state.matches.find(m => m.id == matchId);
     const isAway = match && match.location === 'away';
 
     // Add Total Count Breakdown
