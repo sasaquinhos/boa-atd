@@ -8,7 +8,7 @@ const state = {
     matchLimit: 10
 };
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbxwPQYUM0pNi1h0hQ3sZ6sR4Xe0wid6ELMB7VQ73Vp1BYyHm1dvj60kNasU9assgyBtzg/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbzh1zzWLgU-SGNLe0TrlM1gQSbXi93aW_CcnoJuaTI536LG3OcJpJBHXS1g0bwjupnS2Q/exec';
 
 // DOM Elements
 const matchesContainer = document.getElementById('matches-container');
@@ -548,6 +548,8 @@ function setupEventListeners() {
             const deadline = document.getElementById('new-match-deadline').value;
             const queueFlag = document.getElementById('new-match-queue-flag').checked;
             const queueTime = document.getElementById('new-match-queue-time').value;
+            const lineOrgFlag = document.getElementById('new-match-line-org-flag').checked;
+            const lineOrgTime = document.getElementById('new-match-line-org-time').value;
 
             if (date && opponent) {
                 const newMatch = {
@@ -558,7 +560,9 @@ function setupEventListeners() {
                     seatType,
                     deadline,
                     queueFlag,
-                    queueTime
+                    queueTime,
+                    lineOrgFlag,
+                    lineOrgTime
                 };
                 // Optimistic Update
                 state.matches.push(newMatch);
@@ -581,6 +585,10 @@ function setupEventListeners() {
                 document.getElementById('new-match-queue-flag').checked = false;
                 document.getElementById('new-match-queue-time').value = '';
                 document.getElementById('queue-time-container').style.display = 'none';
+
+                document.getElementById('new-match-line-org-flag').checked = false;
+                document.getElementById('new-match-line-org-time').value = '';
+                document.getElementById('line-org-time-container').style.display = 'none';
 
                 // API Call
                 apiCall('add_match', newMatch);
@@ -624,6 +632,14 @@ function setupEventListeners() {
         if (queueFlagCheckbox && queueTimeContainer) {
             queueFlagCheckbox.addEventListener('change', (e) => {
                 queueTimeContainer.style.display = e.target.checked ? 'flex' : 'none';
+            });
+        }
+
+        const lineOrgFlagCheckbox = document.getElementById('new-match-line-org-flag');
+        const lineOrgTimeContainer = document.getElementById('line-org-time-container');
+        if (lineOrgFlagCheckbox && lineOrgTimeContainer) {
+            lineOrgFlagCheckbox.addEventListener('change', (e) => {
+                lineOrgTimeContainer.style.display = e.target.checked ? 'flex' : 'none';
             });
         }
     }
