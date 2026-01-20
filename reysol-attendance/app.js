@@ -8,7 +8,7 @@ const state = {
     matchLimit: 10
 };
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbw1dutfDLvVkwzHPb1l2mWyc2FUw4dEPYVzE913fMG1HcnIbd1FLs1OBdFD4lwPaLmNmg/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbz1RfRzPM_ORYz2LYoKnOU4QUIqcJy2m6P1gJUcJdiVsm9McNyPENEKGX9NPjppS2_daw/exec';
 
 // DOM Elements
 const matchesContainer = document.getElementById('matches-container');
@@ -329,6 +329,10 @@ function renderMatches() {
                 <div class="match-info">
                     <h2>${match.opponent}</h2>
                     <span class="match-date">${formatDate(match.date)}</span>
+                    <span class="match-location-badge ${match.location === 'away' ? 'location-away' : 'location-home'}">
+                        ${match.location === 'away' ? 'アウェイ' : 'ホーム'}
+                        ${match.location === 'away' ? (match.seatType === 'reserved' ? ' (指定席)' : ' (自由席)') : ''}
+                    </span>
                 </div>
                 ${adminControlsHtml}
             </div>
@@ -535,11 +539,18 @@ function setupEventListeners() {
             const date = newMatchDateInput.value;
             const opponent = newMatchOpponentInput.value.trim();
 
+            const locationRadio = document.querySelector('input[name="new-match-location"]:checked');
+            const location = locationRadio ? locationRadio.value : 'home';
+            const seatTypeRadio = document.querySelector('input[name="new-match-seat-type"]:checked');
+            const seatType = (location === 'away' && seatTypeRadio) ? seatTypeRadio.value : '';
+
             if (date && opponent) {
                 const newMatch = {
                     id: Date.now(),
                     date,
-                    opponent
+                    opponent,
+                    location,
+                    seatType
                 };
                 // Optimistic Update
                 state.matches.push(newMatch);
@@ -548,12 +559,33 @@ function setupEventListeners() {
                 newMatchDateInput.value = '';
                 newMatchOpponentInput.value = '';
 
+                // Reset radio buttons
+                const homeRadio = document.querySelector('input[name="new-match-location"][value="home"]');
+                if (homeRadio) homeRadio.checked = true;
+                const container = document.getElementById('away-seat-type-container');
+                if (container) container.style.display = 'none';
+
                 // API Call
                 apiCall('add_match', newMatch);
             } else {
                 alert('日付と対戦相手を入力してください');
             }
         });
+
+        // Location Radio Toggle for Seat Type
+        const locationRadios = document.querySelectorAll('input[name="new-match-location"]');
+        const awaySeatTypeContainer = document.getElementById('away-seat-type-container');
+        if (locationRadios.length > 0 && awaySeatTypeContainer) {
+            locationRadios.forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    if (e.target.value === 'away') {
+                        awaySeatTypeContainer.style.display = 'flex';
+                    } else {
+                        awaySeatTypeContainer.style.display = 'none';
+                    }
+                });
+            });
+        }
     }
 
     // Admin Member Actions (Delete/Edit)
