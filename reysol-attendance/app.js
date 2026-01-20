@@ -425,7 +425,7 @@ function createMemberRow(matchId, member, hideName = false) {
         let awayDetailsHtml = '';
         if (isAwayFree) {
             if (match.queueFlag && match.queueTime) {
-                awayDetailsHtml += `<div style="font-size: 0.9rem; margin-bottom: 0.3rem;"><span style="font-weight:bold; color:#1976d2;">並び開始：</span>${formatDateWithDayAndTime(match.queueTime)}</div>`;
+                awayDetailsHtml += `<div style="font-size: 0.9rem; margin-bottom: 0.3rem;"><span style="font-weight:bold; color:#1976d2;">並び開始（シート貼り）：</span>${formatDateWithDayAndTime(match.queueTime)}</div>`;
             }
             if (match.lineOrgFlag && match.lineOrgTime) {
                 awayDetailsHtml += `<div style="font-size: 0.9rem; margin-bottom: 0.5rem;"><span style="font-weight:bold; color:#388e3c;">列整理：</span>${formatDateWithDayAndTime(match.lineOrgTime)}</div>`;
