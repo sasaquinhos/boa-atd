@@ -81,6 +81,29 @@
                                 <label><input type="radio" name="new-match-seat-type" value="reserved"> 指定席</label>
                             </div>
                         </div>
+
+                        <!-- Away General Details (Conditionally shown) -->
+                        <div id="away-general-details"
+                            style="display: none; flex-direction: column; gap: 0.8rem; padding: 0.8rem; background: #fffde7; border: 1px solid #fff59d; border-radius: 4px; margin-top: 0.2rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                                <span style="font-weight: bold; font-size: 0.9rem;">回答期限:</span>
+                                <input type="datetime-local" id="new-match-deadline" style="padding: 0.3rem;">
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <label
+                                        style="display: flex; align-items: center; gap: 0.3rem; font-weight: bold; font-size: 0.9rem;">
+                                        <input type="checkbox" id="new-match-queue-flag"> 並び開始（シート貼り）
+                                    </label>
+                                </div>
+                                <div id="queue-time-container"
+                                    style="display: none; align-items: center; gap: 0.5rem; padding-left: 1.5rem;">
+                                    <span style="font-size: 0.9rem;">日時:</span>
+                                    <input type="datetime-local" id="new-match-queue-time" style="padding: 0.3rem;">
+                                </div>
+                            </div>
+                        </div>
+
                         <button id="add-match-btn" class="btn btn-primary">試合を追加</button>
                     </div>
                 </div>
