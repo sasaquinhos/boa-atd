@@ -645,3 +645,34 @@ input[type="number"] {
     padding: 2rem;
     font-style: italic;
 }
+
+/* Ranking Toggle */
+.ranking-toggle-container {
+    display: flex;
+    background: #eee;
+    padding: 0.25rem;
+    border-radius: 6px;
+    gap: 0.25rem;
+}
+
+.toggle-btn {
+    padding: 0.5rem 1.25rem;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: #666;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+}
+
+.toggle-btn.active {
+    background: #fff;
+    color: var(--reysol-black);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.toggle-btn:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.5);
+}
