@@ -89,11 +89,6 @@
                                 <span style="font-weight: bold; font-size: 0.9rem;">回答期限:</span>
                                 <input type="datetime-local" id="new-match-deadline" style="padding: 0.3rem;">
                             </div>
-                            <div style="display: flex; flex-direction: column; gap: 0.3rem;">
-                                <span style="font-weight: bold; font-size: 0.9rem;">注意事項（アウェイ用）:</span>
-                                <textarea id="new-match-away-notice" rows="2" placeholder="集合場所や持ち物など"
-                                    style="width: 100%; padding: 0.5rem; border-radius: 4px; border: 1px solid #ddd; font-family: inherit; font-size: 0.9rem;"></textarea>
-                            </div>
                             <div id="new-match-queue-section"
                                 style="display: flex; flex-direction: column; gap: 0.5rem;">
                                 <div style="display: flex; align-items: center; gap: 0.5rem;">
@@ -122,6 +117,14 @@
                                     <input type="datetime-local" id="new-match-line-org-time" style="padding: 0.3rem;">
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- Notice (For all matches) -->
+                        <div
+                            style="display: flex; flex-direction: column; gap: 0.3rem; padding: 0.5rem; background: #fffde7; border: 1px solid #fff59d; border-radius: 4px;">
+                            <span style="font-weight: bold; font-size: 0.9rem;">連絡事項:</span>
+                            <textarea id="new-match-away-notice" rows="2" placeholder="集合場所や持ち物など"
+                                style="width: 100%; padding: 0.5rem; border-radius: 4px; border: 1px solid #ddd; font-family: inherit; font-size: 0.9rem;"></textarea>
                         </div>
 
                         <button id="add-match-btn" class="btn btn-primary">試合を追加</button>
@@ -215,11 +218,6 @@
                         <span style="font-weight: bold; font-size: 0.9rem;">回答期限:</span>
                         <input type="datetime-local" id="edit-match-deadline" style="padding: 0.3rem;">
                     </div>
-                    <div style="display: flex; flex-direction: column; gap: 0.3rem;">
-                        <span style="font-weight: bold; font-size: 0.9rem;">注意事項（アウェイ用）:</span>
-                        <textarea id="edit-match-away-notice" rows="2" placeholder="集合場所や持ち物など"
-                            style="width: 100%; padding: 0.5rem; border-radius: 4px; border: 1px solid #ddd; font-family: inherit; font-size: 0.9rem;"></textarea>
-                    </div>
                     <div id="edit-match-queue-section" style="display: flex; flex-direction: column; gap: 0.5rem;">
                         <div style="display: flex; align-items: center; gap: 0.5rem;">
                             <label
@@ -247,6 +245,14 @@
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Notice (For all matches) -->
+            <div
+                style="display: flex; flex-direction: column; gap: 0.3rem; padding: 0.5rem; background: #fffde7; border: 1px solid #fff59d; border-radius: 4px; margin-bottom: 1.5rem;">
+                <span style="font-weight: bold; font-size: 0.9rem;">連絡事項:</span>
+                <textarea id="edit-match-away-notice" rows="2" placeholder="集合場所や持ち物など"
+                    style="width: 100%; padding: 0.5rem; border-radius: 4px; border: 1px solid #ddd; font-family: inherit; font-size: 0.9rem;"></textarea>
             </div>
             <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
                 <button id="cancel-edit-match" class="btn" style="background: #ccc;">キャンセル</button>
