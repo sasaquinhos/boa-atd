@@ -161,13 +161,45 @@ input[type="number"] {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1.5rem;
-    padding-bottom: 0.5rem;
+    padding: 1rem 1.5rem;
+    /* Increased padding and made it all sides */
     border-bottom: 1px solid #eee;
     cursor: pointer;
+    margin: -1.5rem -1.5rem 1.5rem -1.5rem;
+    /* Match card padding to go full width */
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+}
+
+.match-header.location-home {
+    background-color: var(--reysol-yellow);
+    color: var(--reysol-black);
+    border-bottom: none;
+}
+
+.match-header.location-home .match-date {
+    color: rgba(0, 0, 0, 0.7);
+}
+
+.match-header.location-home::after {
+    color: var(--reysol-black);
+}
+
+.match-header.location-away {
+    background-color: var(--reysol-black);
+    color: var(--reysol-yellow);
+    border-bottom: none;
+}
+
+.match-header.location-away .match-date {
+    color: rgba(252, 209, 22, 0.7);
+}
+
+.match-header.location-away::after {
+    color: var(--reysol-yellow);
 }
 
 .match-header:hover {
-    background-color: #f9f9f9;
+    filter: brightness(0.95);
 }
 
 .match-header::after {
@@ -175,6 +207,7 @@ input[type="number"] {
     font-size: 0.8rem;
     color: #999;
     transition: transform 0.3s;
+    margin-left: 1rem;
 }
 
 .match-card.collapsed .match-header::after {
@@ -184,6 +217,7 @@ input[type="number"] {
 .match-card.collapsed .match-header {
     margin-bottom: 0;
     border-bottom: none;
+    border-radius: var(--border-radius);
 }
 
 .match-card.collapsed .janken-admin-section,
