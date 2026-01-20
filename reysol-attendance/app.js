@@ -388,12 +388,16 @@ function createMemberRow(matchId, member, hideName = false) {
         if (match.queueFlag) subStatuses.unshift(STATUS_OPTIONS.find(o => o.id === 6));
     }
 
+    let effectiveStatus = data.status;
+    if (effectiveStatus == 6 && !match.queueFlag) effectiveStatus = 1;
+    if (effectiveStatus == 7 && !match.lineOrgFlag) effectiveStatus = 1;
+
     let radiosHtml = subStatuses.map(opt => {
         let label = opt.label;
         if (isAway && opt.id === 4) label = 'ゴール裏以外';
         return `
             <label class="radio-label">
-                <input type="radio" name="status_${key}" value="${opt.id}" ${data.status == opt.id ? 'checked' : ''} ${isAbsent ? 'disabled' : ''}>
+                <input type="radio" name="status_${key}" value="${opt.id}" ${effectiveStatus == opt.id ? 'checked' : ''} ${isAbsent ? 'disabled' : ''}>
                 ${label}
             </label>
         `;
