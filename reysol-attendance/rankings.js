@@ -1,4 +1,4 @@
-const API_URL = 'https://script.google.com/macros/s/AKfycbywRN_oNWEl25L2Rm7taLwexuhPZxl2XoLqATAyh_B7JpTq_7r0gBgOBFO5wjP8IFBxhg/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbwcuqJk9zuxWuvwjk06UeqmbwbZ1dzony20Fsf04vNMsCueca1W6m89GmBENYfq08IBLQ/exec';
 
 const state = {
     matches: [],
