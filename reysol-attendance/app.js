@@ -1064,7 +1064,12 @@ function openEditMatchModal(matchId) {
     const lineOrgFlagInput = document.getElementById('edit-match-line-org-flag');
     const lineOrgTimeInput = document.getElementById('edit-match-line-org-time');
 
-    dateInput.value = match.date;
+    // Format date string for HTML5 date input (YYYY-MM-DD)
+    if (match.date && match.date.includes('T')) {
+        dateInput.value = match.date.split('T')[0];
+    } else {
+        dateInput.value = match.date;
+    }
     opponentInput.value = match.opponent;
 
     // Set radios
