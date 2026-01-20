@@ -21,13 +21,21 @@
     </header>
 
     <main class="container">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-            <div class="year-select-container">
-                <label for="year-select" style="font-weight:bold; margin-right:0.5rem;">年度選択:</label>
-                <select id="year-select"
-                    style="padding:0.5rem; border-radius:4px; border:1px solid #ddd; font-size:1rem;">
-                    <!-- Years will be injected here -->
-                </select>
+        <div
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+            <div style="display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
+                <div class="year-select-container">
+                    <label for="year-select" style="font-weight:bold; margin-right:0.5rem;">年度選択:</label>
+                    <select id="year-select"
+                        style="padding:0.5rem; border-radius:4px; border:1px solid #ddd; font-size:1rem;">
+                        <!-- Years will be injected here -->
+                    </select>
+                </div>
+
+                <div class="ranking-toggle-container">
+                    <button class="toggle-btn active" data-location="home">ホーム</button>
+                    <button class="toggle-btn" data-location="away">アウェイ</button>
+                </div>
             </div>
             <a href="../index.html" style="color: #666; font-size: 0.9rem; text-decoration: none;">← 戻る</a>
         </div>
