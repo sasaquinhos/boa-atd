@@ -435,7 +435,7 @@ function createMemberRow(matchId, member, hideName = false) {
                         ${nameHtml}
 
                         <!-- Attend or Absent -->
-                        <div class="presence-selection" style="margin-top: 0.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid #eee;">
+                        <div class="presence-selection" style="margin-top: 0.5rem; padding-bottom: 0.75rem; border-bottom: 2px solid #e0e0e0;">
                             <label class="radio-label">
                                 <input type="radio" class="presence-radio" name="presence_${key}" value="attendance" ${!isAbsent ? 'checked' : ''}>
                                 出席
@@ -448,10 +448,12 @@ function createMemberRow(matchId, member, hideName = false) {
 
                         <!-- Details (Only enabled if Attendance is selected) -->
                         <div class="attendance-details ${isAbsent ? 'disabled-section' : ''}">
-                            ${awayDetailsHtml}
-                            <div class="status-options">
-                                ${radiosHtml}
-                            </div>
+                            ${isAwayFree ? `
+                                ${awayDetailsHtml}
+                                <div class="status-options">
+                                    ${radiosHtml}
+                                </div>
+                            ` : ''}
                             <div class="extra-guests">
                                 <label>自分以外の人数:</label>
                                 <div class="guest-inputs-container" style="margin-top:0;">
