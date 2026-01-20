@@ -325,7 +325,7 @@ function renderMatches() {
         }
 
         matchEl.innerHTML = `
-            <div class="match-header">
+            <div class="match-header ${match.location === 'away' ? 'location-away' : 'location-home'}">
                 <div class="match-info">
                     <h2>${match.opponent}</h2>
                     <span class="match-date">${formatDate(match.date)}</span>
