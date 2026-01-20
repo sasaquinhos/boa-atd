@@ -25,7 +25,9 @@ const STATUS_OPTIONS = [
     { id: 2, label: '開場後' },
     { id: 3, label: 'キックオフ後' },
     { id: 4, label: '柏熱以外' },
-    { id: 5, label: '欠席' }
+    { id: 5, label: '欠席' },
+    { id: 6, label: '並び開始' },
+    { id: 7, label: '列整理' }
 ];
 
 const SECTION_LABELS = {
@@ -371,7 +373,21 @@ function createMemberRow(matchId, member, hideName = false) {
     const isAway = match && match.location === 'away';
     const isAwayFree = isAway && match.seatType === 'free';
 
-    const subStatuses = STATUS_OPTIONS.filter(opt => opt.id !== 5);
+    const formatDateWithDayAndTime = (dateStr) => {
+        if (!dateStr) return '';
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return dateStr;
+        const days = ['日', '月', '火', '水', '木', '金', '土'];
+        const pad = (n) => String(n).padStart(2, '0');
+        return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} (${days[d.getDay()]}) ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    };
+
+    const subStatuses = [...STATUS_OPTIONS.filter(opt => opt.id !== 5 && opt.id !== 6 && opt.id !== 7)];
+    if (isAwayFree) {
+        if (match.queueFlag) subStatuses.push(STATUS_OPTIONS.find(o => o.id === 6));
+        if (match.lineOrgFlag) subStatuses.push(STATUS_OPTIONS.find(o => o.id === 7));
+    }
+
     let radiosHtml = subStatuses.map(opt => {
         let label = opt.label;
         if (isAway && opt.id === 4) label = 'ゴール裏以外';
@@ -394,25 +410,16 @@ function createMemberRow(matchId, member, hideName = false) {
         // Away View
         let awayHeaderInfo = '';
         if (isAwayFree && match.deadline) {
-            const d = new Date(match.deadline);
-            const mmdd = `${d.getMonth() + 1}/${d.getDate()}`;
-            const days = ['日', '月', '火', '水', '木', '金', '土'];
-            const dayStr = days[d.getDay()];
-            const timeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-            awayHeaderInfo = `<div class="input-box-title" style="color: #d32f2f; font-weight: bold; margin-bottom: 0.5rem;">回答期限：${mmdd}(${dayStr}) ${timeStr}</div>`;
+            awayHeaderInfo = `<div class="input-box-title" style="color: #d32f2f; font-weight: bold; margin-bottom: 0.5rem;">回答期限：${formatDateWithDayAndTime(match.deadline)}</div>`;
         }
 
         let awayDetailsHtml = '';
         if (isAwayFree) {
             if (match.queueFlag && match.queueTime) {
-                const d = new Date(match.queueTime);
-                const timeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-                awayDetailsHtml += `<div style="font-size: 0.9rem; margin-bottom: 0.3rem;"><span style="font-weight:bold; color:#1976d2;">並び開始：</span>${timeStr}</div>`;
+                awayDetailsHtml += `<div style="font-size: 0.9rem; margin-bottom: 0.3rem;"><span style="font-weight:bold; color:#1976d2;">並び開始：</span>${formatDateWithDayAndTime(match.queueTime)}</div>`;
             }
             if (match.lineOrgFlag && match.lineOrgTime) {
-                const d = new Date(match.lineOrgTime);
-                const timeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-                awayDetailsHtml += `<div style="font-size: 0.9rem; margin-bottom: 0.5rem;"><span style="font-weight:bold; color:#388e3c;">列整理：</span>${timeStr}</div>`;
+                awayDetailsHtml += `<div style="font-size: 0.9rem; margin-bottom: 0.5rem;"><span style="font-weight:bold; color:#388e3c;">列整理：</span>${formatDateWithDayAndTime(match.lineOrgTime)}</div>`;
             }
         }
 
@@ -1336,13 +1343,22 @@ function generateMatchSummaryContent(matchId) {
 
     const totalMain = memberMain + guestMain;
     const totalBack = memberBack + guestBack;
+    const match = state.matches.find(m => m.id == matchId);
+    const isAway = match && match.location === 'away';
 
     // Add Total Count Breakdown
     if (totalMain > 0 || totalBack > 0 || outsideTotal > 0) {
         let sectionTotalsHtml = '';
-        if (totalMain > 0) sectionTotalsHtml += `<div>TOP 合計${totalMain}名 <small style="font-weight:normal;">(メンバー${memberMain} / 同伴${guestMain})</small></div>`;
-        if (totalBack > 0) sectionTotalsHtml += `<div>FRONT 合計${totalBack}名 <small style="font-weight:normal;">(メンバー${memberBack} / 同伴${guestBack})</small></div>`;
-        if (outsideTotal > 0) sectionTotalsHtml += `<div style="padding-top: 0.1rem; margin-top: 0.1rem;">柏熱以外 合計${outsideTotal}名</div>`;
+        if (isAway) {
+            // Away: Simple total
+            sectionTotalsHtml += `<div>合計 ${totalMain + totalBack}名 <small style="font-weight:normal;">(メンバー${memberMain + memberBack} / 同伴${guestMain + guestBack})</small></div>`;
+            if (outsideTotal > 0) sectionTotalsHtml += `<div style="padding-top: 0.1rem; margin-top: 0.1rem;">ゴール裏以外 合計${outsideTotal}名</div>`;
+        } else {
+            // Home: Breakdown by section
+            if (totalMain > 0) sectionTotalsHtml += `<div>TOP 合計${totalMain}名 <small style="font-weight:normal;">(メンバー${memberMain} / 同伴${guestMain})</small></div>`;
+            if (totalBack > 0) sectionTotalsHtml += `<div>FRONT 合計${totalBack}名 <small style="font-weight:normal;">(メンバー${memberBack} / 同伴${guestBack})</small></div>`;
+            if (outsideTotal > 0) sectionTotalsHtml += `<div style="padding-top: 0.1rem; margin-top: 0.1rem;">柏熱以外 合計${outsideTotal}名</div>`;
+        }
 
         html += `
             <div class="summary-item active" style="font-weight: bold; background-color: #fff8e1; border: 2px solid #FCD116; border-radius: 4px; flex-direction: column; align-items: flex-start; gap: 0.2rem;">
@@ -1355,9 +1371,11 @@ function generateMatchSummaryContent(matchId) {
     STATUS_OPTIONS.forEach(opt => {
         const names = summary[opt.id];
         if (names && names.length > 0) {
+            let label = opt.label;
+            if (isAway && opt.id === 4) label = 'ゴール裏以外';
             html += `
                 <div class="summary-item active">
-                    <span class="summary-count">${opt.label}: ${names.length}名</span>
+                    <span class="summary-count">${label}: ${names.length}名</span>
                     <span class="summary-names">(${names.join(', ')})</span>
                 </div>
             `;
