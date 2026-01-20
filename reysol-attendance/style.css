@@ -676,3 +676,30 @@ input[type="number"] {
 .toggle-btn:hover:not(.active) {
     background: rgba(255, 255, 255, 0.5);
 }
+
+/* Away Notice */
+.away-notice-box {
+    background-color: #fffde7;
+    border-left: 4px solid #fff59d;
+    padding: 0.8rem 1rem;
+    margin-bottom: 1rem;
+    border-radius: 0 4px 4px 0;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: #555;
+    white-space: pre-wrap;
+}
+
+.away-notice-title {
+    font-weight: bold;
+    color: #fbc02d;
+    margin-bottom: 0.3rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+}
+
+.away-notice-title::before {
+    content: '📌';
+}
