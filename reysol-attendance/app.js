@@ -384,8 +384,8 @@ function createMemberRow(matchId, member, hideName = false) {
 
     const subStatuses = [...STATUS_OPTIONS.filter(opt => opt.id !== 5 && opt.id !== 6 && opt.id !== 7)];
     if (isAwayFree) {
-        if (match.queueFlag) subStatuses.push(STATUS_OPTIONS.find(o => o.id === 6));
-        if (match.lineOrgFlag) subStatuses.push(STATUS_OPTIONS.find(o => o.id === 7));
+        if (match.lineOrgFlag) subStatuses.unshift(STATUS_OPTIONS.find(o => o.id === 7));
+        if (match.queueFlag) subStatuses.unshift(STATUS_OPTIONS.find(o => o.id === 6));
     }
 
     let radiosHtml = subStatuses.map(opt => {
