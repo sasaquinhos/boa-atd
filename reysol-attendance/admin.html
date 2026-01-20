@@ -173,7 +173,75 @@
         </div>
     </div>
 
-    <script src="app.js?v=20260116_1519"></script>
+    <!-- Edit Match Modal -->
+    <div id="edit-match-modal" class="modal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000;">
+        <div class="modal-content"
+            style="background: white; padding: 2rem; border-radius: 8px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto;">
+            <h3>試合編集</h3>
+            <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem;">
+                <div class="input-group" style="flex-direction: column; align-items: flex-start;">
+                    <label style="font-weight: bold; font-size: 0.9rem;">日付</label>
+                    <input type="date" id="edit-match-date" style="width: 100%;">
+                </div>
+                <div class="input-group" style="flex-direction: column; align-items: flex-start;">
+                    <label style="font-weight: bold; font-size: 0.9rem;">対戦相手</label>
+                    <input type="text" id="edit-match-opponent" style="width: 100%;" placeholder="対戦相手 (例: vs 浦和)">
+                </div>
+                <div
+                    style="display: flex; align-items: center; gap: 1rem; padding: 0.5rem; background: #f9f9f9; border-radius: 4px;">
+                    <span style="font-weight: bold; font-size: 0.9rem;">開催区分:</span>
+                    <label><input type="radio" name="edit-match-location" value="home"> ホーム</label>
+                    <label><input type="radio" name="edit-match-location" value="away"> アウェイ</label>
+                </div>
+                <div id="edit-away-seat-type-container"
+                    style="display: none; align-items: center; gap: 1rem; padding: 0.5rem; background: #f9f9f9; border-radius: 4px;">
+                    <span style="font-weight: bold; font-size: 0.9rem;">席種:</span>
+                    <label><input type="radio" name="edit-match-seat-type" value="free"> 自由席</label>
+                    <label><input type="radio" name="edit-match-seat-type" value="reserved"> 指定席</label>
+                </div>
+
+                <!-- Away General Details (Conditionally shown) -->
+                <div id="edit-away-general-details"
+                    style="display: none; flex-direction: column; gap: 0.8rem; padding: 0.8rem; background: #fffde7; border: 1px solid #fff59d; border-radius: 4px;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                        <span style="font-weight: bold; font-size: 0.9rem;">回答期限:</span>
+                        <input type="datetime-local" id="edit-match-deadline" style="padding: 0.3rem;">
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <label
+                                style="display: flex; align-items: center; gap: 0.3rem; font-weight: bold; font-size: 0.9rem;">
+                                <input type="checkbox" id="edit-match-queue-flag"> 並び開始（シート貼り）
+                            </label>
+                        </div>
+                        <div id="edit-queue-time-container"
+                            style="display: none; align-items: center; gap: 0.5rem; padding-left: 1.5rem;">
+                            <span style="font-size: 0.9rem;">日時:</span>
+                            <input type="datetime-local" id="edit-match-queue-time" style="padding: 0.3rem;">
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <label
+                                style="display: flex; align-items: center; gap: 0.3rem; font-weight: bold; font-size: 0.9rem;">
+                                <input type="checkbox" id="edit-match-line-org-flag"> 列整理
+                            </label>
+                        </div>
+                        <div id="edit-line-org-time-container"
+                            style="display: none; align-items: center; gap: 0.5rem; padding-left: 1.5rem;">
+                            <span style="font-size: 0.9rem;">日時:</span>
+                            <input type="datetime-local" id="edit-match-line-org-time" style="padding: 0.3rem;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+                <button id="cancel-edit-match" class="btn" style="background: #ccc;">キャンセル</button>
+                <button id="save-edit-match" class="btn btn-primary">保存</button>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>
