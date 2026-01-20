@@ -641,17 +641,18 @@ function setupEventListeners() {
             const lineOrgTime = document.getElementById('new-match-line-org-time').value;
 
             if (date && opponent) {
+                const isAwayFree = (location === 'away' && seatType === 'free');
                 const newMatch = {
                     id: Date.now(),
                     date,
                     opponent,
                     location,
                     seatType,
-                    deadline,
-                    queueFlag,
-                    queueTime,
-                    lineOrgFlag,
-                    lineOrgTime
+                    deadline: (location === 'away' ? deadline : ''),
+                    queueFlag: (isAwayFree ? queueFlag : false),
+                    queueTime: (isAwayFree ? queueTime : ''),
+                    lineOrgFlag: (isAwayFree ? lineOrgFlag : false),
+                    lineOrgTime: (isAwayFree ? lineOrgTime : '')
                 };
                 // Optimistic Update
                 state.matches.push(newMatch);
@@ -697,11 +698,13 @@ function setupEventListeners() {
 
             if (loc === 'away') {
                 awaySeatTypeContainer.style.display = 'flex';
-                if (seat === 'free') {
-                    awayGeneralDetails.style.display = 'flex';
-                } else {
-                    awayGeneralDetails.style.display = 'none';
-                }
+                awayGeneralDetails.style.display = 'flex'; // Always show for Away (contains deadline)
+
+                // Only show queue/line options for Away General Admission (free)
+                const queueSec = document.getElementById('new-match-queue-section');
+                const lineSec = document.getElementById('new-match-line-org-section');
+                if (queueSec) queueSec.style.display = (seat === 'free') ? 'flex' : 'none';
+                if (lineSec) lineSec.style.display = (seat === 'free') ? 'flex' : 'none';
             } else {
                 awaySeatTypeContainer.style.display = 'none';
                 awayGeneralDetails.style.display = 'none';
@@ -1198,7 +1201,13 @@ function openEditMatchModal(matchId) {
 
         if (loc === 'away') {
             seatContainer.style.display = 'flex';
-            generalDetails.style.display = (seat === 'free') ? 'flex' : 'none';
+            generalDetails.style.display = 'flex'; // Always show for Away (contains deadline)
+
+            // Only show queue/line options for Away General Admission (free)
+            const queueSec = document.getElementById('edit-match-queue-section');
+            const lineSec = document.getElementById('edit-match-line-org-section');
+            if (queueSec) queueSec.style.display = (seat === 'free') ? 'flex' : 'none';
+            if (lineSec) lineSec.style.display = (seat === 'free') ? 'flex' : 'none';
         } else {
             seatContainer.style.display = 'none';
             generalDetails.style.display = 'none';
