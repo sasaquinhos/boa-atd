@@ -1,10 +1,11 @@
-const API_URL = 'https://script.google.com/macros/s/AKfycbw1dutfDLvVkwzHPb1l2mWyc2FUw4dEPYVzE913fMG1HcnIbd1FLs1OBdFD4lwPaLmNmg/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbywRN_oNWEl25L2Rm7taLwexuhPZxl2XoLqATAyh_B7JpTq_7r0gBgOBFO5wjP8IFBxhg/exec';
 
 const state = {
     matches: [],
     attendance: {},
     members: [],
-    selectedYear: new Date().getFullYear()
+    selectedYear: new Date().getFullYear(),
+    selectedLocation: 'home'
 };
 
 const STORAGE_KEY = 'reysol_attendance_data';
@@ -14,19 +15,14 @@ async function init() {
     const hasLocalData = loadFromLocal();
 
     if (hasLocalData) {
-        // If we have local data, render immediately
         setupYearSelect();
         renderRankings();
     } else {
-        // First time load: show blocking loader
         showLoading(true);
     }
 
     try {
-        // 2. Fetch fresh data
         await loadData();
-
-        // Update UI with fresh data
         setupYearSelect();
         renderRankings();
     } catch (e) {
@@ -37,6 +33,14 @@ async function init() {
     } finally {
         showLoading(false);
     }
+
+    // Attach listeners once
+    setupEventListeners();
+}
+
+function setupEventListeners() {
+    setupYearSelectListener();
+    setupLocationToggle();
 }
 
 async function loadData() {
@@ -108,17 +112,88 @@ function setupYearSelect() {
     yearSelect.innerHTML = years.map(year => `<option value="${year}">${year}年度</option>`).join('');
     state.selectedYear = years[0];
     yearSelect.value = state.selectedYear;
+}
 
+function setupYearSelectListener() {
+    const yearSelect = document.getElementById('year-select');
     yearSelect.addEventListener('change', (e) => {
         state.selectedYear = parseInt(e.target.value);
         renderRankings();
     });
 }
 
+function setupLocationToggle() {
+    document.querySelectorAll('.toggle-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const targetBtn = e.target.closest('.toggle-btn');
+            if (!targetBtn) return;
+            document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+            targetBtn.classList.add('active');
+            state.selectedLocation = targetBtn.dataset.location;
+            renderRankings();
+        });
+    });
+}
+
 function renderRankings() {
+    const grid = document.getElementById('rankings-grid');
+    if (state.selectedLocation === 'home') {
+        grid.innerHTML = `
+            <div id="janken-confirmed-ranking" class="ranking-card">
+                <div class="ranking-header">
+                    <h3>じゃんけん大会参加者</h3>
+                    <span class="ranking-sub-title">（参加回数の多い順）</span>
+                </div>
+                <div class="ranking-body">読み込み中...</div>
+            </div>
+            <div id="janken-candidate-ranking" class="ranking-card">
+                <div class="ranking-header">
+                    <h3>じゃんけん大会立候補者</h3>
+                    <span class="ranking-sub-title">（立候補回数の多い順）</span>
+                </div>
+                <div class="ranking-body">読み込み中...</div>
+            </div>
+            <div id="morning-withdraw-ranking" class="ranking-card">
+                <div class="ranking-header">
+                    <h3>朝の引き込み</h3>
+                    <span class="ranking-sub-title">（参加回数の多い順）</span>
+                </div>
+                <div class="ranking-body">読み込み中...</div>
+            </div>
+            <div id="big-flag-ranking" class="ranking-card">
+                <div class="ranking-header">
+                    <h3>ビッグフラッグ搬入手伝い</h3>
+                    <span class="ranking-sub-title">（参加回数の多い順）</span>
+                </div>
+                <div class="ranking-body">読み込み中...</div>
+            </div>
+        `;
+        renderHomeRankings();
+    } else {
+        grid.innerHTML = `
+            <div id="queue-start-ranking" class="ranking-card">
+                <div class="ranking-header">
+                    <h3>並び開始（シート貼り）</h3>
+                    <span class="ranking-sub-title">（参加回数の多い順）</span>
+                </div>
+                <div class="ranking-body">読み込み中...</div>
+            </div>
+            <div id="line-org-ranking" class="ranking-card">
+                <div class="ranking-header">
+                    <h3>列整理</h3>
+                    <span class="ranking-sub-title">（参加回数の多い順）</span>
+                </div>
+                <div class="ranking-body">読み込み中...</div>
+            </div>
+        `;
+        renderAwayRankings();
+    }
+}
+
+function renderHomeRankings() {
     const yearMatches = state.matches.filter(m => {
         const matchYear = new Date(m.date).getFullYear();
-        return matchYear === state.selectedYear;
+        return matchYear === state.selectedYear && (m.location === 'home' || !m.location);
     });
 
     // Janken Confirmed Ranking
@@ -133,11 +208,8 @@ function renderRankings() {
 
     renderRankingCard('janken-confirmed-ranking', jankenConfirmed);
 
-    // Janken Candidate Ranking
     const jankenCandidate = {};
-    // Morning Withdraw Ranking
     const morningWithdraw = {};
-    // Big Flag Ranking
     const bigFlag = {};
     const matchIds = new Set(yearMatches.map(m => String(m.id)));
 
@@ -145,21 +217,38 @@ function renderRankings() {
         const [matchId, memberName] = key.split('_');
         if (matchIds.has(matchId)) {
             const data = state.attendance[key];
-            if (data.jankenParticipate) {
-                jankenCandidate[memberName] = (jankenCandidate[memberName] || 0) + 1;
-            }
-            if (data.morningWithdraw) {
-                morningWithdraw[memberName] = (morningWithdraw[memberName] || 0) + 1;
-            }
-            if (data.bigFlag) {
-                bigFlag[memberName] = (bigFlag[memberName] || 0) + 1;
-            }
+            if (data.jankenParticipate) jankenCandidate[memberName] = (jankenCandidate[memberName] || 0) + 1;
+            if (data.morningWithdraw) morningWithdraw[memberName] = (morningWithdraw[memberName] || 0) + 1;
+            if (data.bigFlag) bigFlag[memberName] = (bigFlag[memberName] || 0) + 1;
         }
     });
 
     renderRankingCard('janken-candidate-ranking', jankenCandidate);
     renderRankingCard('morning-withdraw-ranking', morningWithdraw);
     renderRankingCard('big-flag-ranking', bigFlag);
+}
+
+function renderAwayRankings() {
+    const yearMatches = state.matches.filter(m => {
+        const matchYear = new Date(m.date).getFullYear();
+        return matchYear === state.selectedYear && m.location === 'away';
+    });
+
+    const queueStart = {};
+    const lineOrg = {};
+    const matchIds = new Set(yearMatches.map(m => String(m.id)));
+
+    Object.keys(state.attendance).forEach(key => {
+        const [matchId, memberName] = key.split('_');
+        if (matchIds.has(matchId)) {
+            const data = state.attendance[key];
+            if (data.status === 6) queueStart[memberName] = (queueStart[memberName] || 0) + 1;
+            if (data.status === 7) lineOrg[memberName] = (lineOrg[memberName] || 0) + 1;
+        }
+    });
+
+    renderRankingCard('queue-start-ranking', queueStart);
+    renderRankingCard('line-org-ranking', lineOrg);
 }
 
 function renderRankingCard(containerId, counts) {
