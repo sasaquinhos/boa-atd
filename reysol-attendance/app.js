@@ -412,14 +412,14 @@ function createMemberRow(matchId, member, hideName = false) {
     const matchDate = match ? new Date(match.date) : null;
 
     if (isAway) {
-        // Away View
+        let noticeHtml = '';
+        if (match.awayNotice) {
+            noticeHtml = `<div class="away-notice-box"><div class="away-notice-title">連絡事項</div>${match.awayNotice}</div>`;
+        }
+
         let awayHeaderInfo = '';
         if (match.deadline) {
             awayHeaderInfo += `<div style="font-size:0.9rem; color:#d32f2f; font-weight:bold; margin-top:0.3rem;">回答期限: ${formatDateWithDayAndTime(match.deadline)}</div>`;
-        }
-
-        if (match.awayNotice) {
-            awayHeaderInfo = `<div class="away-notice-box"><div class="away-notice-title">連絡事項</div>${match.awayNotice}</div>` + awayHeaderInfo;
         }
 
         let awayDetailsHtml = '';
@@ -435,6 +435,7 @@ function createMemberRow(matchId, member, hideName = false) {
         return `
             <div class="attendance-row" data-key="${key}">
                 <div class="attendance-input-container">
+                    ${noticeHtml}
                     <div class="input-box" style="width: 100%; border: 2px solid #e0e0e0;">
                         ${awayHeaderInfo}
                         ${nameHtml}
@@ -508,9 +509,15 @@ function createMemberRow(matchId, member, hideName = false) {
         generalTitle = `回答期限：${mmdd}(${dayStr}) 20:00`;
     }
 
+    let noticeHtml = '';
+    if (match.awayNotice) {
+        noticeHtml = `<div class="away-notice-box"><div class="away-notice-title">連絡事項</div>${match.awayNotice}</div>`;
+    }
+
     return `
         <div class="attendance-row" data-key="${key}">
             <div class="attendance-input-container">
+                ${noticeHtml}
                 <!-- Janken Box -->
                 <div class="janken-box-wrapper">
                     <div class="janken-outside-header">${jankenHeader}</div>
