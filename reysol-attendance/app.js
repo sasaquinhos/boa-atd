@@ -413,7 +413,7 @@ function createMemberRow(matchId, member, hideName = false) {
     if (isAway) {
         // Away View
         let awayHeaderInfo = '';
-        if (isAwayFree && match.deadline) {
+        if (match.deadline) {
             awayHeaderInfo = `<div class="input-box-title" style="color: #d32f2f; font-weight: bold; margin-bottom: 0.5rem;">回答期限：${formatDateWithDayAndTime(match.deadline)}</div>`;
         }
 
@@ -1384,19 +1384,20 @@ function generateMatchSummaryContent(matchId) {
     }
 
 
-    STATUS_OPTIONS.forEach(opt => {
-        const names = summary[opt.id];
-        if (names && names.length > 0) {
-            let label = opt.label;
-            if (isAway && opt.id === 4) label = 'ゴール裏以外';
-            html += `
-                <div class="summary-item active">
-                    <span class="summary-count">${label}: ${names.length}名</span>
-                    <span class="summary-names">(${names.join(', ')})</span>
-                </div>
-            `;
-        }
-    });
+    if (!isAway) {
+        STATUS_OPTIONS.forEach(opt => {
+            const names = summary[opt.id];
+            if (names && names.length > 0) {
+                let label = opt.label;
+                html += `
+                    <div class="summary-item active">
+                        <span class="summary-count">${label}: ${names.length}名</span>
+                        <span class="summary-names">(${names.join(', ')})</span>
+                    </div>
+                `;
+            }
+        });
+    }
 
 
     // Big Flag Summary
