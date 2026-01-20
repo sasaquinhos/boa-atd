@@ -1064,12 +1064,25 @@ function openEditMatchModal(matchId) {
     const lineOrgFlagInput = document.getElementById('edit-match-line-org-flag');
     const lineOrgTimeInput = document.getElementById('edit-match-line-org-time');
 
-    // Format date string for HTML5 date input (YYYY-MM-DD)
-    if (match.date && match.date.includes('T')) {
-        dateInput.value = match.date.split('T')[0];
-    } else {
-        dateInput.value = match.date;
-    }
+    const formatForInput = (dateStr, isDateTime = false) => {
+        if (!dateStr) return '';
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return dateStr;
+
+        const pad = (num) => String(num).padStart(2, '0');
+        const year = d.getFullYear();
+        const month = pad(d.getMonth() + 1);
+        const day = pad(d.getDate());
+
+        if (isDateTime) {
+            const hours = pad(d.getHours());
+            const minutes = pad(d.getMinutes());
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+        return `${year}-${month}-${day}`;
+    };
+
+    dateInput.value = formatForInput(match.date);
     opponentInput.value = match.opponent;
 
     // Set radios
@@ -1079,12 +1092,12 @@ function openEditMatchModal(matchId) {
     const seatRadios = document.getElementsByName('edit-match-seat-type');
     seatRadios.forEach(r => r.checked = (r.value === (match.seatType || 'free')));
 
-    // Set other fields
-    deadlineInput.value = match.deadline || '';
+    // Set other fields with proper formatting
+    deadlineInput.value = formatForInput(match.deadline, true);
     queueFlagInput.checked = !!match.queueFlag;
-    queueTimeInput.value = match.queueTime || '';
+    queueTimeInput.value = formatForInput(match.queueTime, true);
     lineOrgFlagInput.checked = !!match.lineOrgFlag;
-    lineOrgTimeInput.value = match.lineOrgTime || '';
+    lineOrgTimeInput.value = formatForInput(match.lineOrgTime, true);
 
     // Function for modal UI updates
     const updateModalUI = () => {
