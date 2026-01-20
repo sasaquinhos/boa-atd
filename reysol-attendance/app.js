@@ -289,7 +289,7 @@ function renderMatches() {
             </div>
         ` : '';
 
-        const jankenAdminHtml = isAdmin ? `
+        const jankenAdminHtml = (isAdmin && match.location === 'home') ? `
             <div class="janken-admin-section" style="margin: 0.5rem 1rem; padding-top: 0.5rem; border-top: 1px dashed #eee;">
                 <label style="font-size:0.8rem; font-weight:bold; color:#555;">じゃんけん大会参加確定者</label>
                 <div class="janken-tags-container" style="display:flex; flex-wrap:wrap; gap:0.2rem; margin-bottom:0.2rem; padding:0.2rem; border:1px solid #ddd; background:#fff; min-height:2rem; border-radius:4px;">
@@ -358,7 +358,7 @@ function renderMatches() {
 
 function createMemberRow(matchId, member, hideName = false) {
     const memberName = member.name;
-    const key = `${matchId}_${memberName}`;
+    const key = `${matchId}_${memberName} `;
     const data = state.attendance[key] || { status: null, guestsMain: '', guestsBack: '', bigFlag: false, jankenParticipate: false, morningWithdraw: false };
 
     // Ensure default values
@@ -379,7 +379,7 @@ function createMemberRow(matchId, member, hideName = false) {
         if (isNaN(d.getTime())) return dateStr;
         const days = ['日', '月', '火', '水', '木', '金', '土'];
         const pad = (n) => String(n).padStart(2, '0');
-        return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} (${days[d.getDay()]}) ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        return `${d.getFullYear()} /${pad(d.getMonth() + 1)}/${pad(d.getDate())} (${days[d.getDay()]}) ${pad(d.getHours())}:${pad(d.getMinutes())} `;
     };
 
     const subStatuses = [...STATUS_OPTIONS.filter(opt => opt.id !== 5 && opt.id !== 6 && opt.id !== 7)];
@@ -396,14 +396,14 @@ function createMemberRow(matchId, member, hideName = false) {
         let label = opt.label;
         if (isAway && opt.id === 4) label = 'ゴール裏以外';
         return `
-            <label class="radio-label">
-                <input type="radio" name="status_${key}" value="${opt.id}" ${effectiveStatus == opt.id ? 'checked' : ''} ${isAbsent ? 'disabled' : ''}>
+        < label class="radio-label" >
+            <input type="radio" name="status_${key}" value="${opt.id}" ${effectiveStatus == opt.id ? 'checked' : ''} ${isAbsent ? 'disabled' : ''}>
                 ${label}
             </label>
-        `;
+    `;
     }).join('');
 
-    const nameHtml = hideName ? '' : `<div class="member-name">${memberName}</div>`;
+    const nameHtml = hideName ? '' : `< div class="member-name" > ${memberName}</div > `;
 
     const currentGuests = (parseInt(data.guestsMain) || 0) + (parseInt(data.guestsBack) || 0);
     const guestValue = currentGuests > 0 ? currentGuests : '';
@@ -414,57 +414,57 @@ function createMemberRow(matchId, member, hideName = false) {
         // Away View
         let awayHeaderInfo = '';
         if (isAwayFree && match.deadline) {
-            awayHeaderInfo = `<div class="input-box-title" style="color: #d32f2f; font-weight: bold; margin-bottom: 0.5rem;">回答期限：${formatDateWithDayAndTime(match.deadline)}</div>`;
+            awayHeaderInfo = `< div class="input-box-title" style = "color: #d32f2f; font-weight: bold; margin-bottom: 0.5rem;" > 回答期限：${formatDateWithDayAndTime(match.deadline)}</div > `;
         }
 
         let awayDetailsHtml = '';
         if (isAwayFree) {
             if (match.queueFlag && match.queueTime) {
-                awayDetailsHtml += `<div style="font-size: 0.9rem; margin-bottom: 0.3rem;"><span style="font-weight:bold; color:#1976d2;">並び開始：</span>${formatDateWithDayAndTime(match.queueTime)}</div>`;
+                awayDetailsHtml += `< div style = "font-size: 0.9rem; margin-bottom: 0.3rem;" > <span style="font-weight:bold; color:#1976d2;">並び開始：</span>${formatDateWithDayAndTime(match.queueTime)}</div > `;
             }
             if (match.lineOrgFlag && match.lineOrgTime) {
-                awayDetailsHtml += `<div style="font-size: 0.9rem; margin-bottom: 0.5rem;"><span style="font-weight:bold; color:#388e3c;">列整理：</span>${formatDateWithDayAndTime(match.lineOrgTime)}</div>`;
+                awayDetailsHtml += `< div style = "font-size: 0.9rem; margin-bottom: 0.5rem;" > <span style="font-weight:bold; color:#388e3c;">列整理：</span>${formatDateWithDayAndTime(match.lineOrgTime)}</div > `;
             }
         }
 
         return `
-            <div class="attendance-row" data-key="${key}">
-                <div class="attendance-input-container">
-                    <div class="input-box" style="width: 100%; border: 2px solid #e0e0e0;">
-                        ${awayHeaderInfo}
-                        ${nameHtml}
-                        
-                        <!-- Attend or Absent -->
-                        <div class="presence-selection" style="margin-top: 0.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid #eee;">
-                            <label class="radio-label">
-                                <input type="radio" class="presence-radio" name="presence_${key}" value="attendance" ${!isAbsent ? 'checked' : ''}>
-                                出席
-                            </label>
-                            <label class="radio-label">
-                                <input type="radio" class="presence-radio" name="presence_${key}" value="absence" ${isAbsent ? 'checked' : ''}>
-                                欠席
-                            </label>
-                        </div>
+        < div class="attendance-row" data - key="${key}" >
+            <div class="attendance-input-container">
+                <div class="input-box" style="width: 100%; border: 2px solid #e0e0e0;">
+                    ${awayHeaderInfo}
+                    ${nameHtml}
 
-                        <!-- Details (Only enabled if Attendance is selected) -->
-                        <div class="attendance-details ${isAbsent ? 'disabled-section' : ''}">
-                            ${awayDetailsHtml}
-                            <div class="status-options">
-                                ${radiosHtml}
-                            </div>
-                            <div class="extra-guests">
-                                <label>自分以外の人数:</label>
-                                <div class="guest-inputs-container" style="margin-top:0;">
-                                    <div class="guest-input-group">
-                                        <input type="number" class="guest-input guest-input-unified" min="0" value="${guestValue}" placeholder="0" style="width: 60px;" ${isAbsent ? 'disabled' : ''}>
+                    <!-- Attend or Absent -->
+                    <div class="presence-selection" style="margin-top: 0.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid #eee;">
+                        <label class="radio-label">
+                            <input type="radio" class="presence-radio" name="presence_${key}" value="attendance" ${!isAbsent ? 'checked' : ''}>
+                                出席
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" class="presence-radio" name="presence_${key}" value="absence" ${isAbsent ? 'checked' : ''}>
+                                欠席
+                        </label>
+                    </div>
+
+                    <!-- Details (Only enabled if Attendance is selected) -->
+                    <div class="attendance-details ${isAbsent ? 'disabled-section' : ''}">
+                        ${awayDetailsHtml}
+                        <div class="status-options">
+                            ${radiosHtml}
+                        </div>
+                        <div class="extra-guests">
+                            <label>自分以外の人数:</label>
+                            <div class="guest-inputs-container" style="margin-top:0;">
+                                <div class="guest-input-group">
+                                    <input type="number" class="guest-input guest-input-unified" min="0" value="${guestValue}" placeholder="0" style="width: 60px;" ${isAbsent ? 'disabled' : ''}>
                                         <span style="font-size: 0.8rem; color: #666; margin-left: 0.5rem;">名 (${SECTION_LABELS[member.section] || 'TOP'})</span>
-                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+            </div >
         `;
     }
 
@@ -1320,43 +1320,45 @@ function generateMatchSummaryContent(matchId) {
         }
     });
 
+    const isAway = match && match.location === 'away';
     let html = '<div class="match-summary"><div class="summary-title">集計</div>';
 
-    // Janken Summary (Top Priority)
-    const jankenParticipants = state.members.filter(member => {
-        const key = `${matchId}_${member.name}`;
-        const data = state.attendance[key];
-        return data && data.jankenParticipate;
-    }).map(m => m.name);
+    if (!isAway) {
+        // Janken Summary (Top Priority)
+        const jankenParticipants = state.members.filter(member => {
+            const key = `${matchId}_${member.name}`;
+            const data = state.attendance[key];
+            return data && data.jankenParticipate;
+        }).map(m => m.name);
 
-    if (jankenParticipants.length > 0) {
-        html += `
-            <div class="summary-item active" style="background-color: #ffebee; border: 1px solid #ef5350;">
-                <span class="summary-count" style="color: #c62828;">じゃんけん大会立候補者: ${jankenParticipants.length}名</span>
-                <span class="summary-names">(${jankenParticipants.join(', ')})</span>
-            </div>
-        `;
-    }
+        if (jankenParticipants.length > 0) {
+            html += `
+                <div class="summary-item active" style="background-color: #ffebee; border: 1px solid #ef5350;">
+                    <span class="summary-count" style="color: #c62828;">じゃんけん大会立候補者: ${jankenParticipants.length}名</span>
+                    <span class="summary-names">(${jankenParticipants.join(', ')})</span>
+                </div>
+            `;
+        }
 
-    // Morning Withdraw Summary (Moved below Janken Candidates)
-    const morningMembers = state.members.filter(member => {
-        const key = `${matchId}_${member.name}`;
-        const data = state.attendance[key];
-        return data && data.morningWithdraw;
-    }).map(m => m.name);
+        // Morning Withdraw Summary (Moved below Janken Candidates)
+        const morningMembers = state.members.filter(member => {
+            const key = `${matchId}_${member.name}`;
+            const data = state.attendance[key];
+            return data && data.morningWithdraw;
+        }).map(m => m.name);
 
-    if (morningMembers.length > 0) {
-        html += `
-            <div class="summary-item active" style="background-color: #f1f8e9; border: 1px solid #8bc34a; margin-top: 0.5rem;">
-                <span class="summary-count" style="color: #33691e;">朝の引き込み: ${morningMembers.length}名</span>
-                <span class="summary-names">(${morningMembers.join(', ')})</span>
-            </div>
-        `;
+        if (morningMembers.length > 0) {
+            html += `
+                <div class="summary-item active" style="background-color: #f1f8e9; border: 1px solid #8bc34a; margin-top: 0.5rem;">
+                    <span class="summary-count" style="color: #33691e;">朝の引き込み: ${morningMembers.length}名</span>
+                    <span class="summary-names">(${morningMembers.join(', ')})</span>
+                </div>
+            `;
+        }
     }
 
     const totalMain = memberMain + guestMain;
     const totalBack = memberBack + guestBack;
-    const isAway = match && match.location === 'away';
 
     // Add Total Count Breakdown
     if (totalMain > 0 || totalBack > 0 || outsideTotal > 0) {
