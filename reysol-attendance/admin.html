@@ -102,6 +102,19 @@
                                     <input type="datetime-local" id="new-match-queue-time" style="padding: 0.3rem;">
                                 </div>
                             </div>
+                            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <label
+                                        style="display: flex; align-items: center; gap: 0.3rem; font-weight: bold; font-size: 0.9rem;">
+                                        <input type="checkbox" id="new-match-line-org-flag"> 列整理
+                                    </label>
+                                </div>
+                                <div id="line-org-time-container"
+                                    style="display: none; align-items: center; gap: 0.5rem; padding-left: 1.5rem;">
+                                    <span style="font-size: 0.9rem;">日時:</span>
+                                    <input type="datetime-local" id="new-match-line-org-time" style="padding: 0.3rem;">
+                                </div>
+                            </div>
                         </div>
 
                         <button id="add-match-btn" class="btn btn-primary">試合を追加</button>
