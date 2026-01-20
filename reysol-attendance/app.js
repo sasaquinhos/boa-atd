@@ -8,7 +8,7 @@ const state = {
     matchLimit: 10
 };
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbzh1zzWLgU-SGNLe0TrlM1gQSbXi93aW_CcnoJuaTI536LG3OcJpJBHXS1g0bwjupnS2Q/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbywRN_oNWEl25L2Rm7taLwexuhPZxl2XoLqATAyh_B7JpTq_7r0gBgOBFO5wjP8IFBxhg/exec';
 
 // DOM Elements
 const matchesContainer = document.getElementById('matches-container');
@@ -1046,18 +1046,107 @@ function attachMatchListeners() {
     document.querySelectorAll('.edit-match-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const id = parseInt(e.target.dataset.id);
-            const match = state.matches.find(m => m.id === id);
-            if (match) {
-                const newOpponent = prompt('新しい対戦相手を入力してください:', match.opponent);
-                if (newOpponent && newOpponent.trim() !== '') {
-                    match.opponent = newOpponent.trim();
-                    saveToLocal();
-                    renderMatches();
-                    apiCall('update_match', { id: id, opponent: match.opponent });
-                }
-            }
+            openEditMatchModal(id);
         });
     });
+}
+
+function openEditMatchModal(matchId) {
+    const match = state.matches.find(m => m.id === matchId);
+    if (!match) return;
+
+    const modal = document.getElementById('edit-match-modal');
+    const dateInput = document.getElementById('edit-match-date');
+    const opponentInput = document.getElementById('edit-match-opponent');
+    const deadlineInput = document.getElementById('edit-match-deadline');
+    const queueFlagInput = document.getElementById('edit-match-queue-flag');
+    const queueTimeInput = document.getElementById('edit-match-queue-time');
+    const lineOrgFlagInput = document.getElementById('edit-match-line-org-flag');
+    const lineOrgTimeInput = document.getElementById('edit-match-line-org-time');
+
+    dateInput.value = match.date;
+    opponentInput.value = match.opponent;
+
+    // Set radios
+    const locRadios = document.getElementsByName('edit-match-location');
+    locRadios.forEach(r => r.checked = (r.value === (match.location || 'home')));
+
+    const seatRadios = document.getElementsByName('edit-match-seat-type');
+    seatRadios.forEach(r => r.checked = (r.value === (match.seatType || 'free')));
+
+    // Set other fields
+    deadlineInput.value = match.deadline || '';
+    queueFlagInput.checked = !!match.queueFlag;
+    queueTimeInput.value = match.queueTime || '';
+    lineOrgFlagInput.checked = !!match.lineOrgFlag;
+    lineOrgTimeInput.value = match.lineOrgTime || '';
+
+    // Function for modal UI updates
+    const updateModalUI = () => {
+        const loc = Array.from(locRadios).find(r => r.checked)?.value || 'home';
+        const seat = Array.from(seatRadios).find(r => r.checked)?.value || 'free';
+
+        const seatContainer = document.getElementById('edit-away-seat-type-container');
+        const generalDetails = document.getElementById('edit-away-general-details');
+
+        if (loc === 'away') {
+            seatContainer.style.display = 'flex';
+            generalDetails.style.display = (seat === 'free') ? 'flex' : 'none';
+        } else {
+            seatContainer.style.display = 'none';
+            generalDetails.style.display = 'none';
+        }
+
+        document.getElementById('edit-queue-time-container').style.display = queueFlagInput.checked ? 'flex' : 'none';
+        document.getElementById('edit-line-org-time-container').style.display = lineOrgFlagInput.checked ? 'flex' : 'none';
+    };
+
+    // Attach listeners for modal
+    locRadios.forEach(r => r.onchange = updateModalUI);
+    seatRadios.forEach(r => r.onchange = updateModalUI);
+    queueFlagInput.onchange = updateModalUI;
+    lineOrgFlagInput.onchange = updateModalUI;
+
+    updateModalUI();
+    modal.style.display = 'flex';
+
+    // Save/Cancel
+    document.getElementById('save-edit-match').onclick = () => {
+        const loc = Array.from(locRadios).find(r => r.checked)?.value || 'home';
+        const seat = Array.from(seatRadios).find(r => r.checked)?.value || 'free';
+
+        const updatedMatch = {
+            id: matchId,
+            date: dateInput.value,
+            opponent: opponentInput.value.trim(),
+            location: loc,
+            seatType: (loc === 'away' ? seat : ''),
+            deadline: (loc === 'away' && seat === 'free' ? deadlineInput.value : ''),
+            queueFlag: (loc === 'away' && seat === 'free' ? queueFlagInput.checked : false),
+            queueTime: (loc === 'away' && seat === 'free' && queueFlagInput.checked ? queueTimeInput.value : ''),
+            lineOrgFlag: (loc === 'away' && seat === 'free' ? lineOrgFlagInput.checked : false),
+            lineOrgTime: (loc === 'away' && seat === 'free' && lineOrgFlagInput.checked ? lineOrgTimeInput.value : '')
+        };
+
+        if (!updatedMatch.date || !updatedMatch.opponent) {
+            alert('日付と対戦相手を入力してください');
+            return;
+        }
+
+        // Update local state
+        const idx = state.matches.findIndex(m => m.id === matchId);
+        if (idx !== -1) {
+            state.matches[idx] = { ...state.matches[idx], ...updatedMatch };
+            saveToLocal();
+            renderMatches();
+            modal.style.display = 'none';
+            apiCall('update_match', updatedMatch);
+        }
+    };
+
+    document.getElementById('cancel-edit-match').onclick = () => {
+        modal.style.display = 'none';
+    };
 }
 
 function renderMembersAdmin() {
