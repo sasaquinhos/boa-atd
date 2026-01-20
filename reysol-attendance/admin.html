@@ -63,10 +63,25 @@
                 </div>
                 <div class="control-group">
                     <h3>試合日追加</h3>
-                    <div class="input-group">
-                        <input type="date" id="new-match-date">
-                        <input type="text" id="new-match-opponent" placeholder="対戦相手 (例: vs 浦和)">
-                        <button id="add-match-btn" class="btn btn-primary">追加</button>
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <div class="input-group">
+                            <input type="date" id="new-match-date">
+                            <input type="text" id="new-match-opponent" placeholder="対戦相手 (例: vs 浦和)">
+                        </div>
+                        <div
+                            style="display: flex; align-items: center; gap: 1rem; padding: 0.5rem; background: #f9f9f9; border-radius: 4px;">
+                            <span style="font-weight: bold; font-size: 0.9rem;">開催区分:</span>
+                            <label><input type="radio" name="new-match-location" value="home" checked> ホーム</label>
+                            <label><input type="radio" name="new-match-location" value="away"> アウェイ</label>
+
+                            <div id="away-seat-type-container"
+                                style="display: none; align-items: center; gap: 1rem; border-left: 1px solid #ccc; padding-left: 1rem; margin-left: 0.5rem;">
+                                <span style="font-weight: bold; font-size: 0.9rem;">席種:</span>
+                                <label><input type="radio" name="new-match-seat-type" value="free" checked> 自由席</label>
+                                <label><input type="radio" name="new-match-seat-type" value="reserved"> 指定席</label>
+                            </div>
+                        </div>
+                        <button id="add-match-btn" class="btn btn-primary">試合を追加</button>
                     </div>
                 </div>
                 <div class="control-group">
