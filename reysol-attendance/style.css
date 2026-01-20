@@ -198,8 +198,28 @@ input[type="number"] {
 }
 
 .match-date {
+    display: block;
     color: #666;
     font-size: 0.9rem;
+}
+
+.match-location-badge {
+    display: inline-block;
+    padding: 0.1rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    margin-top: 0.2rem;
+}
+
+.location-home {
+    background-color: #FCD116;
+    color: #000;
+}
+
+.location-away {
+    background-color: #666;
+    color: #fff;
 }
 
 .match-controls {
