@@ -8,7 +8,7 @@ const state = {
     matchLimit: 10
 };
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbywRN_oNWEl25L2Rm7taLwexuhPZxl2XoLqATAyh_B7JpTq_7r0gBgOBFO5wjP8IFBxhg/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbwcuqJk9zuxWuvwjk06UeqmbwbZ1dzony20Fsf04vNMsCueca1W6m89GmBENYfq08IBLQ/exec';
 
 // DOM Elements
 const matchesContainer = document.getElementById('matches-container');
@@ -415,7 +415,11 @@ function createMemberRow(matchId, member, hideName = false) {
         // Away View
         let awayHeaderInfo = '';
         if (match.deadline) {
-            awayHeaderInfo = `<div class="input-box-title" style="color: #d32f2f; font-weight: bold; margin-bottom: 0.5rem;">回答期限：${formatDateWithDayAndTime(match.deadline)}</div>`;
+            awayHeaderInfo += `<div style="font-size:0.9rem; color:#d32f2f; font-weight:bold; margin-top:0.3rem;">回答期限: ${formatDateWithDayAndTime(match.deadline)}</div>`;
+        }
+
+        if (match.awayNotice) {
+            awayHeaderInfo = `<div class="away-notice-box"><div class="away-notice-title">注意事項</div>${match.awayNotice}</div>` + awayHeaderInfo;
         }
 
         let awayDetailsHtml = '';
@@ -640,6 +644,7 @@ function setupEventListeners() {
             const queueTime = document.getElementById('new-match-queue-time').value;
             const lineOrgFlag = document.getElementById('new-match-line-org-flag').checked;
             const lineOrgTime = document.getElementById('new-match-line-org-time').value;
+            const awayNotice = document.getElementById('new-match-away-notice').value;
 
             if (date && opponent) {
                 const isAwayFree = (location === 'away' && seatType === 'free');
@@ -653,7 +658,8 @@ function setupEventListeners() {
                     queueFlag: (isAwayFree ? queueFlag : false),
                     queueTime: (isAwayFree ? queueTime : ''),
                     lineOrgFlag: (isAwayFree ? lineOrgFlag : false),
-                    lineOrgTime: (isAwayFree ? lineOrgTime : '')
+                    lineOrgTime: (isAwayFree ? lineOrgTime : ''),
+                    awayNotice: (location === 'away' ? awayNotice : '')
                 };
                 // Optimistic Update
                 state.matches.push(newMatch);
@@ -680,6 +686,7 @@ function setupEventListeners() {
                 document.getElementById('new-match-line-org-flag').checked = false;
                 document.getElementById('new-match-line-org-time').value = '';
                 document.getElementById('line-org-time-container').style.display = 'none';
+                document.getElementById('new-match-away-notice').value = ''; // Reset awayNotice
 
                 // API Call
                 apiCall('add_match', newMatch);
@@ -1191,6 +1198,7 @@ function openEditMatchModal(matchId) {
     queueTimeInput.value = formatForInput(match.queueTime, true);
     lineOrgFlagInput.checked = !!match.lineOrgFlag;
     lineOrgTimeInput.value = formatForInput(match.lineOrgTime, true);
+    document.getElementById('edit-match-away-notice').value = match.awayNotice || '';
 
     // Function for modal UI updates
     const updateModalUI = () => {
@@ -1238,7 +1246,8 @@ function openEditMatchModal(matchId) {
             opponent: opponentInput.value.trim(),
             location: loc,
             seatType: (loc === 'away' ? seat : ''),
-            deadline: (loc === 'away' && seat === 'free' ? deadlineInput.value : ''),
+            deadline: (loc === 'away' ? deadlineInput.value : ''),
+            awayNotice: (loc === 'away' ? document.getElementById('edit-match-away-notice').value : ''),
             queueFlag: (loc === 'away' && seat === 'free' ? queueFlagInput.checked : false),
             queueTime: (loc === 'away' && seat === 'free' && queueFlagInput.checked ? queueTimeInput.value : ''),
             lineOrgFlag: (loc === 'away' && seat === 'free' ? lineOrgFlagInput.checked : false),
