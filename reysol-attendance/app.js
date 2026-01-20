@@ -8,7 +8,7 @@ const state = {
     matchLimit: 10
 };
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbz1RfRzPM_ORYz2LYoKnOU4QUIqcJy2m6P1gJUcJdiVsm9McNyPENEKGX9NPjppS2_daw/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbxwPQYUM0pNi1h0hQ3sZ6sR4Xe0wid6ELMB7VQ73Vp1BYyHm1dvj60kNasU9assgyBtzg/exec';
 
 // DOM Elements
 const matchesContainer = document.getElementById('matches-container');
@@ -544,13 +544,21 @@ function setupEventListeners() {
             const seatTypeRadio = document.querySelector('input[name="new-match-seat-type"]:checked');
             const seatType = (location === 'away' && seatTypeRadio) ? seatTypeRadio.value : '';
 
+            // New fields
+            const deadline = document.getElementById('new-match-deadline').value;
+            const queueFlag = document.getElementById('new-match-queue-flag').checked;
+            const queueTime = document.getElementById('new-match-queue-time').value;
+
             if (date && opponent) {
                 const newMatch = {
                     id: Date.now(),
                     date,
                     opponent,
                     location,
-                    seatType
+                    seatType,
+                    deadline,
+                    queueFlag,
+                    queueTime
                 };
                 // Optimistic Update
                 state.matches.push(newMatch);
@@ -559,11 +567,20 @@ function setupEventListeners() {
                 newMatchDateInput.value = '';
                 newMatchOpponentInput.value = '';
 
-                // Reset radio buttons
+                // Reset radio buttons and fields
                 const homeRadio = document.querySelector('input[name="new-match-location"][value="home"]');
                 if (homeRadio) homeRadio.checked = true;
-                const container = document.getElementById('away-seat-type-container');
-                if (container) container.style.display = 'none';
+
+                const seatContainer = document.getElementById('away-seat-type-container');
+                if (seatContainer) seatContainer.style.display = 'none';
+
+                const detailContainer = document.getElementById('away-general-details');
+                if (detailContainer) detailContainer.style.display = 'none';
+
+                document.getElementById('new-match-deadline').value = '';
+                document.getElementById('new-match-queue-flag').checked = false;
+                document.getElementById('new-match-queue-time').value = '';
+                document.getElementById('queue-time-container').style.display = 'none';
 
                 // API Call
                 apiCall('add_match', newMatch);
@@ -572,18 +589,41 @@ function setupEventListeners() {
             }
         });
 
-        // Location Radio Toggle for Seat Type
+        // Toggle Listeners
         const locationRadios = document.querySelectorAll('input[name="new-match-location"]');
         const awaySeatTypeContainer = document.getElementById('away-seat-type-container');
-        if (locationRadios.length > 0 && awaySeatTypeContainer) {
-            locationRadios.forEach(radio => {
-                radio.addEventListener('change', (e) => {
-                    if (e.target.value === 'away') {
-                        awaySeatTypeContainer.style.display = 'flex';
-                    } else {
-                        awaySeatTypeContainer.style.display = 'none';
-                    }
-                });
+        const awayGeneralDetails = document.getElementById('away-general-details');
+
+        function updateAwayUI() {
+            const loc = document.querySelector('input[name="new-match-location"]:checked').value;
+            const seat = document.querySelector('input[name="new-match-seat-type"]:checked').value;
+
+            if (loc === 'away') {
+                awaySeatTypeContainer.style.display = 'flex';
+                if (seat === 'free') {
+                    awayGeneralDetails.style.display = 'flex';
+                } else {
+                    awayGeneralDetails.style.display = 'none';
+                }
+            } else {
+                awaySeatTypeContainer.style.display = 'none';
+                awayGeneralDetails.style.display = 'none';
+            }
+        }
+
+        locationRadios.forEach(radio => {
+            radio.addEventListener('change', updateAwayUI);
+        });
+
+        document.querySelectorAll('input[name="new-match-seat-type"]').forEach(radio => {
+            radio.addEventListener('change', updateAwayUI);
+        });
+
+        const queueFlagCheckbox = document.getElementById('new-match-queue-flag');
+        const queueTimeContainer = document.getElementById('queue-time-container');
+        if (queueFlagCheckbox && queueTimeContainer) {
+            queueFlagCheckbox.addEventListener('change', (e) => {
+                queueTimeContainer.style.display = e.target.checked ? 'flex' : 'none';
             });
         }
     }
