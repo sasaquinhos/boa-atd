@@ -358,7 +358,7 @@ function renderMatches() {
 
 function createMemberRow(matchId, member, hideName = false) {
     const memberName = member.name;
-    const key = `${matchId}_${memberName} `;
+    const key = `${matchId}_${memberName}`;
     const data = state.attendance[key] || { status: null, guestsMain: '', guestsBack: '', bigFlag: false, jankenParticipate: false, morningWithdraw: false };
 
     // Ensure default values
@@ -379,7 +379,7 @@ function createMemberRow(matchId, member, hideName = false) {
         if (isNaN(d.getTime())) return dateStr;
         const days = ['日', '月', '火', '水', '木', '金', '土'];
         const pad = (n) => String(n).padStart(2, '0');
-        return `${d.getFullYear()} /${pad(d.getMonth() + 1)}/${pad(d.getDate())} (${days[d.getDay()]}) ${pad(d.getHours())}:${pad(d.getMinutes())} `;
+        return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} (${days[d.getDay()]}) ${pad(d.getHours())}:${pad(d.getMinutes())}`;
     };
 
     const subStatuses = [...STATUS_OPTIONS.filter(opt => opt.id !== 5 && opt.id !== 6 && opt.id !== 7)];
@@ -396,14 +396,14 @@ function createMemberRow(matchId, member, hideName = false) {
         let label = opt.label;
         if (isAway && opt.id === 4) label = 'ゴール裏以外';
         return `
-        < label class="radio-label" >
-            <input type="radio" name="status_${key}" value="${opt.id}" ${effectiveStatus == opt.id ? 'checked' : ''} ${isAbsent ? 'disabled' : ''}>
+            <label class="radio-label">
+                <input type="radio" name="status_${key}" value="${opt.id}" ${effectiveStatus == opt.id ? 'checked' : ''} ${isAbsent ? 'disabled' : ''}>
                 ${label}
             </label>
-    `;
+        `;
     }).join('');
 
-    const nameHtml = hideName ? '' : `< div class="member-name" > ${memberName}</div > `;
+    const nameHtml = hideName ? '' : `<div class="member-name">${memberName}</div>`;
 
     const currentGuests = (parseInt(data.guestsMain) || 0) + (parseInt(data.guestsBack) || 0);
     const guestValue = currentGuests > 0 ? currentGuests : '';
@@ -414,57 +414,57 @@ function createMemberRow(matchId, member, hideName = false) {
         // Away View
         let awayHeaderInfo = '';
         if (isAwayFree && match.deadline) {
-            awayHeaderInfo = `< div class="input-box-title" style = "color: #d32f2f; font-weight: bold; margin-bottom: 0.5rem;" > 回答期限：${formatDateWithDayAndTime(match.deadline)}</div > `;
+            awayHeaderInfo = `<div class="input-box-title" style="color: #d32f2f; font-weight: bold; margin-bottom: 0.5rem;">回答期限：${formatDateWithDayAndTime(match.deadline)}</div>`;
         }
 
         let awayDetailsHtml = '';
         if (isAwayFree) {
             if (match.queueFlag && match.queueTime) {
-                awayDetailsHtml += `< div style = "font-size: 0.9rem; margin-bottom: 0.3rem;" > <span style="font-weight:bold; color:#1976d2;">並び開始：</span>${formatDateWithDayAndTime(match.queueTime)}</div > `;
+                awayDetailsHtml += `<div style="font-size: 0.9rem; margin-bottom: 0.3rem;"><span style="font-weight:bold; color:#1976d2;">並び開始：</span>${formatDateWithDayAndTime(match.queueTime)}</div>`;
             }
             if (match.lineOrgFlag && match.lineOrgTime) {
-                awayDetailsHtml += `< div style = "font-size: 0.9rem; margin-bottom: 0.5rem;" > <span style="font-weight:bold; color:#388e3c;">列整理：</span>${formatDateWithDayAndTime(match.lineOrgTime)}</div > `;
+                awayDetailsHtml += `<div style="font-size: 0.9rem; margin-bottom: 0.5rem;"><span style="font-weight:bold; color:#388e3c;">列整理：</span>${formatDateWithDayAndTime(match.lineOrgTime)}</div>`;
             }
         }
 
         return `
-        < div class="attendance-row" data - key="${key}" >
-            <div class="attendance-input-container">
-                <div class="input-box" style="width: 100%; border: 2px solid #e0e0e0;">
-                    ${awayHeaderInfo}
-                    ${nameHtml}
+            <div class="attendance-row" data-key="${key}">
+                <div class="attendance-input-container">
+                    <div class="input-box" style="width: 100%; border: 2px solid #e0e0e0;">
+                        ${awayHeaderInfo}
+                        ${nameHtml}
 
-                    <!-- Attend or Absent -->
-                    <div class="presence-selection" style="margin-top: 0.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid #eee;">
-                        <label class="radio-label">
-                            <input type="radio" class="presence-radio" name="presence_${key}" value="attendance" ${!isAbsent ? 'checked' : ''}>
+                        <!-- Attend or Absent -->
+                        <div class="presence-selection" style="margin-top: 0.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid #eee;">
+                            <label class="radio-label">
+                                <input type="radio" class="presence-radio" name="presence_${key}" value="attendance" ${!isAbsent ? 'checked' : ''}>
                                 出席
-                        </label>
-                        <label class="radio-label">
-                            <input type="radio" class="presence-radio" name="presence_${key}" value="absence" ${isAbsent ? 'checked' : ''}>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" class="presence-radio" name="presence_${key}" value="absence" ${isAbsent ? 'checked' : ''}>
                                 欠席
-                        </label>
-                    </div>
-
-                    <!-- Details (Only enabled if Attendance is selected) -->
-                    <div class="attendance-details ${isAbsent ? 'disabled-section' : ''}">
-                        ${awayDetailsHtml}
-                        <div class="status-options">
-                            ${radiosHtml}
+                            </label>
                         </div>
-                        <div class="extra-guests">
-                            <label>自分以外の人数:</label>
-                            <div class="guest-inputs-container" style="margin-top:0;">
-                                <div class="guest-input-group">
-                                    <input type="number" class="guest-input guest-input-unified" min="0" value="${guestValue}" placeholder="0" style="width: 60px;" ${isAbsent ? 'disabled' : ''}>
+
+                        <!-- Details (Only enabled if Attendance is selected) -->
+                        <div class="attendance-details ${isAbsent ? 'disabled-section' : ''}">
+                            ${awayDetailsHtml}
+                            <div class="status-options">
+                                ${radiosHtml}
+                            </div>
+                            <div class="extra-guests">
+                                <label>自分以外の人数:</label>
+                                <div class="guest-inputs-container" style="margin-top:0;">
+                                    <div class="guest-input-group">
+                                        <input type="number" class="guest-input guest-input-unified" min="0" value="${guestValue}" placeholder="0" style="width: 60px;" ${isAbsent ? 'disabled' : ''}>
                                         <span style="font-size: 0.8rem; color: #666; margin-left: 0.5rem;">名 (${SECTION_LABELS[member.section] || 'TOP'})</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            </div >
         `;
     }
 
