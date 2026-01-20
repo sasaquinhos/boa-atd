@@ -419,7 +419,7 @@ function createMemberRow(matchId, member, hideName = false) {
         }
 
         if (match.awayNotice) {
-            awayHeaderInfo = `<div class="away-notice-box"><div class="away-notice-title">注意事項</div>${match.awayNotice}</div>` + awayHeaderInfo;
+            awayHeaderInfo = `<div class="away-notice-box"><div class="away-notice-title">連絡事項</div>${match.awayNotice}</div>` + awayHeaderInfo;
         }
 
         let awayDetailsHtml = '';
@@ -659,7 +659,7 @@ function setupEventListeners() {
                     queueTime: (isAwayFree ? queueTime : ''),
                     lineOrgFlag: (isAwayFree ? lineOrgFlag : false),
                     lineOrgTime: (isAwayFree ? lineOrgTime : ''),
-                    awayNotice: (location === 'away' ? awayNotice : '')
+                    awayNotice: awayNotice
                 };
                 // Optimistic Update
                 state.matches.push(newMatch);
@@ -1247,7 +1247,7 @@ function openEditMatchModal(matchId) {
             location: loc,
             seatType: (loc === 'away' ? seat : ''),
             deadline: (loc === 'away' ? deadlineInput.value : ''),
-            awayNotice: (loc === 'away' ? document.getElementById('edit-match-away-notice').value : ''),
+            awayNotice: document.getElementById('edit-match-away-notice').value,
             queueFlag: (loc === 'away' && seat === 'free' ? queueFlagInput.checked : false),
             queueTime: (loc === 'away' && seat === 'free' && queueFlagInput.checked ? queueTimeInput.value : ''),
             lineOrgFlag: (loc === 'away' && seat === 'free' ? lineOrgFlagInput.checked : false),
