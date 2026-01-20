@@ -368,13 +368,20 @@ function createMemberRow(matchId, member, hideName = false) {
     const jankenConfirmedText = match ? (match.jankenConfirmed || '') : '';
     const isAbsent = data.status == 5;
 
+    const isAway = match && match.location === 'away';
+    const isAwayFree = isAway && match.seatType === 'free';
+
     const subStatuses = STATUS_OPTIONS.filter(opt => opt.id !== 5);
-    let radiosHtml = subStatuses.map(opt => `
-        <label class="radio-label">
-            <input type="radio" name="status_${key}" value="${opt.id}" ${data.status == opt.id ? 'checked' : ''} ${isAbsent ? 'disabled' : ''}>
-            ${opt.label}
-        </label>
-    `).join('');
+    let radiosHtml = subStatuses.map(opt => {
+        let label = opt.label;
+        if (isAway && opt.id === 4) label = 'ゴール裏以外';
+        return `
+            <label class="radio-label">
+                <input type="radio" name="status_${key}" value="${opt.id}" ${data.status == opt.id ? 'checked' : ''} ${isAbsent ? 'disabled' : ''}>
+                ${label}
+            </label>
+        `;
+    }).join('');
 
     const nameHtml = hideName ? '' : `<div class="member-name">${memberName}</div>`;
 
@@ -382,6 +389,75 @@ function createMemberRow(matchId, member, hideName = false) {
     const guestValue = currentGuests > 0 ? currentGuests : '';
 
     const matchDate = match ? new Date(match.date) : null;
+
+    if (isAway) {
+        // Away View
+        let awayHeaderInfo = '';
+        if (isAwayFree && match.deadline) {
+            const d = new Date(match.deadline);
+            const mmdd = `${d.getMonth() + 1}/${d.getDate()}`;
+            const days = ['日', '月', '火', '水', '木', '金', '土'];
+            const dayStr = days[d.getDay()];
+            const timeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+            awayHeaderInfo = `<div class="input-box-title" style="color: #d32f2f; font-weight: bold; margin-bottom: 0.5rem;">回答期限：${mmdd}(${dayStr}) ${timeStr}</div>`;
+        }
+
+        let awayDetailsHtml = '';
+        if (isAwayFree) {
+            if (match.queueFlag && match.queueTime) {
+                const d = new Date(match.queueTime);
+                const timeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+                awayDetailsHtml += `<div style="font-size: 0.9rem; margin-bottom: 0.3rem;"><span style="font-weight:bold; color:#1976d2;">並び開始：</span>${timeStr}</div>`;
+            }
+            if (match.lineOrgFlag && match.lineOrgTime) {
+                const d = new Date(match.lineOrgTime);
+                const timeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+                awayDetailsHtml += `<div style="font-size: 0.9rem; margin-bottom: 0.5rem;"><span style="font-weight:bold; color:#388e3c;">列整理：</span>${timeStr}</div>`;
+            }
+        }
+
+        return `
+            <div class="attendance-row" data-key="${key}">
+                <div class="attendance-input-container">
+                    <div class="input-box" style="width: 100%; border: 2px solid #e0e0e0;">
+                        ${awayHeaderInfo}
+                        ${nameHtml}
+                        
+                        <!-- Attend or Absent -->
+                        <div class="presence-selection" style="margin-top: 0.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid #eee;">
+                            <label class="radio-label">
+                                <input type="radio" class="presence-radio" name="presence_${key}" value="attendance" ${!isAbsent ? 'checked' : ''}>
+                                出席
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" class="presence-radio" name="presence_${key}" value="absence" ${isAbsent ? 'checked' : ''}>
+                                欠席
+                            </label>
+                        </div>
+
+                        <!-- Details (Only enabled if Attendance is selected) -->
+                        <div class="attendance-details ${isAbsent ? 'disabled-section' : ''}">
+                            ${awayDetailsHtml}
+                            <div class="status-options">
+                                ${radiosHtml}
+                            </div>
+                            <div class="extra-guests">
+                                <label>自分以外の人数:</label>
+                                <div class="guest-inputs-container" style="margin-top:0;">
+                                    <div class="guest-input-group">
+                                        <input type="number" class="guest-input guest-input-unified" min="0" value="${guestValue}" placeholder="0" style="width: 60px;" ${isAbsent ? 'disabled' : ''}>
+                                        <span style="font-size: 0.8rem; color: #666; margin-left: 0.5rem;">名 (${SECTION_LABELS[member.section] || 'TOP'})</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Default Home View
     let jankenLabelSuffix = '';
     if (matchDate) {
         const prevDate = new Date(matchDate);
