@@ -369,6 +369,7 @@ function createMemberRow(matchId, member, hideName = false) {
     const match = state.matches.find(m => m.id == matchId);
     const jankenConfirmedText = match ? (match.jankenConfirmed || '') : '';
     const isAbsent = data.status == 5;
+    const isAttending = data.status !== null && data.status != 5;
 
     const isAway = match && match.location === 'away';
     const isAwayFree = isAway && match.seatType === 'free';
@@ -397,7 +398,7 @@ function createMemberRow(matchId, member, hideName = false) {
         if (isAway && opt.id === 4) label = 'ゴール裏以外';
         return `
             <label class="radio-label">
-                <input type="radio" name="status_${key}" value="${opt.id}" ${effectiveStatus == opt.id ? 'checked' : ''} ${isAbsent ? 'disabled' : ''}>
+                <input type="radio" name="status_${key}" value="${opt.id}" ${effectiveStatus == opt.id ? 'checked' : ''} ${!isAttending ? 'disabled' : ''}>
                 ${label}
             </label>
         `;
@@ -437,7 +438,7 @@ function createMemberRow(matchId, member, hideName = false) {
                         <!-- Attend or Absent -->
                         <div class="presence-selection" style="margin-top: 0.5rem; padding-bottom: 0.75rem; border-bottom: 2px solid #e0e0e0;">
                             <label class="radio-label">
-                                <input type="radio" class="presence-radio" name="presence_${key}" value="attendance" ${!isAbsent ? 'checked' : ''}>
+                                <input type="radio" class="presence-radio" name="presence_${key}" value="attendance" ${isAttending ? 'checked' : ''}>
                                 出席
                             </label>
                             <label class="radio-label">
@@ -447,7 +448,7 @@ function createMemberRow(matchId, member, hideName = false) {
                         </div>
 
                         <!-- Details (Only enabled if Attendance is selected) -->
-                        <div class="attendance-details ${isAbsent ? 'disabled-section' : ''}">
+                        <div class="attendance-details ${!isAttending ? 'disabled-section' : ''}">
                             ${isAwayFree ? `
                                 ${awayDetailsHtml}
                                 <div class="status-options">
@@ -458,7 +459,7 @@ function createMemberRow(matchId, member, hideName = false) {
                                 <label>自分以外の人数:</label>
                                 <div class="guest-inputs-container" style="margin-top:0;">
                                     <div class="guest-input-group">
-                                        <input type="number" class="guest-input guest-input-unified" min="0" value="${guestValue}" placeholder="0" style="width: 60px;" ${isAbsent ? 'disabled' : ''}>
+                                        <input type="number" class="guest-input guest-input-unified" min="0" value="${guestValue}" placeholder="0" style="width: 60px;" ${!isAttending ? 'disabled' : ''}>
                                         <span style="font-size: 0.8rem; color: #666; margin-left: 0.5rem;">名 (${SECTION_LABELS[member.section] || 'TOP'})</span>
                                     </div>
                                 </div>
@@ -539,7 +540,7 @@ function createMemberRow(matchId, member, hideName = false) {
                         <!-- Attend or Absent -->
                         <div class="presence-selection">
                             <label class="radio-label">
-                                <input type="radio" class="presence-radio" name="presence_${key}" value="attendance" ${!isAbsent ? 'checked' : ''}>
+                                <input type="radio" class="presence-radio" name="presence_${key}" value="attendance" ${isAttending ? 'checked' : ''}>
                                 出席
                             </label>
                             <label class="radio-label">
@@ -549,7 +550,7 @@ function createMemberRow(matchId, member, hideName = false) {
                         </div>
 
                         <!-- Details (Only enabled if Attendance is selected) -->
-                        <div class="attendance-details ${isAbsent ? 'disabled-section' : ''}">
+                        <div class="attendance-details ${!isAttending ? 'disabled-section' : ''}">
                             <div class="status-options">
                                 ${radiosHtml}
                             </div>
@@ -557,14 +558,14 @@ function createMemberRow(matchId, member, hideName = false) {
                                 <label>自分以外の人数:</label>
                                 <div class="guest-inputs-container" style="margin-top:0;">
                                     <div class="guest-input-group">
-                                        <input type="number" class="guest-input guest-input-unified" min="0" value="${guestValue}" placeholder="0" style="width: 60px;" ${isAbsent ? 'disabled' : ''}>
+                                        <input type="number" class="guest-input guest-input-unified" min="0" value="${guestValue}" placeholder="0" style="width: 60px;" ${!isAttending ? 'disabled' : ''}>
                                         <span style="font-size: 0.8rem; color: #666; margin-left: 0.5rem;">名 (${SECTION_LABELS[member.section] || 'TOP'})</span>
                                     </div>
                                 </div>
                             </div>
                             <div class="big-flag-section">
                                 <label class="checkbox-label">
-                                    <input type="checkbox" class="big-flag-checkbox" ${data.bigFlag ? 'checked' : ''} ${isAbsent ? 'disabled' : ''}>
+                                    <input type="checkbox" class="big-flag-checkbox" ${data.bigFlag ? 'checked' : ''} ${!isAttending ? 'disabled' : ''}>
                                     ビッグフラッグ搬入手伝い
                                 </label>
                                 <div class="big-flag-note" style="font-size: 0.8rem; color: #666; margin-left: 1.6rem;">
