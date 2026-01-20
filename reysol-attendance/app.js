@@ -1394,11 +1394,13 @@ function generateMatchSummaryContent(matchId) {
     }
 
 
-    if (!isAway) {
+    const isAwayFree = isAway && match.seatType === 'free';
+    if (!isAway || isAwayFree) {
         STATUS_OPTIONS.forEach(opt => {
             const names = summary[opt.id];
             if (names && names.length > 0) {
                 let label = opt.label;
+                if (isAway && opt.id === 4) label = 'ゴール裏以外';
                 html += `
                     <div class="summary-item active">
                         <span class="summary-count">${label}: ${names.length}名</span>
