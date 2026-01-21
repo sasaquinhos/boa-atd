@@ -373,7 +373,7 @@ function createMemberRow(matchId, member, hideName = false) {
     if (effectiveStatus == 7 && !match.lineOrgFlag) effectiveStatus = null;
 
     const isAbsent = effectiveStatus == 5;
-    const isAttending = effectiveStatus !== null && effectiveStatus != 5;
+    const isAttending = effectiveStatus !== null && effectiveStatus !== "" && effectiveStatus != 5;
 
     const isAway = match && match.location === 'away';
     const isAwayFree = isAway && match.seatType === 'free';
@@ -963,16 +963,25 @@ function attachMatchListeners() {
                 details.classList.add('disabled-section');
                 details.querySelectorAll('input').forEach(input => input.disabled = true);
             } else {
-                // Return to attendance. Default to 1 if it was 5 or null.
-                if (state.attendance[key].status === 5 || state.attendance[key].status === null) {
-                    state.attendance[key].status = 1;
+                // Return to attendance.
+                const match = state.matches.find(m => m.id == matchId);
+                const isAwayReserved = match && match.location === 'away' && match.seatType === 'reserved';
+
+                // If switching from Absent (5) or it's current null/empty, reset sub-status
+                // BUT for Away Reserved, we don't have sub-radios, so we use 1 as default "Attending"
+                if (state.attendance[key].status === 5 || !state.attendance[key].status) {
+                    state.attendance[key].status = isAwayReserved ? 1 : 0; // 0: Attending but sub-status unpicked
                 }
+
                 details.classList.remove('disabled-section');
                 details.querySelectorAll('input').forEach(input => input.disabled = false);
 
-                // Also ensure the correct sub-status radio is checked visually
-                const subRadio = row.querySelector(`.status-options input[value="${state.attendance[key].status}"]`);
-                if (subRadio) subRadio.checked = true;
+                // Ensure the correct sub-status radio is checked visually, or uncheck all if 0
+                const currentStatus = state.attendance[key].status;
+                const subRadios = row.querySelectorAll('.status-options input[type="radio"]');
+                subRadios.forEach(r => {
+                    r.checked = (parseInt(r.value) === currentStatus);
+                });
             }
 
             saveToLocal();
@@ -1349,7 +1358,7 @@ function generateMatchSummaryContent(matchId) {
         const key = `${matchId}_${member.name}`;
         const data = state.attendance[key];
 
-        if (data && data.status) {
+        if (data && data.status !== null && data.status !== "") {
             let effectiveStatus = data.status;
 
             // Validate away-specific statuses
@@ -1361,7 +1370,8 @@ function generateMatchSummaryContent(matchId) {
             }
 
             // Exclude Absent (5) and Outside Hakunetsu (4) from section totals
-            if (effectiveStatus && effectiveStatus !== 5 && effectiveStatus !== 4) {
+            // Allow status 0 (Attending but pending) to be counted
+            if (effectiveStatus !== null && effectiveStatus != 5 && effectiveStatus !== 4) {
                 if (member.section === 2) {
                     memberBack += 1;
                 } else {
