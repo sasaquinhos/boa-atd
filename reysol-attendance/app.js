@@ -1422,12 +1422,14 @@ function generateMatchSummaryContent(matchId) {
     // Add Total Count Breakdown
     if (totalMain > 0 || totalBack > 0 || outsideTotal > 0) {
         let sectionTotalsHtml = '';
+        let reservedNamesHtml = '';
+
         if (isAway) {
             // Away: Simple total
             sectionTotalsHtml += `<div>合計 ${totalMain + totalBack}名 <small style="font-weight:normal;">(メンバー${memberMain + memberBack} / 同伴${guestMain + guestBack})</small></div>`;
             if (outsideTotal > 0) sectionTotalsHtml += `<div style="padding-top: 0.1rem; margin-top: 0.1rem;">ゴール裏以外 合計${outsideTotal}名</div>`;
 
-            // If Away Reserved, show member names
+            // If Away Reserved, prepare names list
             if (match.seatType === 'reserved') {
                 const attendees = [];
                 state.members.forEach(member => {
@@ -1438,7 +1440,7 @@ function generateMatchSummaryContent(matchId) {
                     }
                 });
                 if (attendees.length > 0) {
-                    sectionTotalsHtml += `<div style="font-weight: normal; font-size: 0.85rem; color: #666; margin-top: 0.2rem;">出席者: (${attendees.join(', ')})</div>`;
+                    reservedNamesHtml = `<div class="summary-item active" style="margin-top: 0.3rem;"><span class="summary-names" style="font-size: 0.85rem;">出席者: (${attendees.join(', ')})</span></div>`;
                 }
             }
         } else {
@@ -1452,6 +1454,7 @@ function generateMatchSummaryContent(matchId) {
             <div class="summary-item active" style="font-weight: bold; background-color: #fff8e1; border: 2px solid #FCD116; border-radius: 4px; flex-direction: column; align-items: flex-start; gap: 0.2rem;">
                 ${sectionTotalsHtml}
             </div>
+            ${reservedNamesHtml}
         `;
     }
 
