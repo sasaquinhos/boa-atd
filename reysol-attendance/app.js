@@ -708,40 +708,37 @@ function setupEventListeners() {
         const awayGeneralDetails = document.getElementById('away-general-details');
 
         function updateAwayUI(e) {
-            const isManualChange = !!e; // If called by event listener, 'e' will be defined
+            const isManualChange = !!e;
             const loc = document.querySelector('input[name="new-match-location"]:checked').value;
             const seat = document.querySelector('input[name="new-match-seat-type"]:checked').value;
 
             const isAway = (loc === 'away');
             const isFree = (seat === 'free');
 
+            const queueSec = document.getElementById('new-match-queue-section');
+            const lineSec = document.getElementById('new-match-line-org-section');
+
+            // Detect if the Away/Free details were previously hidden to trigger auto-check
+            const wasAwayFreeVisible = (awayGeneralDetails.style.display === 'flex' &&
+                queueSec && queueSec.style.display === 'flex');
+
             if (isAway) {
                 awaySeatTypeContainer.style.display = 'flex';
                 awayGeneralDetails.style.display = 'flex';
 
-                const queueSec = document.getElementById('new-match-queue-section');
-                const lineSec = document.getElementById('new-match-line-org-section');
+                if (queueSec) queueSec.style.display = isFree ? 'flex' : 'none';
+                if (lineSec) lineSec.style.display = isFree ? 'flex' : 'none';
 
-                if (queueSec) {
-                    const wasHidden = (queueSec.style.display === 'none');
-                    queueSec.style.display = isFree ? 'flex' : 'none';
-                    if (isManualChange && isFree && wasHidden) {
-                        const qFlag = document.getElementById('new-match-queue-flag');
-                        if (qFlag) {
-                            qFlag.checked = true;
-                            document.getElementById('queue-time-container').style.display = 'flex';
-                        }
+                if (isManualChange && isAway && isFree && !wasAwayFreeVisible) {
+                    const qFlag = document.getElementById('new-match-queue-flag');
+                    if (qFlag) {
+                        qFlag.checked = true;
+                        document.getElementById('queue-time-container').style.display = 'flex';
                     }
-                }
-                if (lineSec) {
-                    const wasHidden = (lineSec.style.display === 'none');
-                    lineSec.style.display = isFree ? 'flex' : 'none';
-                    if (isManualChange && isFree && wasHidden) {
-                        const lFlag = document.getElementById('new-match-line-org-flag');
-                        if (lFlag) {
-                            lFlag.checked = true;
-                            document.getElementById('line-org-time-container').style.display = 'flex';
-                        }
+                    const lFlag = document.getElementById('new-match-line-org-flag');
+                    if (lFlag) {
+                        lFlag.checked = true;
+                        document.getElementById('line-org-time-container').style.display = 'flex';
                     }
                 }
             } else {
@@ -1238,33 +1235,25 @@ function openEditMatchModal(matchId) {
 
         const seatContainer = document.getElementById('edit-away-seat-type-container');
         const generalDetails = document.getElementById('edit-away-general-details');
+        const queueSec = document.getElementById('edit-match-queue-section');
+        const lineSec = document.getElementById('edit-match-line-org-section');
 
         const isAway = (loc === 'away');
         const isFree = (seat === 'free');
+
+        const wasAwayFreeVisible = (generalDetails.style.display === 'flex' &&
+            queueSec && queueSec.style.display === 'flex');
 
         if (isAway) {
             seatContainer.style.display = 'flex';
             generalDetails.style.display = 'flex';
 
-            // Only show queue/line options for Away General Admission (free)
-            const queueSec = document.getElementById('edit-match-queue-section');
-            const lineSec = document.getElementById('edit-match-line-org-section');
+            if (queueSec) queueSec.style.display = isFree ? 'flex' : 'none';
+            if (lineSec) lineSec.style.display = isFree ? 'flex' : 'none';
 
-            if (queueSec) {
-                const wasHidden = (queueSec.style.display === 'none');
-                queueSec.style.display = isFree ? 'flex' : 'none';
-                if (isManualChange && isFree && wasHidden) {
-                    queueFlagInput.checked = true;
-                    document.getElementById('edit-queue-time-container').style.display = 'flex';
-                }
-            }
-            if (lineSec) {
-                const wasHidden = (lineSec.style.display === 'none');
-                lineSec.style.display = isFree ? 'flex' : 'none';
-                if (isManualChange && isFree && wasHidden) {
-                    lineOrgFlagInput.checked = true;
-                    document.getElementById('edit-line-org-time-container').style.display = 'flex';
-                }
+            if (isManualChange && isAway && isFree && !wasAwayFreeVisible) {
+                queueFlagInput.checked = true;
+                lineOrgFlagInput.checked = true;
             }
         } else {
             seatContainer.style.display = 'none';
