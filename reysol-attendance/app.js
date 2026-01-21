@@ -1426,6 +1426,21 @@ function generateMatchSummaryContent(matchId) {
             // Away: Simple total
             sectionTotalsHtml += `<div>合計 ${totalMain + totalBack}名 <small style="font-weight:normal;">(メンバー${memberMain + memberBack} / 同伴${guestMain + guestBack})</small></div>`;
             if (outsideTotal > 0) sectionTotalsHtml += `<div style="padding-top: 0.1rem; margin-top: 0.1rem;">ゴール裏以外 合計${outsideTotal}名</div>`;
+
+            // If Away Reserved, show member names
+            if (match.seatType === 'reserved') {
+                const attendees = [];
+                state.members.forEach(member => {
+                    const key = `${matchId}_${member.name}`;
+                    const data = state.attendance[key];
+                    if (data && data.status && data.status != 5) {
+                        attendees.push(member.name);
+                    }
+                });
+                if (attendees.length > 0) {
+                    sectionTotalsHtml += `<div style="font-weight: normal; font-size: 0.85rem; color: #666; margin-top: 0.2rem;">出席者: (${attendees.join(', ')})</div>`;
+                }
+            }
         } else {
             // Home: Breakdown by section
             if (totalMain > 0) sectionTotalsHtml += `<div>TOP 合計${totalMain}名 <small style="font-weight:normal;">(メンバー${memberMain} / 同伴${guestMain})</small></div>`;
