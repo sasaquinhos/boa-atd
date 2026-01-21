@@ -368,8 +368,12 @@ function createMemberRow(matchId, member, hideName = false) {
 
     const match = state.matches.find(m => m.id == matchId);
     const jankenConfirmedText = match ? (match.jankenConfirmed || '') : '';
-    const isAbsent = data.status == 5;
-    const isAttending = data.status !== null && data.status != 5;
+    let effectiveStatus = data.status;
+    if (effectiveStatus == 6 && !match.queueFlag) effectiveStatus = null;
+    if (effectiveStatus == 7 && !match.lineOrgFlag) effectiveStatus = null;
+
+    const isAbsent = effectiveStatus == 5;
+    const isAttending = effectiveStatus !== null && effectiveStatus != 5;
 
     const isAway = match && match.location === 'away';
     const isAwayFree = isAway && match.seatType === 'free';
@@ -388,10 +392,6 @@ function createMemberRow(matchId, member, hideName = false) {
         if (match.lineOrgFlag) subStatuses.unshift(STATUS_OPTIONS.find(o => o.id === 7));
         if (match.queueFlag) subStatuses.unshift(STATUS_OPTIONS.find(o => o.id === 6));
     }
-
-    let effectiveStatus = data.status;
-    if (effectiveStatus == 6 && !match.queueFlag) effectiveStatus = 1;
-    if (effectiveStatus == 7 && !match.lineOrgFlag) effectiveStatus = 1;
 
     let radiosHtml = subStatuses.map(opt => {
         let label = opt.label;
@@ -1353,15 +1353,15 @@ function generateMatchSummaryContent(matchId) {
             let effectiveStatus = data.status;
 
             // Validate away-specific statuses
-            if (effectiveStatus == 6 && !match.queueFlag) effectiveStatus = 1; // Default to 'before opening' if flag removed
-            if (effectiveStatus == 7 && !match.lineOrgFlag) effectiveStatus = 1;
+            if (effectiveStatus == 6 && !match.queueFlag) effectiveStatus = null;
+            if (effectiveStatus == 7 && !match.lineOrgFlag) effectiveStatus = null;
 
-            if (summary[effectiveStatus]) {
+            if (effectiveStatus && summary[effectiveStatus]) {
                 summary[effectiveStatus].push(member.name);
             }
 
             // Exclude Absent (5) and Outside Hakunetsu (4) from section totals
-            if (effectiveStatus !== 5 && effectiveStatus !== 4) {
+            if (effectiveStatus && effectiveStatus !== 5 && effectiveStatus !== 4) {
                 if (member.section === 2) {
                     memberBack += 1;
                 } else {
