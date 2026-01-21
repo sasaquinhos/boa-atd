@@ -8,7 +8,7 @@ const state = {
     matchLimit: 10
 };
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbwcuqJk9zuxWuvwjk06UeqmbwbZ1dzony20Fsf04vNMsCueca1W6m89GmBENYfq08IBLQ/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycby3B9102FJLpmaT5Xjs2BSB7Nh2IRz_qy1vvd7z8Nda9qr3L5Hcdm7TC24GxxITp3F4QA/exec';
 
 // DOM Elements
 const matchesContainer = document.getElementById('matches-container');
@@ -711,6 +711,8 @@ function setupEventListeners() {
             const loc = document.querySelector('input[name="new-match-location"]:checked').value;
             const seat = document.querySelector('input[name="new-match-seat-type"]:checked').value;
 
+            const wasHidden = (awayGeneralDetails.style.display === 'none');
+
             if (loc === 'away') {
                 awaySeatTypeContainer.style.display = 'flex';
                 awayGeneralDetails.style.display = 'flex'; // Always show for Away (contains deadline)
@@ -718,8 +720,32 @@ function setupEventListeners() {
                 // Only show queue/line options for Away General Admission (free)
                 const queueSec = document.getElementById('new-match-queue-section');
                 const lineSec = document.getElementById('new-match-line-org-section');
-                if (queueSec) queueSec.style.display = (seat === 'free') ? 'flex' : 'none';
-                if (lineSec) lineSec.style.display = (seat === 'free') ? 'flex' : 'none';
+                const isFree = (seat === 'free');
+
+                if (queueSec) {
+                    const secWasHidden = (queueSec.style.display === 'none');
+                    queueSec.style.display = isFree ? 'flex' : 'none';
+                    // Default check if it transition to visible
+                    if (isFree && secWasHidden) {
+                        const qFlag = document.getElementById('new-match-queue-flag');
+                        if (qFlag) {
+                            qFlag.checked = true;
+                            document.getElementById('queue-time-container').style.display = 'flex';
+                        }
+                    }
+                }
+                if (lineSec) {
+                    const secWasHidden = (lineSec.style.display === 'none');
+                    lineSec.style.display = isFree ? 'flex' : 'none';
+                    // Default check if it transition to visible
+                    if (isFree && secWasHidden) {
+                        const lFlag = document.getElementById('new-match-line-org-flag');
+                        if (lFlag) {
+                            lFlag.checked = true;
+                            document.getElementById('line-org-time-container').style.display = 'flex';
+                        }
+                    }
+                }
             } else {
                 awaySeatTypeContainer.style.display = 'none';
                 awayGeneralDetails.style.display = 'none';
@@ -1222,8 +1248,26 @@ function openEditMatchModal(matchId) {
             // Only show queue/line options for Away General Admission (free)
             const queueSec = document.getElementById('edit-match-queue-section');
             const lineSec = document.getElementById('edit-match-line-org-section');
-            if (queueSec) queueSec.style.display = (seat === 'free') ? 'flex' : 'none';
-            if (lineSec) lineSec.style.display = (seat === 'free') ? 'flex' : 'none';
+            const isFree = (seat === 'free');
+
+            if (queueSec) {
+                const secWasHidden = (queueSec.style.display === 'none');
+                queueSec.style.display = isFree ? 'flex' : 'none';
+                // Default check if it transition to visible
+                if (isFree && secWasHidden) {
+                    queueFlagInput.checked = true;
+                    document.getElementById('edit-queue-time-container').style.display = 'flex';
+                }
+            }
+            if (lineSec) {
+                const secWasHidden = (lineSec.style.display === 'none');
+                lineSec.style.display = isFree ? 'flex' : 'none';
+                // Default check if it transition to visible
+                if (isFree && secWasHidden) {
+                    lineOrgFlagInput.checked = true;
+                    document.getElementById('edit-line-org-time-container').style.display = 'flex';
+                }
+            }
         } else {
             seatContainer.style.display = 'none';
             generalDetails.style.display = 'none';
