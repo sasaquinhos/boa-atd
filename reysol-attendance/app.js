@@ -707,26 +707,25 @@ function setupEventListeners() {
         const awaySeatTypeContainer = document.getElementById('away-seat-type-container');
         const awayGeneralDetails = document.getElementById('away-general-details');
 
-        function updateAwayUI() {
+        function updateAwayUI(e) {
+            const isManualChange = !!e; // If called by event listener, 'e' will be defined
             const loc = document.querySelector('input[name="new-match-location"]:checked').value;
             const seat = document.querySelector('input[name="new-match-seat-type"]:checked').value;
 
-            const wasHidden = (awayGeneralDetails.style.display === 'none');
+            const isAway = (loc === 'away');
+            const isFree = (seat === 'free');
 
-            if (loc === 'away') {
+            if (isAway) {
                 awaySeatTypeContainer.style.display = 'flex';
-                awayGeneralDetails.style.display = 'flex'; // Always show for Away (contains deadline)
+                awayGeneralDetails.style.display = 'flex';
 
-                // Only show queue/line options for Away General Admission (free)
                 const queueSec = document.getElementById('new-match-queue-section');
                 const lineSec = document.getElementById('new-match-line-org-section');
-                const isFree = (seat === 'free');
 
                 if (queueSec) {
-                    const secWasHidden = (queueSec.style.display === 'none');
+                    const wasHidden = (queueSec.style.display === 'none');
                     queueSec.style.display = isFree ? 'flex' : 'none';
-                    // Default check if it transition to visible
-                    if (isFree && secWasHidden) {
+                    if (isManualChange && isFree && wasHidden) {
                         const qFlag = document.getElementById('new-match-queue-flag');
                         if (qFlag) {
                             qFlag.checked = true;
@@ -735,10 +734,9 @@ function setupEventListeners() {
                     }
                 }
                 if (lineSec) {
-                    const secWasHidden = (lineSec.style.display === 'none');
+                    const wasHidden = (lineSec.style.display === 'none');
                     lineSec.style.display = isFree ? 'flex' : 'none';
-                    // Default check if it transition to visible
-                    if (isFree && secWasHidden) {
+                    if (isManualChange && isFree && wasHidden) {
                         const lFlag = document.getElementById('new-match-line-org-flag');
                         if (lFlag) {
                             lFlag.checked = true;
@@ -1234,36 +1232,36 @@ function openEditMatchModal(matchId) {
     document.getElementById('edit-match-away-notice').value = match.awayNotice || '';
 
     // Function for modal UI updates
-    const updateModalUI = () => {
+    const updateModalUI = (isManualChange = false) => {
         const loc = Array.from(locRadios).find(r => r.checked)?.value || 'home';
         const seat = Array.from(seatRadios).find(r => r.checked)?.value || 'free';
 
         const seatContainer = document.getElementById('edit-away-seat-type-container');
         const generalDetails = document.getElementById('edit-away-general-details');
 
-        if (loc === 'away') {
+        const isAway = (loc === 'away');
+        const isFree = (seat === 'free');
+
+        if (isAway) {
             seatContainer.style.display = 'flex';
-            generalDetails.style.display = 'flex'; // Always show for Away (contains deadline)
+            generalDetails.style.display = 'flex';
 
             // Only show queue/line options for Away General Admission (free)
             const queueSec = document.getElementById('edit-match-queue-section');
             const lineSec = document.getElementById('edit-match-line-org-section');
-            const isFree = (seat === 'free');
 
             if (queueSec) {
-                const secWasHidden = (queueSec.style.display === 'none');
+                const wasHidden = (queueSec.style.display === 'none');
                 queueSec.style.display = isFree ? 'flex' : 'none';
-                // Default check if it transition to visible
-                if (isFree && secWasHidden) {
+                if (isManualChange && isFree && wasHidden) {
                     queueFlagInput.checked = true;
                     document.getElementById('edit-queue-time-container').style.display = 'flex';
                 }
             }
             if (lineSec) {
-                const secWasHidden = (lineSec.style.display === 'none');
+                const wasHidden = (lineSec.style.display === 'none');
                 lineSec.style.display = isFree ? 'flex' : 'none';
-                // Default check if it transition to visible
-                if (isFree && secWasHidden) {
+                if (isManualChange && isFree && wasHidden) {
                     lineOrgFlagInput.checked = true;
                     document.getElementById('edit-line-org-time-container').style.display = 'flex';
                 }
@@ -1278,12 +1276,12 @@ function openEditMatchModal(matchId) {
     };
 
     // Attach listeners for modal
-    locRadios.forEach(r => r.onchange = updateModalUI);
-    seatRadios.forEach(r => r.onchange = updateModalUI);
-    queueFlagInput.onchange = updateModalUI;
-    lineOrgFlagInput.onchange = updateModalUI;
+    locRadios.forEach(r => r.onchange = () => updateModalUI(true));
+    seatRadios.forEach(r => r.onchange = () => updateModalUI(true));
+    queueFlagInput.onchange = () => updateModalUI(false);
+    lineOrgFlagInput.onchange = () => updateModalUI(false);
 
-    updateModalUI();
+    updateModalUI(false);
     modal.style.display = 'flex';
 
     // Save/Cancel
