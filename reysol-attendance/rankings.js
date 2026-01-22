@@ -232,16 +232,16 @@ function renderHomeRankings() {
     const jankenCandidate = {};
     const morningWithdraw = {};
     const bigFlag = {};
-    const matchIds = new Set(leagueMatches.map(m => String(m.id)));
 
-    Object.keys(state.attendance).forEach(key => {
-        const [matchId, memberName] = key.split('_');
-        if (matchIds.has(matchId)) {
+    leagueMatches.forEach(match => {
+        state.members.forEach(member => {
+            const key = `${match.id}_${member.name}`;
             const data = state.attendance[key];
-            if (data.jankenParticipate) jankenCandidate[memberName] = (jankenCandidate[memberName] || 0) + 1;
-            if (data.morningWithdraw) morningWithdraw[memberName] = (morningWithdraw[memberName] || 0) + 1;
-            if (data.bigFlag) bigFlag[memberName] = (bigFlag[memberName] || 0) + 1;
-        }
+            if (!data) return;
+            if (data.jankenParticipate) jankenCandidate[member.name] = (jankenCandidate[member.name] || 0) + 1;
+            if (data.morningWithdraw) morningWithdraw[member.name] = (morningWithdraw[member.name] || 0) + 1;
+            if (data.bigFlag) bigFlag[member.name] = (bigFlag[member.name] || 0) + 1;
+        });
     });
 
     renderRankingCard('janken-candidate-ranking', jankenCandidate);
@@ -266,15 +266,15 @@ function renderAwayRankings() {
 
     const queueStart = {};
     const lineOrg = {};
-    const matchIds = new Set(leagueMatches.map(m => String(m.id)));
 
-    Object.keys(state.attendance).forEach(key => {
-        const [matchId, memberName] = key.split('_');
-        if (matchIds.has(matchId)) {
+    leagueMatches.forEach(match => {
+        state.members.forEach(member => {
+            const key = `${match.id}_${member.name}`;
             const data = state.attendance[key];
-            if (data.status === 6) queueStart[memberName] = (queueStart[memberName] || 0) + 1;
-            if (data.status === 7) lineOrg[memberName] = (lineOrg[memberName] || 0) + 1;
-        }
+            if (!data) return;
+            if (data.status === 6) queueStart[member.name] = (queueStart[member.name] || 0) + 1;
+            if (data.status === 7) lineOrg[member.name] = (lineOrg[member.name] || 0) + 1;
+        });
     });
 
     renderRankingCard('queue-start-ranking', queueStart);
