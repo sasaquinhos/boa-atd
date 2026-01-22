@@ -1470,8 +1470,23 @@ function generateMatchSummaryContent(matchId) {
 
 
     const isAwayFree = isAway && match.seatType === 'free';
+
+    // Determine order of status items to display
+    let displayOrder = [...STATUS_OPTIONS.filter(opt => opt.id !== 5 && opt.id !== 6 && opt.id !== 7)]; // Default order
+    if (isAwayFree) {
+        // For Away Free, match radio button order: Queue(6), LineOrg(7), then others
+        const awayOrder = [];
+        if (match.lineOrgFlag) awayOrder.unshift(STATUS_OPTIONS.find(o => o.id === 7));
+        if (match.queueFlag) awayOrder.unshift(STATUS_OPTIONS.find(o => o.id === 6));
+        displayOrder = [...awayOrder, ...displayOrder];
+    } else if (!isAway) {
+        // For Home, append 6 and 7 at the end (though they usually aren't used for Home)
+        displayOrder = [...displayOrder, STATUS_OPTIONS.find(o => o.id === 6), STATUS_OPTIONS.find(o => o.id === 7)];
+    }
+
     if (!isAway || isAwayFree) {
-        STATUS_OPTIONS.forEach(opt => {
+        displayOrder.forEach(opt => {
+            if (!opt) return;
             const names = summary[opt.id];
             if (names && names.length > 0) {
                 let label = opt.label;
