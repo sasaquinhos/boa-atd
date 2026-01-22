@@ -275,6 +275,14 @@ function renderMatches() {
     // Admin Mode: Render selections only
     const isAdmin = !!document.getElementById('matches-select-admin');
 
+    // DEBUG: Mobile Diagnosis (Force Alert)
+    if (!isAdmin && !window.hasDebugAlerted) {
+        window.hasDebugAlerted = true;
+        const leagueEl = document.getElementById('current-league-select');
+        const matchEl = document.getElementById('current-match-select');
+        alert(`Render Check:\nMatches: ${state.matches?.length}\nLeagues: ${state.leagues?.length}\nLeagueEl: ${!!leagueEl}\nMatchEl: ${!!matchEl}`);
+    }
+
     // Sort matches by date (descending)
     const sortedMatches = [...state.matches].sort((a, b) => parseDate(b.date) - parseDate(a.date));
 
@@ -375,16 +383,6 @@ function renderMatches() {
                 // Set value if determined
                 if (defaultLeagueId) {
                     userLeagueSelect.value = String(defaultLeagueId);
-                }
-
-                // DEBUG: Temporary Alert for Mobile Diagnosis
-                if (!window.hasDebugAlerted && sortedMatches.length > 0 && state.leagues.length > 0) {
-                    window.hasDebugAlerted = true;
-                    const mDate = sortedMatches[0].date;
-                    const lStart = state.leagues[0].start;
-                    const pMatch = parseDate(mDate);
-                    const pLeague = parseDate(lStart);
-                    alert(`Debug Info:\nMatch raw: ${mDate} (${typeof mDate})\nLeague raw: ${lStart} (${typeof lStart})\nParsed Match: ${pMatch.getFullYear()}/${pMatch.getMonth() + 1}/${pMatch.getDate()}\nParsed League: ${pLeague.getFullYear()}/${pLeague.getMonth() + 1}/${pLeague.getDate()}`);
                 }
             }
 
