@@ -39,6 +39,22 @@ const SECTION_LABELS = {
 // Caching Constants
 const STORAGE_KEY = 'reysol_attendance_data';
 
+// Helper: Robust Date Parser (Safe handling for Mobile/Safari)
+function parseDate(input) {
+    if (!input) return new Date();
+    if (input instanceof Date) return input;
+    if (typeof input === 'number') return new Date(input);
+    const str = String(input);
+    // Extract YYYY, MM, DD
+    const match = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+    if (match) {
+        // Construct Local Date
+        return new Date(parseInt(match[1]), parseInt(match[2]) - 1, parseInt(match[3]));
+    }
+    // Fallback
+    return new Date(str.replace(/-/g, '/'));
+}
+
 // Initialization
 async function init() {
     console.log('Current API URL:', API_URL);
@@ -260,7 +276,7 @@ function renderMatches() {
     const isAdmin = !!document.getElementById('matches-select-admin');
 
     // Sort matches by date (descending)
-    const sortedMatches = [...state.matches].sort((a, b) => new Date(b.date) - new Date(a.date));
+    const sortedMatches = [...state.matches].sort((a, b) => parseDate(b.date) - parseDate(a.date));
 
     // Initialize expandedMatches if empty and we have matches (Might not be needed for admin anymore, but good for user side)
     if (state.expandedMatches.size === 0 && sortedMatches.length > 0) {
@@ -274,7 +290,7 @@ function renderMatches() {
             const currentVal = matchesSelect.value;
             matchesSelect.innerHTML = '<option value="">-- 試合を選択 --</option>' +
                 sortedMatches.map(m => {
-                    const d = new Date(m.date);
+                    const d = parseDate(m.date);
                     const dateStr = `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
                     return `<option value="${m.id}">${dateStr} ${m.opponent}</option>`;
                 }).join('');
@@ -297,12 +313,6 @@ function renderMatches() {
         const userLeagueSelect = document.getElementById('current-league-select');
         const userMatchSelect = document.getElementById('current-match-select');
 
-        // Helper for Safe Date Parsing (Mobile Safari compatibility)
-        const safeDate = (str) => {
-            if (!str) return new Date();
-            return new Date(String(str).replace(/-/g, '/'));
-        };
-
         // 1. League Selection & Filtering
         let leagueFilteredMatches = sortedMatches;
 
@@ -310,7 +320,7 @@ function renderMatches() {
             // Populate if empty (First run)
             if (userLeagueSelect.options.length <= 1 && state.leagues && state.leagues.length > 0) {
                 // Sort leagues by start date descending for display
-                const sortedLeagues = [...state.leagues].sort((a, b) => safeDate(b.start) - safeDate(a.start));
+                const sortedLeagues = [...state.leagues].sort((a, b) => parseDate(b.start) - parseDate(a.start));
 
                 userLeagueSelect.innerHTML = '<option value="">-- 全ての期間 --</option>' +
                     sortedLeagues.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
@@ -320,18 +330,14 @@ function renderMatches() {
                 today.setHours(0, 0, 0, 0);
 
                 const currentLeague = sortedLeagues.find(l => {
-                    const s = safeDate(l.start);
-                    const e = safeDate(l.end);
+                    const s = parseDate(l.start);
+                    const e = parseDate(l.end);
                     return today >= s && today <= e;
                 });
 
                 // Only set default if found, otherwise keep "All"
                 if (currentLeague) {
                     userLeagueSelect.value = currentLeague.id;
-                } else if (sortedLeagues.length > 0) {
-                    // Optional: Default to latest? Or just All?
-                    // Let's stick to "All" if no current league matches today, to avoid empty lists
-                    // userLeagueSelect.value = sortedLeagues[0].id;
                 }
             }
 
@@ -340,13 +346,13 @@ function renderMatches() {
             if (selectedLeagueId) {
                 const league = state.leagues.find(l => l.id == selectedLeagueId);
                 if (league) {
-                    const s = safeDate(league.start);
+                    const s = parseDate(league.start);
                     // End date should include the full day
-                    const e = safeDate(league.end);
+                    const e = parseDate(league.end);
                     e.setHours(23, 59, 59, 999);
 
                     leagueFilteredMatches = sortedMatches.filter(m => {
-                        const d = safeDate(m.date);
+                        const d = parseDate(m.date);
                         return d >= s && d <= e;
                     });
                 }
@@ -361,7 +367,7 @@ function renderMatches() {
 
             // Generate Options from Filtered List
             userMatchSelect.innerHTML = leagueFilteredMatches.map(m => {
-                const d = safeDate(m.date);
+                const d = parseDate(m.date);
                 const dateStr = `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
                 return `<option value="${m.id}">${dateStr} ${m.opponent}</option>`;
             }).join('');
@@ -373,7 +379,7 @@ function renderMatches() {
                 // Default: Closest Future Match in LIST
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
-                const futureMatches = leagueFilteredMatches.filter(m => safeDate(m.date) >= today);
+                const futureMatches = leagueFilteredMatches.filter(m => parseDate(m.date) >= today);
 
                 if (futureMatches.length > 0) {
                     userMatchSelect.value = futureMatches[futureMatches.length - 1].id;
