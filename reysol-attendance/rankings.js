@@ -131,20 +131,29 @@ function saveToLocal() {
 // Helper to get records for specific matches only
 function ensureGroupedData(matchIds) {
     console.log('Ensuring grouped data for matches:', matchIds);
+    // logToPage(`Grouping data for ${matchIds.length} matches`);
     matchIds.forEach(id => {
-        if (state.attendanceByMatch[id]) return;
+        const idStr = String(id); // Ensure string ID
+        if (state.attendanceByMatch[idStr]) return;
 
-        state.attendanceByMatch[id] = [];
+        state.attendanceByMatch[idStr] = [];
         state.members.forEach(member => {
-            const key = `${id}_${member.name}`;
+            const key = `${idStr}_${member.name}`;
             if (state.attendance[key]) {
-                state.attendanceByMatch[id].push({
+                state.attendanceByMatch[idStr].push({
                     memberName: member.name,
                     data: state.attendance[key]
                 });
             }
         });
     });
+}
+function logToPage(msg) {
+    const debugEl = document.getElementById('debug-log');
+    if (debugEl) {
+        debugEl.innerHTML += `<div>${new Date().toLocaleTimeString()} ${msg}</div>`;
+        debugEl.scrollTop = debugEl.scrollHeight;
+    }
 }
 
 function normalizeToYYYYMM(dateInput) {
@@ -280,14 +289,19 @@ function renderHomeRankings() {
     const normalizedEnd = normalizeToYYYYMM(end);
 
     console.log(`Filtering for Home: ${normalizedStart} to ${normalizedEnd}`);
-
+    logToPage(`Home Filter: ${normalizedStart} ~ ${normalizedEnd}`);
     const leagueMatches = state.matches.filter(m => {
         const mMonth = normalizeToYYYYMM(m.date);
         const isMatchInLeague = mMonth >= normalizedStart && mMonth <= normalizedEnd;
-        return isMatchInLeague && (m.location === 'home' || !m.location);
+
+        const loc = String(m.location || 'home').trim().toLowerCase();
+        const isHome = loc === 'home';
+
+        return isMatchInLeague && isHome;
     });
 
     console.log('Found Home Matches:', leagueMatches.length);
+    logToPage(`Found Home Matches: ${leagueMatches.length}`);
 
     const jConf = {};
     leagueMatches.forEach(m => {
@@ -330,14 +344,17 @@ function renderAwayRankings() {
     const normalizedEnd = normalizeToYYYYMM(end);
 
     console.log(`Filtering for Away: ${normalizedStart} to ${normalizedEnd}`);
-
+    logToPage(`Away Filter: ${normalizedStart} ~ ${normalizedEnd}`);
     const leagueMatches = state.matches.filter(m => {
         const mMonth = normalizeToYYYYMM(m.date);
         const isMatchInLeague = mMonth >= normalizedStart && mMonth <= normalizedEnd;
-        return isMatchInLeague && m.location === 'away';
+
+        const loc = String(m.location || '').trim().toLowerCase();
+        return isMatchInLeague && loc === 'away';
     });
 
     console.log('Found Away Matches:', leagueMatches.length);
+    logToPage(`Found Away Matches: ${leagueMatches.length}`);
 
     const qStart = {};
     const lOrg = {};
