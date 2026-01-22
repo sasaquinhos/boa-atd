@@ -50,9 +50,12 @@
         <section class="controls-section">
             <div class="admin-panel"> <!-- Always open for admin -->
                 <div class="control-group">
+                    <h2
+                        style="border-bottom: 2px solid #ccc; padding-bottom: 0.2rem; margin-bottom: 0.8rem; font-size: 1.2rem; color: #333;">
+                        【登録】</h2>
                     <h3>リーグ名登録</h3>
                     <div
-                        style="display: flex; flex-direction: column; gap: 0.5rem; background: #e8f5e9; padding: 1rem; border-radius: 8px; border: 1px solid #c8e6c9; margin-bottom: 1rem;">
+                        style="display: flex; flex-direction: column; gap: 0.5rem; background: #e8f5e9; padding: 1rem; border-radius: 8px; border: 1px solid #c8e6c9; margin-bottom: 0.5rem;">
                         <div class="input-group" style="flex-wrap: wrap;">
                             <input type="text" id="new-league-name" placeholder="リーグ名 (例: 2024 J1)"
                                 style="flex: 1; min-width: 200px;">
@@ -65,28 +68,31 @@
                             <input type="date" id="new-league-end"
                                 style="padding: 0.5rem; border-radius: 4px; border: 1px solid #ddd;">
                             <button id="add-league-btn" class="btn btn-primary"
-                                style="margin-left: auto;">リーグを登録</button>
+                                style="margin-left: auto; min-width: 80px;">登録</button>
                         </div>
                     </div>
-
-                    <!-- League List (Collapsible) -->
-                    <!-- League Management (Select style) -->
                 </div>
                 <div class="control-group">
                     <h3>メンバー登録</h3>
-                    <div class="input-group" style="flex-wrap: wrap;">
-                        <input type="text" id="new-member-name" placeholder="名前を入力" style="flex: 1; min-width: 200px;">
-                        <div style="display: flex; align-items: center; margin: 0 1rem;">
-                            <label style="margin-right: 0.5rem;"><input type="radio" name="new-member-section" value="1"
-                                    checked> TOP</label>
-                            <label><input type="radio" name="new-member-section" value="2"> FRONT</label>
+                    <div
+                        style="display: flex; flex-direction: column; gap: 0.5rem; background: #e3f2fd; padding: 1rem; border-radius: 8px; border: 1px solid #bbdefb; margin-bottom: 0.5rem;">
+                        <div class="input-group" style="flex-wrap: wrap;">
+                            <input type="text" id="new-member-name" placeholder="名前を入力"
+                                style="flex: 1; min-width: 200px;">
+                            <div style="display: flex; align-items: center; margin: 0 1rem;">
+                                <label style="margin-right: 0.5rem;"><input type="radio" name="new-member-section"
+                                        value="1" checked> TOP</label>
+                                <label><input type="radio" name="new-member-section" value="2"> FRONT</label>
+                            </div>
+                            <button id="add-member-btn" class="btn btn-primary"
+                                style="margin-left: auto; min-width: 80px;">登録</button>
                         </div>
-                        <button id="add-member-btn" class="btn btn-primary">追加</button>
                     </div>
                 </div>
                 <div class="control-group">
                     <h3>試合日登録</h3>
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <div
+                        style="display: flex; flex-direction: column; gap: 0.5rem; background: #fff3e0; padding: 1rem; border-radius: 8px; border: 1px solid #ffcc80; margin-bottom: 0.5rem;">
                         <div class="input-group">
                             <input type="date" id="new-match-date">
                             <input type="text" id="new-match-opponent" placeholder="対戦相手 (例: vs 浦和)">
@@ -150,50 +156,64 @@
                                 style="width: 100%; padding: 0.5rem; border-radius: 4px; border: 1px solid #ddd; font-family: inherit; font-size: 0.9rem;"></textarea>
                         </div>
 
-                        <button id="add-match-btn" class="btn btn-primary">試合を追加</button>
+                        <button id="add-match-btn" class="btn btn-primary"
+                            style="align-self: flex-end; min-width: 80px;">登録</button>
                     </div>
                 </div>
                 <div class="control-group">
-                    <h3>登録済みリーグ名一覧</h3>
-                    <div class="input-group">
-                        <select id="leagues-select-admin"
-                            style="flex: 1; padding: 0.5rem; border-radius: 4px; border: 1px solid #ddd;">
-                            <option value="">-- リーグ名を選択 --</option>
-                        </select>
-                        <button id="edit-league-btn-admin" class="btn"
-                            style="background: #e3f2fd; color: #1976d2;">編集</button>
-                        <button id="delete-league-btn-admin" class="btn"
-                            style="background: #ffebee; color: #d32f2f;">削除</button>
+                    <h2
+                        style="border-bottom: 2px solid #ccc; padding-bottom: 0.2rem; margin-top: 1.5rem; margin-bottom: 0.8rem; font-size: 1.2rem; color: #333;">
+                        【管理】</h2>
+                    <h3>登録済みリーグ名管理</h3>
+                    <div
+                        style="display: flex; flex-direction: column; gap: 0.5rem; background: #e8f5e9; padding: 1rem; border-radius: 8px; border: 1px solid #c8e6c9; margin-bottom: 0.5rem;">
+                        <div class="input-group">
+                            <select id="leagues-select-admin"
+                                style="flex: 1; padding: 0.5rem; border-radius: 4px; border: 1px solid #ddd;">
+                                <option value="">-- リーグ名を選択 --</option>
+                            </select>
+                            <button id="edit-league-btn-admin" class="btn"
+                                style="background: #e3f2fd; color: #1976d2;">編集</button>
+                            <button id="delete-league-btn-admin" class="btn"
+                                style="background: #ffebee; color: #d32f2f;">削除</button>
+                        </div>
                     </div>
                 </div>
                 <div class="control-group">
                     <h3>登録済みメンバー管理</h3>
-                    <div class="input-group">
-                        <select id="members-select-admin"
-                            style="flex: 1; padding: 0.5rem; border-radius: 4px; border: 1px solid #ddd;">
-                            <option value="">-- メンバーを選択 --</option>
-                        </select>
-                        <button id="edit-member-btn-admin" class="btn"
-                            style="background: #e3f2fd; color: #1976d2;">編集</button>
-                        <button id="delete-member-btn-admin" class="btn"
-                            style="background: #ffebee; color: #d32f2f;">削除</button>
+                    <div
+                        style="display: flex; flex-direction: column; gap: 0.5rem; background: #e3f2fd; padding: 1rem; border-radius: 8px; border: 1px solid #bbdefb; margin-bottom: 0.5rem;">
+                        <div class="input-group">
+                            <select id="members-select-admin"
+                                style="flex: 1; padding: 0.5rem; border-radius: 4px; border: 1px solid #ddd;">
+                                <option value="">-- メンバーを選択 --</option>
+                            </select>
+                            <button id="edit-member-btn-admin" class="btn"
+                                style="background: #e3f2fd; color: #1976d2;">編集</button>
+                            <button id="delete-member-btn-admin" class="btn"
+                                style="background: #ffebee; color: #d32f2f;">削除</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <h3>登録済み試合管理</h3>
+                    <div
+                        style="display: flex; flex-direction: column; gap: 0.5rem; background: #fff3e0; padding: 1rem; border-radius: 8px; border: 1px solid #ffcc80; margin-bottom: 0.5rem;">
+                        <div class="input-group">
+                            <select id="matches-select-admin"
+                                style="flex: 1; padding: 0.5rem; border-radius: 4px; border: 1px solid #ddd;">
+                                <option value="">-- 試合を選択 --</option>
+                            </select>
+                            <button id="edit-match-btn-admin" class="btn"
+                                style="background: #e3f2fd; color: #1976d2;">編集</button>
+                            <button id="delete-match-btn-admin" class="btn"
+                                style="background: #ffebee; color: #d32f2f;">削除</button>
+                        </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Match List (For deletion management) -->
-        <div class="match-list-header">
-            <h2 class="section-title">登録済み試合一覧</h2>
-            <div class="match-limit-control">
-                <span>表示試合数:</span>
-                <input type="number" id="match-limit-input" min="1" value="10">
-                <span>試合</span>
-            </div>
-        </div>
-        <div id="matches-container" class="matches-list admin-mode">
-            <!-- Matches will be injected here with delete buttons -->
-        </div>
     </main>
 
     <!-- Edit Member Modal -->
@@ -323,7 +343,7 @@
         </div>
     </div>
 
-    <script src="app.js?v=20260120_1300"></script>
+    <script src="app.js?v=20260122_1448"></script>
 </body>
 
 </html>
