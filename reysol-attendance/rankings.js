@@ -160,7 +160,22 @@ function normalizeToYYYYMM(dateInput) {
     if (!dateInput) return "";
     const dStr = String(dateInput);
 
-    // Handle YYYY-MM-DD... or YYYY/MM/DD... or YYYY-M-D
+    // Check for ISO string with time indicating potential TZ shift need (e.g., from GAS)
+    // GAS often returns ISO strings in UTC. We need JST (UTC+9).
+    if (dStr.includes('T') && dStr.endsWith('Z')) {
+        try {
+            const d = new Date(dateInput);
+            if (!isNaN(d.getTime())) {
+                // Shift to JST (UTC+9)
+                const jst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
+                const y = jst.getUTCFullYear();
+                const m = String(jst.getUTCMonth() + 1).padStart(2, '0');
+                return `${y}-${m}`;
+            }
+        } catch (e) { console.error('Date parse error', e); }
+    }
+
+    // Handle YYYY-MM-DD... or YYYY/MM/DD... or YYYY-M-D (Plain strings)
     const match = dStr.match(/^(\d{4})[-/](\d{1,2})/);
     if (match) {
         const year = match[1];
@@ -299,7 +314,8 @@ function renderHomeRankings() {
 
     if (state.matches.length > 0) {
         const sample = state.matches[0];
-        logToPage(`Sample Match: Date=${sample.date}, Loc=${sample.location}`);
+        const norm = normalizeToYYYYMM(sample.date);
+        logToPage(`Sample Match: Raw=${sample.date} -> Norm=${norm}, Loc=${sample.location}`);
     }
 
     const leagueMatches = state.matches.filter(m => {
