@@ -42,17 +42,25 @@ const STORAGE_KEY = 'reysol_attendance_data';
 // Helper: Robust Date Parser (Safe handling for Mobile/Safari)
 function parseDate(input) {
     if (!input) return new Date();
-    if (input instanceof Date) return input;
+    if (input instanceof Date) {
+        return isNaN(input.getTime()) ? new Date() : input;
+    }
     if (typeof input === 'number') return new Date(input);
     const str = String(input);
+
+    let d;
     // Extract YYYY, MM, DD
     const match = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
     if (match) {
         // Construct Local Date
-        return new Date(parseInt(match[1]), parseInt(match[2]) - 1, parseInt(match[3]));
+        d = new Date(parseInt(match[1]), parseInt(match[2]) - 1, parseInt(match[3]));
+    } else {
+        // Fallback
+        d = new Date(str.replace(/-/g, '/'));
     }
-    // Fallback
-    return new Date(str.replace(/-/g, '/'));
+
+    // Final Safety Check
+    return isNaN(d.getTime()) ? new Date() : d;
 }
 
 // Initialization
@@ -319,8 +327,9 @@ function renderMatches() {
         if (userLeagueSelect) {
             // Populate if empty (First run)
             if (userLeagueSelect.options.length <= 1 && state.leagues && state.leagues.length > 0) {
-                // Sort leagues by start date descending for display
-                const sortedLeagues = [...state.leagues].sort((a, b) => parseDate(b.start) - parseDate(a.start));
+                // Filter valid leagues and Sort by start date descending
+                const validLeagues = state.leagues.filter(l => l.start && l.end);
+                const sortedLeagues = [...validLeagues].sort((a, b) => parseDate(b.start) - parseDate(a.start));
 
                 userLeagueSelect.innerHTML = '<option value="">-- 全ての期間 --</option>' +
                     sortedLeagues.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
@@ -385,7 +394,7 @@ function renderMatches() {
                     eFull.setHours(23, 59, 59, 999);
                     const isFallbackMatch = latestM ? (latestM >= s && latestM <= eFull) : false;
 
-                    alert(`Logic Check:\nToday: ${today.getMonth() + 1}/${today.getDate()}\nL_Start: ${s.getMonth() + 1}/${s.getDate()}\nL_End: ${e.getMonth() + 1}/${e.getDate()}\nM_Date: ${latestM ? (latestM.getMonth() + 1) + '/' + latestM.getDate() : 'N/A'}\nIsFallback: ${isFallbackMatch}\nDefaultID: ${defaultLeagueId}`);
+                    alert(`Logic Check:\nObj: ${JSON.stringify(l)}\nToday: ${today.getMonth() + 1}/${today.getDate()}\nL_Start: ${s.getMonth() + 1}/${s.getDate()}\nL_End: ${e.getMonth() + 1}/${e.getDate()}\nM_Date: ${latestM ? (latestM.getMonth() + 1) + '/' + latestM.getDate() : 'N/A'}\nIsFallback: ${isFallbackMatch}\nDefaultID: ${defaultLeagueId}`);
                 }
 
                 // Set value if determined
