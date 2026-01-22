@@ -159,9 +159,14 @@ function logToPage(msg) {
 function normalizeToYYYYMM(dateInput) {
     if (!dateInput) return "";
     const dStr = String(dateInput);
-    // Handle YYYY-MM-DD... or YYYY/MM/DD...
-    const match = dStr.match(/^(\d{4})[-/](\d{2})/);
-    if (match) return `${match[1]}-${match[2]}`;
+
+    // Handle YYYY-MM-DD... or YYYY/MM/DD... or YYYY-M-D
+    const match = dStr.match(/^(\d{4})[-/](\d{1,2})/);
+    if (match) {
+        const year = match[1];
+        const month = match[2].padStart(2, '0');
+        return `${year}-${month}`;
+    }
 
     // Fallback: try new Date()
     try {
@@ -290,12 +295,24 @@ function renderHomeRankings() {
 
     console.log(`Filtering for Home: ${normalizedStart} to ${normalizedEnd}`);
     logToPage(`Home Filter: ${normalizedStart} ~ ${normalizedEnd}`);
+    logToPage(`Total Matches: ${state.matches.length}`);
+
+    if (state.matches.length > 0) {
+        const sample = state.matches[0];
+        logToPage(`Sample Match: Date=${sample.date}, Loc=${sample.location}`);
+    }
+
     const leagueMatches = state.matches.filter(m => {
         const mMonth = normalizeToYYYYMM(m.date);
         const isMatchInLeague = mMonth >= normalizedStart && mMonth <= normalizedEnd;
 
         const loc = String(m.location || 'home').trim().toLowerCase();
         const isHome = loc === 'home';
+
+        // Debugging first few matches
+        // if (state.matches.indexOf(m) < 3) {
+        //    logToPage(`Check ${m.date} (${mMonth}): InLeague=${isMatchInLeague}, IsHome=${isHome}`);
+        // }
 
         return isMatchInLeague && isHome;
     });
