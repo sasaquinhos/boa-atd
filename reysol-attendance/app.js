@@ -5,7 +5,8 @@ const state = {
     attendance: {}, // { "matchId_memberName": { status, guestsMain, guestsBack } }
     expandedMatches: new Set(), // Set of match IDs that are expanded
     loading: false,
-    matchLimit: 10
+    matchLimit: 10,
+    leagues: []
 };
 
 const API_URL = 'https://script.google.com/macros/s/AKfycby3B9102FJLpmaT5Xjs2BSB7Nh2IRz_qy1vvd7z8Nda9qr3L5Hcdm7TC24GxxITp3F4QA/exec';
@@ -105,6 +106,15 @@ async function loadData() {
             state.matchLimit = data.settings.matchLimit;
         }
 
+        if (data.settings && data.settings.leagues) {
+            try {
+                state.leagues = JSON.parse(data.settings.leagues);
+            } catch (e) {
+                console.error('Failed to parse leagues settings:', e);
+                state.leagues = [];
+            }
+        }
+
         if (data.attendance) {
             state.attendance = data.attendance;
             sanitizeAttendanceData();
@@ -136,6 +146,7 @@ function loadFromLocal() {
         }
 
         if (data.matchLimit) state.matchLimit = data.matchLimit;
+        if (data.leagues) state.leagues = data.leagues;
 
         return true;
     } catch (e) {
@@ -151,6 +162,7 @@ function saveToLocal() {
             matches: state.matches,
             attendance: state.attendance,
             matchLimit: state.matchLimit,
+            leagues: state.leagues,
             timestamp: new Date().getTime()
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -351,6 +363,7 @@ function renderMatches() {
 
     if (isAdmin) {
         renderMembersAdmin();
+        renderLeaguesAdmin();
     }
 
     attachMatchListeners();
@@ -769,6 +782,12 @@ function setupEventListeners() {
             lineOrgFlagCheckbox.addEventListener('change', (e) => {
                 lineOrgTimeContainer.style.display = e.target.checked ? 'flex' : 'none';
             });
+        }
+
+        // League Registration
+        const addLeagueBtn = document.getElementById('add-league-btn');
+        if (addLeagueBtn) {
+            addLeagueBtn.addEventListener('click', addLeague);
         }
     }
 
@@ -1585,6 +1604,84 @@ function generateAttendanceTable(matchId) {
         </details>
         `;
     return html;
+}
+
+function renderLeaguesAdmin() {
+    const list = document.getElementById('leagues-list-admin');
+    if (!list) return;
+
+    if (state.leagues.length === 0) {
+        list.innerHTML = '<p style="text-align:center; color:#999; font-size:0.9rem;">登録されたリーグはありません</p>';
+        return;
+    }
+
+    list.innerHTML = state.leagues.map(league => `
+        <div style="display:flex; align-items:center; justify-content:space-between; background:#fff; padding:0.5rem 1rem; border-radius:4px; border:1px solid #ddd;">
+            <div>
+                <strong style="font-size:1rem;">${league.name}</strong>
+                <div style="font-size:0.8rem; color:#666;">${league.start} ～ ${league.end}</div>
+            </div>
+            <button class="delete-league-btn" data-id="${league.id}" style="background:#ffebee; color:#d32f2f; border:none; padding:0.3rem 0.6rem; border-radius:4px; cursor:pointer; font-size:0.8rem;">削除</button>
+        </div>
+    `).join('');
+
+    // Attach delete listeners
+    list.querySelectorAll('.delete-league-btn').forEach(btn => {
+        btn.onclick = (e) => {
+            const leagueId = e.target.dataset.id;
+            deleteLeague(leagueId);
+        };
+    });
+}
+
+function addLeague() {
+    const nameInput = document.getElementById('new-league-name');
+    const startInput = document.getElementById('new-league-start');
+    const endInput = document.getElementById('new-league-end');
+
+    const name = nameInput.value.trim();
+    const start = startInput.value;
+    const end = endInput.value;
+
+    if (!name || !start || !end) {
+        alert('リーグ名と期間を入力してください');
+        return;
+    }
+
+    const newLeague = {
+        id: Date.now().toString(),
+        name,
+        start,
+        end
+    };
+
+    state.leagues.push(newLeague);
+    saveToLocal();
+    renderLeaguesAdmin();
+
+    // Reset inputs
+    nameInput.value = '';
+    startInput.value = '';
+    endInput.value = '';
+
+    // API Call
+    syncLeagues();
+}
+
+function deleteLeague(leagueId) {
+    if (confirm('このリーグを削除しますか？')) {
+        state.leagues = state.leagues.filter(l => l.id !== leagueId);
+        saveToLocal();
+        renderLeaguesAdmin();
+        syncLeagues();
+    }
+}
+
+async function syncLeagues() {
+    await apiCall('update_setting', {
+        key: 'leagues',
+        value: JSON.stringify(state.leagues)
+    });
 }
 
 // Utilities
