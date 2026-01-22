@@ -253,16 +253,22 @@ function renderHomeRankings() {
         return;
     }
 
-    const { start, end } = state.selectedLeague;
+    const normalizedStart = start.replace(/\//g, '-');
+    const normalizedEnd = end.replace(/\//g, '-');
+
     const leagueMatches = state.matches.filter(m => {
-        const mMonth = m.date.substring(0, 7);
-        return mMonth >= start && mMonth <= end && (m.location === 'home' || !m.location);
+        if (!m.date) return false;
+        // Normalize any date format (YYYY/MM/DD or ISO) to YYYY-MM
+        const dateStr = String(m.date).replace(/\//g, '-');
+        const mMonth = dateStr.substring(0, 7);
+        const isMatchInLeague = mMonth >= normalizedStart && mMonth <= normalizedEnd;
+        return isMatchInLeague && (m.location === 'home' || !m.location);
     });
 
     const jConf = {};
     leagueMatches.forEach(m => {
         if (m.jankenConfirmed) {
-            m.jankenConfirmed.split(',').map(s => s.trim()).filter(s => s).forEach(n => {
+            String(m.jankenConfirmed).split(',').map(s => s.trim()).filter(s => s).forEach(n => {
                 jConf[n] = (jConf[n] || 0) + 1;
             });
         }
@@ -295,10 +301,15 @@ function renderAwayRankings() {
         return;
     }
 
-    const { start, end } = state.selectedLeague;
+    const normalizedStart = start.replace(/\//g, '-');
+    const normalizedEnd = end.replace(/\//g, '-');
+
     const leagueMatches = state.matches.filter(m => {
-        const mMonth = m.date.substring(0, 7);
-        return mMonth >= start && mMonth <= end && m.location === 'away';
+        if (!m.date) return false;
+        const dateStr = String(m.date).replace(/\//g, '-');
+        const mMonth = dateStr.substring(0, 7);
+        const isMatchInLeague = mMonth >= normalizedStart && mMonth <= normalizedEnd;
+        return isMatchInLeague && m.location === 'away';
     });
 
     const qStart = {};
