@@ -374,7 +374,17 @@ function renderMatches() {
 
                 // Set value if determined
                 if (defaultLeagueId) {
-                    userLeagueSelect.value = defaultLeagueId;
+                    userLeagueSelect.value = String(defaultLeagueId);
+                }
+
+                // DEBUG: Temporary Alert for Mobile Diagnosis
+                if (!window.hasDebugAlerted && sortedMatches.length > 0 && state.leagues.length > 0) {
+                    window.hasDebugAlerted = true;
+                    const mDate = sortedMatches[0].date;
+                    const lStart = state.leagues[0].start;
+                    const pMatch = parseDate(mDate);
+                    const pLeague = parseDate(lStart);
+                    alert(`Debug Info:\nMatch raw: ${mDate} (${typeof mDate})\nLeague raw: ${lStart} (${typeof lStart})\nParsed Match: ${pMatch.getFullYear()}/${pMatch.getMonth() + 1}/${pMatch.getDate()}\nParsed League: ${pLeague.getFullYear()}/${pLeague.getMonth() + 1}/${pLeague.getDate()}`);
                 }
             }
 
