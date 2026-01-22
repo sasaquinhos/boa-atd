@@ -325,19 +325,56 @@ function renderMatches() {
                 userLeagueSelect.innerHTML = '<option value="">-- 全ての期間 --</option>' +
                     sortedLeagues.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
 
-                // Default Selection: League covering Today, or most recent
+                // Default Selection Logic (Refined):
+                // 1. League covering Today AND has matches
+                // 2. Fallback: League covering the LATEST MATCH (to avoid empty future leagues)
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
 
+                let defaultLeagueId = null;
+
+                // 1. Try Current (Today)
                 const currentLeague = sortedLeagues.find(l => {
                     const s = parseDate(l.start);
                     const e = parseDate(l.end);
                     return today >= s && today <= e;
                 });
 
-                // Only set default if found, otherwise keep "All"
                 if (currentLeague) {
-                    userLeagueSelect.value = currentLeague.id;
+                    // Check if this league actually has matches
+                    const s = parseDate(currentLeague.start);
+                    const e = parseDate(currentLeague.end);
+                    e.setHours(23, 59, 59, 999);
+
+                    const hasMatches = sortedMatches.some(m => {
+                        const d = parseDate(m.date);
+                        return d >= s && d <= e;
+                    });
+
+                    if (hasMatches) {
+                        defaultLeagueId = currentLeague.id;
+                    }
+                }
+
+                // 2. Fallback if no valid current league found
+                if (!defaultLeagueId && sortedMatches.length > 0) {
+                    const latestMatchDate = parseDate(sortedMatches[0].date);
+                    const matchLeague = sortedLeagues.find(l => {
+                        const s = parseDate(l.start);
+                        const e = parseDate(l.end);
+                        // Make sure end date covers the full day
+                        const eFull = new Date(e);
+                        eFull.setHours(23, 59, 59, 999);
+                        return latestMatchDate >= s && latestMatchDate <= eFull;
+                    });
+                    if (matchLeague) {
+                        defaultLeagueId = matchLeague.id;
+                    }
+                }
+
+                // Set value if determined
+                if (defaultLeagueId) {
+                    userLeagueSelect.value = defaultLeagueId;
                 }
             }
 
