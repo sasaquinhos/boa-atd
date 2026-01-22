@@ -300,8 +300,6 @@ function renderMatches() {
         // Helper for Safe Date Parsing (Mobile Safari compatibility)
         const safeDate = (str) => {
             if (!str) return new Date();
-            // If already Date object, return it (though getting from JSON usually gives strings)
-            // If string contains -, replace with /
             return new Date(String(str).replace(/-/g, '/'));
         };
 
@@ -327,10 +325,13 @@ function renderMatches() {
                     return today >= s && today <= e;
                 });
 
+                // Only set default if found, otherwise keep "All"
                 if (currentLeague) {
                     userLeagueSelect.value = currentLeague.id;
                 } else if (sortedLeagues.length > 0) {
-                    userLeagueSelect.value = sortedLeagues[0].id; // Fallback to latest
+                    // Optional: Default to latest? Or just All?
+                    // Let's stick to "All" if no current league matches today, to avoid empty lists
+                    // userLeagueSelect.value = sortedLeagues[0].id;
                 }
             }
 
@@ -389,7 +390,8 @@ function renderMatches() {
                     state.expandedMatches.add(matchesToRender[0].id);
                 }
             } else {
-                matchesToRender = []; // No matches available in this league
+                // If filtering resulted in NO matches (e.g. empty league), render nothing
+                matchesToRender = [];
             }
 
             // Bind change event
@@ -405,6 +407,7 @@ function renderMatches() {
                 matchesToRender = sortedMatches.slice(0, limitCount);
             }
         }
+
 
         if (currentUserSelect && !currentUser) {
             matchesContainer.innerHTML = '<p style="text-align:center; padding:2rem; color:#666;">ユーザーを選択してください。</p>';
