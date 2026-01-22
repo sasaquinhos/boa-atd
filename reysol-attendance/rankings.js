@@ -4,7 +4,8 @@ const state = {
     matches: [],
     attendance: {},
     members: [],
-    selectedYear: new Date().getFullYear(),
+    leagues: [],
+    selectedLeague: null,
     selectedLocation: 'home'
 };
 
@@ -15,7 +16,7 @@ async function init() {
     const hasLocalData = loadFromLocal();
 
     if (hasLocalData) {
-        setupYearSelect();
+        setupLeagueSelect();
         renderRankings();
     } else {
         showLoading(true);
@@ -23,7 +24,7 @@ async function init() {
 
     try {
         await loadData();
-        setupYearSelect();
+        setupLeagueSelect();
         renderRankings();
     } catch (e) {
         console.error('Data sync failed:', e);
@@ -60,6 +61,15 @@ async function loadData() {
         state.attendance = data.attendance || {};
         state.members = data.members || [];
 
+        if (data.settings && data.settings.leagues) {
+            try {
+                state.leagues = JSON.parse(data.settings.leagues);
+            } catch (e) {
+                console.error('Failed to parse leagues settings:', e);
+                state.leagues = [];
+            }
+        }
+
         // Save to local storage
         saveToLocal();
     } catch (e) {
@@ -79,6 +89,7 @@ function loadFromLocal() {
         if (data.members) state.members = data.members;
         if (data.matches) state.matches = data.matches;
         if (data.attendance) state.attendance = data.attendance;
+        if (data.leagues) state.leagues = data.leagues;
 
         return true;
     } catch (e) {
@@ -93,6 +104,7 @@ function saveToLocal() {
             members: state.members,
             matches: state.matches,
             attendance: state.attendance,
+            leagues: state.leagues,
             timestamp: new Date().getTime()
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -101,23 +113,23 @@ function saveToLocal() {
     }
 }
 
-function setupYearSelect() {
-    const yearSelect = document.getElementById('year-select');
-    const years = [...new Set(state.matches.map(m => new Date(m.date).getFullYear()))].sort((a, b) => b - a);
-
-    if (years.length === 0) {
-        years.push(new Date().getFullYear());
+function setupLeagueSelect() {
+    const leagueSelect = document.getElementById('year-select'); // Keep same ID for simplicity
+    if (state.leagues.length === 0) {
+        leagueSelect.innerHTML = '<option value="">リーグが登録されていません</option>';
+        state.selectedLeague = null;
+        return;
     }
 
-    yearSelect.innerHTML = years.map(year => `<option value="${year}">${year}年度</option>`).join('');
-    state.selectedYear = years[0];
-    yearSelect.value = state.selectedYear;
+    leagueSelect.innerHTML = state.leagues.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+    state.selectedLeague = state.leagues[0];
 }
 
 function setupYearSelectListener() {
-    const yearSelect = document.getElementById('year-select');
-    yearSelect.addEventListener('change', (e) => {
-        state.selectedYear = parseInt(e.target.value);
+    const leagueSelect = document.getElementById('year-select');
+    leagueSelect.addEventListener('change', (e) => {
+        const leagueId = e.target.value;
+        state.selectedLeague = state.leagues.find(l => l.id === leagueId);
         renderRankings();
     });
 }
@@ -191,9 +203,18 @@ function renderRankings() {
 }
 
 function renderHomeRankings() {
-    const yearMatches = state.matches.filter(m => {
-        const matchYear = new Date(m.date).getFullYear();
-        return matchYear === state.selectedYear && (m.location === 'home' || !m.location);
+    if (!state.selectedLeague) {
+        clearRankings();
+        return;
+    }
+
+    const start = state.selectedLeague.start; // YYYY-MM
+    const end = state.selectedLeague.end;     // YYYY-MM
+
+    const leagueMatches = state.matches.filter(m => {
+        const matchMonth = m.date.substring(0, 7); // YYYY-MM
+        const isMatchInLeague = matchMonth >= start && matchMonth <= end;
+        return isMatchInLeague && (m.location === 'home' || !m.location);
     });
 
     // Janken Confirmed Ranking
@@ -211,7 +232,7 @@ function renderHomeRankings() {
     const jankenCandidate = {};
     const morningWithdraw = {};
     const bigFlag = {};
-    const matchIds = new Set(yearMatches.map(m => String(m.id)));
+    const matchIds = new Set(leagueMatches.map(m => String(m.id)));
 
     Object.keys(state.attendance).forEach(key => {
         const [matchId, memberName] = key.split('_');
@@ -229,14 +250,23 @@ function renderHomeRankings() {
 }
 
 function renderAwayRankings() {
-    const yearMatches = state.matches.filter(m => {
-        const matchYear = new Date(m.date).getFullYear();
-        return matchYear === state.selectedYear && m.location === 'away';
+    if (!state.selectedLeague) {
+        clearRankings();
+        return;
+    }
+
+    const start = state.selectedLeague.start;
+    const end = state.selectedLeague.end;
+
+    const leagueMatches = state.matches.filter(m => {
+        const matchMonth = m.date.substring(0, 7);
+        const isMatchInLeague = matchMonth >= start && matchMonth <= end;
+        return isMatchInLeague && m.location === 'away';
     });
 
     const queueStart = {};
     const lineOrg = {};
-    const matchIds = new Set(yearMatches.map(m => String(m.id)));
+    const matchIds = new Set(leagueMatches.map(m => String(m.id)));
 
     Object.keys(state.attendance).forEach(key => {
         const [matchId, memberName] = key.split('_');
@@ -249,6 +279,12 @@ function renderAwayRankings() {
 
     renderRankingCard('queue-start-ranking', queueStart);
     renderRankingCard('line-org-ranking', lineOrg);
+}
+
+function clearRankings() {
+    document.querySelectorAll('.ranking-body').forEach(container => {
+        container.innerHTML = '<div class="no-data">リーグを選択してください</div>';
+    });
 }
 
 function renderRankingCard(containerId, counts) {
