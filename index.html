@@ -22,12 +22,28 @@
 
     <main class="container">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem;">
-            <div class="user-select-container">
-                <label for="current-user-select" style="font-weight:bold; margin-right:0.5rem;">メンバー選択:</label>
-                <select id="current-user-select"
-                    style="padding:0.5rem; border-radius:4px; border:1px solid #ddd; font-size:1rem;">
-                    <option value="">-- 選択してください --</option>
-                </select>
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                <div class="league-select-container">
+                    <label for="current-league-select" style="font-weight:bold; margin-right:0.5rem;">リーグ選択:</label>
+                    <select id="current-league-select"
+                        style="padding:0.5rem; border-radius:4px; border:1px solid #ddd; font-size:1rem;">
+                        <option value="">-- 全ての期間 --</option>
+                    </select>
+                </div>
+                <div class="user-select-container">
+                    <label for="current-user-select" style="font-weight:bold; margin-right:0.5rem;">メンバー選択:</label>
+                    <select id="current-user-select"
+                        style="padding:0.5rem; border-radius:4px; border:1px solid #ddd; font-size:1rem;">
+                        <option value="">-- 選択してください --</option>
+                    </select>
+                </div>
+                <div class="match-select-container">
+                    <label for="current-match-select" style="font-weight:bold; margin-right:0.5rem;">試合選択:</label>
+                    <select id="current-match-select"
+                        style="padding:0.5rem; border-radius:4px; border:1px solid #ddd; font-size:1rem;">
+                        <option value="">-- 試合を選択 --</option>
+                    </select>
+                </div>
             </div>
             <div style="display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-end;">
                 <a href="reysol-attendance/manual.html"
