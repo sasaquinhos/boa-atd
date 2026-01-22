@@ -382,23 +382,46 @@ function renderMatches() {
                     }
                 }
 
-                // DEBUG: Logic Trace (Mobile)
-                if (!window.debug_v3 && sortedLeagues.length > 0) {
-                    window.debug_v3 = true;
-                    // Gather info for ALL leagues to see why fallback fails
-                    const latestM = sortedMatches.length > 0 ? parseDate(sortedMatches[0].date) : null;
+                // DEBUG: Deep Logic Trace (Mobile) v4
+                if (!window.debug_v4 && state.matches.length > 0) {
+                    window.debug_v4 = true;
 
-                    let log = `Match: ${latestM ? (latestM.getMonth() + 1) + '/' + latestM.getDate() : 'None'}\n`;
-                    log += `DefaultID: ${defaultLeagueId}\n`;
-                    log += `Leagues check:\n`;
+                    let log = 'v4 Debug:\n';
 
-                    sortedLeagues.forEach(l => {
+                    // 1. Check Today vs Current League Search
+                    log += `Today: ${today.getFullYear()}/${today.getMonth() + 1}/${today.getDate()}\n`;
+
+                    const foundLeague = sortedLeagues.find(l => {
                         const s = parseDate(l.start);
                         const e = parseDate(l.end);
                         e.setHours(23, 59, 59, 999);
-                        const covers = latestM ? (latestM >= s && latestM <= e) : false;
-                        log += `[${l.name}] ${s.getMonth() + 1}/${s.getDate()}-${e.getMonth() + 1}/${e.getDate()} : ${covers}\n`;
+                        return today >= s && today <= e;
                     });
+
+                    if (foundLeague) {
+                        log += `Found CurLeague: ${foundLeague.name}\n`;
+                        const s = parseDate(foundLeague.start);
+                        const e = parseDate(foundLeague.end);
+                        e.setHours(23, 59, 59, 999);
+                        log += `Range: ${s.getMonth() + 1}/${s.getDate()} - ${e.getMonth() + 1}/${e.getDate()}\n`;
+
+                        // Check Matches
+                        log += 'Matches Check:\n';
+                        sortedMatches.slice(0, 5).forEach((m, i) => {
+                            const d = parseDate(m.date);
+                            const inRange = d >= s && d <= e;
+                            log += `#${i} ${d.getMonth() + 1}/${d.getDate()} (${m.date}) : ${inRange}\n`;
+                        });
+                    } else {
+                        log += 'NO CurLeague checking TopL:\n';
+                        if (sortedLeagues.length > 0) {
+                            const l = sortedLeagues[0];
+                            const s = parseDate(l.start);
+                            const e = parseDate(l.end);
+                            e.setHours(23, 59, 59, 999);
+                            log += `TopL: ${s.getMonth() + 1}/${s.getDate()}-${e.getMonth() + 1}/${e.getDate()} T>=S:${today >= s} T<=E:${today <= e}\nTime: T${today.getTime()} S${s.getTime()} E${e.getTime()}`;
+                        }
+                    }
 
                     alert(log);
                 }
