@@ -43,7 +43,7 @@ const STORAGE_KEY = 'reysol_attendance_data';
 function parseDate(input) {
     if (!input) return new Date();
     if (input instanceof Date) {
-        return isNaN(input.getTime()) ? new Date() : input;
+        return isNaN(input.getTime()) ? new Date() : new Date(input.getTime());
     }
     if (typeof input === 'number') return new Date(input);
     const str = String(input);
@@ -345,14 +345,16 @@ function renderMatches() {
                 // 1. Try Current (Today)
                 const currentLeague = sortedLeagues.find(l => {
                     const s = parseDate(l.start);
+                    s.setHours(0, 0, 0, 0); // Force start of day
                     const e = parseDate(l.end);
-                    e.setHours(23, 59, 59, 999); // Fix: Extend to end of day
+                    e.setHours(23, 59, 59, 999); // Force end of day
                     return today >= s && today <= e;
                 });
 
                 if (currentLeague) {
                     // Check if this league actually has matches
                     const s = parseDate(currentLeague.start);
+                    s.setHours(0, 0, 0, 0);
                     const e = parseDate(currentLeague.end);
                     e.setHours(23, 59, 59, 999);
 
@@ -369,61 +371,17 @@ function renderMatches() {
                 // 2. Fallback if no valid current league found
                 if (!defaultLeagueId && sortedMatches.length > 0) {
                     const latestMatchDate = parseDate(sortedMatches[0].date);
+
                     const matchLeague = sortedLeagues.find(l => {
                         const s = parseDate(l.start);
+                        s.setHours(0, 0, 0, 0);
                         const e = parseDate(l.end);
-                        // Make sure end date covers the full day
-                        const eFull = new Date(e);
-                        eFull.setHours(23, 59, 59, 999);
-                        return latestMatchDate >= s && latestMatchDate <= eFull;
+                        e.setHours(23, 59, 59, 999);
+                        return latestMatchDate >= s && latestMatchDate <= e;
                     });
                     if (matchLeague) {
                         defaultLeagueId = matchLeague.id;
                     }
-                }
-
-                // DEBUG: Deep Logic Trace (Mobile) v4
-                if (!window.debug_v4 && state.matches.length > 0) {
-                    window.debug_v4 = true;
-
-                    let log = 'v4 Debug:\n';
-
-                    // 1. Check Today vs Current League Search
-                    log += `Today: ${today.getFullYear()}/${today.getMonth() + 1}/${today.getDate()}\n`;
-
-                    const foundLeague = sortedLeagues.find(l => {
-                        const s = parseDate(l.start);
-                        const e = parseDate(l.end);
-                        e.setHours(23, 59, 59, 999);
-                        return today >= s && today <= e;
-                    });
-
-                    if (foundLeague) {
-                        log += `Found CurLeague: ${foundLeague.name}\n`;
-                        const s = parseDate(foundLeague.start);
-                        const e = parseDate(foundLeague.end);
-                        e.setHours(23, 59, 59, 999);
-                        log += `Range: ${s.getMonth() + 1}/${s.getDate()} - ${e.getMonth() + 1}/${e.getDate()}\n`;
-
-                        // Check Matches
-                        log += 'Matches Check:\n';
-                        sortedMatches.slice(0, 5).forEach((m, i) => {
-                            const d = parseDate(m.date);
-                            const inRange = d >= s && d <= e;
-                            log += `#${i} ${d.getMonth() + 1}/${d.getDate()} (${m.date}) : ${inRange}\n`;
-                        });
-                    } else {
-                        log += 'NO CurLeague checking TopL:\n';
-                        if (sortedLeagues.length > 0) {
-                            const l = sortedLeagues[0];
-                            const s = parseDate(l.start);
-                            const e = parseDate(l.end);
-                            e.setHours(23, 59, 59, 999);
-                            log += `TopL: ${s.getMonth() + 1}/${s.getDate()}-${e.getMonth() + 1}/${e.getDate()} T>=S:${today >= s} T<=E:${today <= e}\nTime: T${today.getTime()} S${s.getTime()} E${e.getTime()}`;
-                        }
-                    }
-
-                    alert(log);
                 }
 
                 // Set value if determined
