@@ -13,349 +13,367 @@ const state = {
 const STORAGE_KEY = 'reysol_attendance_data';
 
 async function init() {
+    console.log('Initializing rankings...');
+
     // 1. Try to load from local storage
     const hasLocalData = loadFromLocal();
 
     if (hasLocalData) {
+        console.log('Loaded local data, rendering immediately');
         setupLeagueSelect();
         renderRankings();
-        try {
-            // Fetch fresh data in the background if we have local data,
-            // or in the foreground if we don't.
-            if (!hasLocalData) showLoading(true);
+    } else {
+        console.log('No local data, showing loader');
+        showLoading(true);
+    }
 
-            await loadData();
-            setupLeagueSelect();
-            renderRankings();
-        } catch (e) {
-            console.error('Data sync failed:', e);
-            if (!hasLocalData) {
-                alert('データの読み込みに失敗しました');
-            }
-        } finally {
-            showLoading(false);
+    try {
+        console.log('Fetching fresh data...');
+        await loadData();
+        setupLeagueSelect();
+        renderRankings();
+    } catch (e) {
+        console.error('Data sync failed:', e);
+        if (!hasLocalData) {
+            alert('データの読み込みに失敗しました');
         }
-
-        // Attach listeners once
-        setupEventListeners();
+    } finally {
+        showLoading(false);
     }
 
-    function setupEventListeners() {
-        setupYearSelectListener();
-        setupLocationToggle();
-    }
+    // Attach listeners once
+    setupEventListeners();
+}
 
-    async function loadData() {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+function setupEventListeners() {
+    setupYearSelectListener();
+    setupLocationToggle();
+}
 
-        try {
-            const response = await fetch(`${API_URL}?t=${new Date().getTime()}`, {
-                signal: controller.signal
-            });
-            clearTimeout(timeoutId);
+async function loadData() {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            const data = await response.json();
-
-            state.matches = data.matches || [];
-            state.attendance = data.attendance || {};
-            state.members = data.members || [];
-
-            if (data.settings && data.settings.leagues) {
-                try {
-                    state.leagues = JSON.parse(data.settings.leagues);
-                } catch (e) {
-                    console.error('Failed to parse leagues settings:', e);
-                    state.leagues = [];
-                }
-            }
-
-            // We'll group on-demand during render to keep init fast
-            // Save to local storage
-            saveToLocal();
-        } catch (e) {
-            clearTimeout(timeoutId);
-            throw e;
-        }
-    }
-
-    function loadFromLocal() {
-        try {
-            const json = localStorage.getItem(STORAGE_KEY);
-            if (!json) return false;
-
-            const data = JSON.parse(json);
-            if (!data) return false;
-
-            if (data.members) state.members = data.members;
-            if (data.matches) state.matches = data.matches;
-            if (data.attendance) {
-                state.attendance = data.attendance;
-            }
-            if (data.leagues) state.leagues = data.leagues;
-
-            return true;
-        } catch (e) {
-            console.error('Error loading from local storage:', e);
-            return false;
-        }
-    }
-
-    function saveToLocal() {
-        try {
-            const data = {
-                members: state.members,
-                matches: state.matches,
-                attendance: state.attendance,
-                leagues: state.leagues,
-                timestamp: new Date().getTime()
-            };
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-        } catch (e) {
-            console.error('Error saving to local storage:', e);
-        }
-    }
-
-    // Helper to get records for specific matches only
-    function ensureGroupedData(matchIds) {
-        matchIds.forEach(id => {
-            if (state.attendanceByMatch[id]) return; // Already indexed
-
-            state.attendanceByMatch[id] = [];
-            // Since we can't easily find only relevant keys in a large object without scanning once,
-            // we'll actually scan ONLY once if needed or use a more targeted approach.
-            // Optimization: iterate through members * matches instead of all attendance keys
-            // if members * matches < total attendance size.
-            state.members.forEach(member => {
-                const key = `${id}_${member.name}`;
-                if (state.attendance[key]) {
-                    state.attendanceByMatch[id].push({
-                        memberName: member.name,
-                        data: state.attendance[key]
-                    });
-                }
-            });
+    try {
+        const response = await fetch(`${API_URL}?t=${new Date().getTime()}`, {
+            signal: controller.signal
         });
-    }
+        clearTimeout(timeoutId);
 
-    function setupLeagueSelect() {
-        const leagueSelect = document.getElementById('year-select'); // Keep same ID for simplicity
-        if (state.leagues.length === 0) {
-            leagueSelect.innerHTML = '<option value="">リーグが登録されていません</option>';
-            state.selectedLeague = null;
-            return;
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const data = await response.json();
+
+        state.matches = data.matches || [];
+        state.attendance = data.attendance || {};
+        state.members = data.members || [];
+
+        if (data.settings && data.settings.leagues) {
+            try {
+                state.leagues = JSON.parse(data.settings.leagues);
+            } catch (e) {
+                console.error('Failed to parse leagues settings:', e);
+                state.leagues = [];
+            }
         }
 
-        leagueSelect.innerHTML = state.leagues.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+        // We'll group on-demand during render to keep init fast
+        // Reset grouped data on fresh load
+        state.attendanceByMatch = {};
+
+        // Save to local storage
+        saveToLocal();
+    } catch (e) {
+        clearTimeout(timeoutId);
+        throw e;
+    }
+}
+
+function loadFromLocal() {
+    try {
+        const json = localStorage.getItem(STORAGE_KEY);
+        if (!json) return false;
+
+        const data = JSON.parse(json);
+        if (!data) return false;
+
+        if (data.members) state.members = data.members;
+        if (data.matches) state.matches = data.matches;
+        if (data.attendance) {
+            state.attendance = data.attendance;
+        }
+        if (data.leagues) state.leagues = data.leagues;
+
+        return true;
+    } catch (e) {
+        console.error('Error loading from local storage:', e);
+        return false;
+    }
+}
+
+function saveToLocal() {
+    try {
+        const data = {
+            members: state.members,
+            matches: state.matches,
+            attendance: state.attendance,
+            leagues: state.leagues,
+            timestamp: new Date().getTime()
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch (e) {
+        console.error('Error saving to local storage:', e);
+    }
+}
+
+// Helper to get records for specific matches only
+function ensureGroupedData(matchIds) {
+    matchIds.forEach(id => {
+        if (state.attendanceByMatch[id]) return; // Already indexed
+
+        state.attendanceByMatch[id] = [];
+        state.members.forEach(member => {
+            const key = `${id}_${member.name}`;
+            if (state.attendance[key]) {
+                state.attendanceByMatch[id].push({
+                    memberName: member.name,
+                    data: state.attendance[key]
+                });
+            }
+        });
+    });
+}
+
+function setupLeagueSelect() {
+    const leagueSelect = document.getElementById('year-select');
+    if (!leagueSelect) return;
+
+    if (state.leagues.length === 0) {
+        leagueSelect.innerHTML = '<option value="">リーグが登録されていません</option>';
+        state.selectedLeague = null;
+        return;
+    }
+
+    // Preserving selection if possible
+    const currentId = state.selectedLeague ? state.selectedLeague.id : null;
+
+    leagueSelect.innerHTML = state.leagues.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+
+    if (currentId && state.leagues.some(l => l.id === currentId)) {
+        leagueSelect.value = currentId;
+    } else {
         state.selectedLeague = state.leagues[0];
+        leagueSelect.value = state.selectedLeague.id;
     }
+}
 
-    function setupYearSelectListener() {
-        const leagueSelect = document.getElementById('year-select');
-        leagueSelect.addEventListener('change', (e) => {
-            const leagueId = e.target.value;
-            state.selectedLeague = state.leagues.find(l => l.id === leagueId);
+function setupYearSelectListener() {
+    const leagueSelect = document.getElementById('year-select');
+    if (!leagueSelect) return;
+    leagueSelect.addEventListener('change', (e) => {
+        const leagueId = e.target.value;
+        state.selectedLeague = state.leagues.find(l => l.id === leagueId);
+        renderRankings();
+    });
+}
+
+function setupLocationToggle() {
+    document.querySelectorAll('.toggle-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const targetBtn = e.target.closest('.toggle-btn');
+            if (!targetBtn) return;
+            document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+            targetBtn.classList.add('active');
+            state.selectedLocation = targetBtn.dataset.location;
             renderRankings();
         });
-    }
+    });
+}
 
-    function setupLocationToggle() {
-        document.querySelectorAll('.toggle-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const targetBtn = e.target.closest('.toggle-btn');
-                if (!targetBtn) return;
-                document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-                targetBtn.classList.add('active');
-                state.selectedLocation = targetBtn.dataset.location;
-                renderRankings();
-            });
-        });
-    }
+function renderRankings() {
+    console.time('renderRankings');
+    const grid = document.getElementById('rankings-grid');
+    if (!grid) return;
 
-    function renderRankings() {
-        console.time('renderRankings');
-        const grid = document.getElementById('rankings-grid');
-        if (state.selectedLocation === 'home') {
-            grid.innerHTML = `
+    if (state.selectedLocation === 'home') {
+        grid.innerHTML = `
             <div id="janken-confirmed-ranking" class="ranking-card">
                 <div class="ranking-header">
                     <h3>じゃんけん大会参加者</h3>
                     <span class="ranking-sub-title">（参加回数の多い順）</span>
                 </div>
-                <div class="ranking-body">読み込み中...</div>
+                <div class="ranking-body">集計中...</div>
             </div>
             <div id="janken-candidate-ranking" class="ranking-card">
                 <div class="ranking-header">
                     <h3>じゃんけん大会立候補者</h3>
                     <span class="ranking-sub-title">（立候補回数の多い順）</span>
                 </div>
-                <div class="ranking-body">読み込み中...</div>
+                <div class="ranking-body">集計中...</div>
             </div>
             <div id="morning-withdraw-ranking" class="ranking-card">
                 <div class="ranking-header">
                     <h3>朝の引き込み</h3>
                     <span class="ranking-sub-title">（参加回数の多い順）</span>
                 </div>
-                <div class="ranking-body">読み込み中...</div>
+                <div class="ranking-body">集計中...</div>
             </div>
             <div id="big-flag-ranking" class="ranking-card">
                 <div class="ranking-header">
                     <h3>ビッグフラッグ搬入手伝い</h3>
                     <span class="ranking-sub-title">（参加回数の多い順）</span>
                 </div>
-                <div class="ranking-body">読み込み中...</div>
+                <div class="ranking-body">集計中...</div>
             </div>
         `;
-            renderHomeRankings();
-        } else {
-            grid.innerHTML = `
+        renderHomeRankings();
+    } else {
+        grid.innerHTML = `
             <div id="queue-start-ranking" class="ranking-card">
                 <div class="ranking-header">
                     <h3>並び開始（シート貼り）</h3>
                     <span class="ranking-sub-title">（参加回数の多い順）</span>
                 </div>
-                <div class="ranking-body">読み込み中...</div>
+                <div class="ranking-body">集計中...</div>
             </div>
             <div id="line-org-ranking" class="ranking-card">
                 <div class="ranking-header">
                     <h3>列整理</h3>
                     <span class="ranking-sub-title">（参加回数の多い順）</span>
                 </div>
-                <div class="ranking-body">読み込み中...</div>
+                <div class="ranking-body">集計中...</div>
             </div>
         `;
-            renderAwayRankings();
-        }
-        console.timeEnd('renderRankings');
+        renderAwayRankings();
+    }
+    console.timeEnd('renderRankings');
+}
+
+function renderHomeRankings() {
+    if (!state.selectedLeague) {
+        clearRankings();
+        return;
     }
 
-    function renderHomeRankings() {
-        if (!state.selectedLeague) {
-            clearRankings();
-            return;
-        }
+    const start = state.selectedLeague.start;
+    const end = state.selectedLeague.end;
 
-        const start = state.selectedLeague.start; // YYYY-MM
-        const end = state.selectedLeague.end;     // YYYY-MM
+    const leagueMatches = state.matches.filter(m => {
+        const matchMonth = m.date.substring(0, 7);
+        const isMatchInLeague = matchMonth >= start && matchMonth <= end;
+        return isMatchInLeague && (m.location === 'home' || !m.location);
+    });
 
-        const leagueMatches = state.matches.filter(m => {
-            const matchMonth = m.date.substring(0, 7); // YYYY-MM
-            const isMatchInLeague = matchMonth >= start && matchMonth <= end;
-            return isMatchInLeague && (m.location === 'home' || !m.location);
-        });
-
-        // Janken Confirmed Ranking
-        const jankenConfirmed = {};
-        leagueMatches.forEach(m => {
-            if (m.jankenConfirmed) {
-                m.jankenConfirmed.split(',').map(s => s.trim()).filter(s => s).forEach(name => {
-                    jankenConfirmed[name] = (jankenConfirmed[name] || 0) + 1;
-                });
-            }
-        });
-
-        renderRankingCard('janken-confirmed-ranking', jankenConfirmed);
-
-        const jankenCandidate = {};
-        const morningWithdraw = {};
-        const bigFlag = {};
-
-        ensureGroupedData(leagueMatches.map(m => m.id));
-
-        leagueMatches.forEach(match => {
-            const records = state.attendanceByMatch[match.id] || [];
-            records.forEach(record => {
-                const data = record.data;
-                if (data.jankenParticipate) jankenCandidate[record.memberName] = (jankenCandidate[record.memberName] || 0) + 1;
-                if (data.morningWithdraw) morningWithdraw[record.memberName] = (morningWithdraw[record.memberName] || 0) + 1;
-                if (data.bigFlag) bigFlag[record.memberName] = (bigFlag[record.memberName] || 0) + 1;
+    // Janken Confirmed Ranking
+    const jankenConfirmed = {};
+    leagueMatches.forEach(m => {
+        if (m.jankenConfirmed) {
+            m.jankenConfirmed.split(',').map(s => s.trim()).filter(s => s).forEach(name => {
+                jankenConfirmed[name] = (jankenConfirmed[name] || 0) + 1;
             });
-        });
-
-        renderRankingCard('janken-candidate-ranking', jankenCandidate);
-        renderRankingCard('morning-withdraw-ranking', morningWithdraw);
-        renderRankingCard('big-flag-ranking', bigFlag);
-    }
-
-    function renderAwayRankings() {
-        if (!state.selectedLeague) {
-            clearRankings();
-            return;
         }
+    });
 
-        const start = state.selectedLeague.start;
-        const end = state.selectedLeague.end;
+    renderRankingCard('janken-confirmed-ranking', jankenConfirmed);
 
-        const leagueMatches = state.matches.filter(m => {
-            const matchMonth = m.date.substring(0, 7);
-            const isMatchInLeague = matchMonth >= start && matchMonth <= end;
-            return isMatchInLeague && m.location === 'away';
+    const jankenCandidate = {};
+    const morningWithdraw = {};
+    const bigFlag = {};
+
+    ensureGroupedData(leagueMatches.map(m => m.id));
+
+    leagueMatches.forEach(match => {
+        const records = state.attendanceByMatch[match.id] || [];
+        records.forEach(record => {
+            const data = record.data;
+            if (data.jankenParticipate) jankenCandidate[record.memberName] = (jankenCandidate[record.memberName] || 0) + 1;
+            if (data.morningWithdraw) morningWithdraw[record.memberName] = (morningWithdraw[record.memberName] || 0) + 1;
+            if (data.bigFlag) bigFlag[record.memberName] = (bigFlag[record.memberName] || 0) + 1;
         });
+    });
 
-        const queueStart = {};
-        const lineOrg = {};
+    renderRankingCard('janken-candidate-ranking', jankenCandidate);
+    renderRankingCard('morning-withdraw-ranking', morningWithdraw);
+    renderRankingCard('big-flag-ranking', bigFlag);
+}
 
-        ensureGroupedData(leagueMatches.map(m => m.id));
-
-        leagueMatches.forEach(match => {
-            const records = state.attendanceByMatch[match.id] || [];
-            records.forEach(record => {
-                const data = record.data;
-                if (data.status === 6) queueStart[record.memberName] = (queueStart[record.memberName] || 0) + 1;
-                if (data.status === 7) lineOrg[record.memberName] = (lineOrg[record.memberName] || 0) + 1;
-            });
-        });
-
-        renderRankingCard('queue-start-ranking', queueStart);
-        renderRankingCard('line-org-ranking', lineOrg);
+function renderAwayRankings() {
+    if (!state.selectedLeague) {
+        clearRankings();
+        return;
     }
 
-    function clearRankings() {
-        document.querySelectorAll('.ranking-body').forEach(container => {
-            container.innerHTML = '<div class="no-data">リーグを選択してください</div>';
+    const start = state.selectedLeague.start;
+    const end = state.selectedLeague.end;
+
+    const leagueMatches = state.matches.filter(m => {
+        const matchMonth = m.date.substring(0, 7);
+        const isMatchInLeague = matchMonth >= start && matchMonth <= end;
+        return isMatchInLeague && m.location === 'away';
+    });
+
+    const queueStart = {};
+    const lineOrg = {};
+
+    ensureGroupedData(leagueMatches.map(m => m.id));
+
+    leagueMatches.forEach(match => {
+        const records = state.attendanceByMatch[match.id] || [];
+        records.forEach(record => {
+            const data = record.data;
+            if (data.status === 6) queueStart[record.memberName] = (queueStart[record.memberName] || 0) + 1;
+            if (data.status === 7) lineOrg[record.memberName] = (lineOrg[record.memberName] || 0) + 1;
         });
+    });
+
+    renderRankingCard('queue-start-ranking', queueStart);
+    renderRankingCard('line-org-ranking', lineOrg);
+}
+
+function clearRankings() {
+    document.querySelectorAll('.ranking-body').forEach(container => {
+        container.innerHTML = '<div class="no-data">リーグを選択してください</div>';
+    });
+}
+
+function renderRankingCard(containerId, counts) {
+    const card = document.getElementById(containerId);
+    if (!card) return;
+    const container = card.querySelector('.ranking-body');
+    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+
+    if (sorted.length === 0) {
+        container.innerHTML = '<div class="no-data">データがありません</div>';
+        return;
     }
 
-    function renderRankingCard(containerId, counts) {
-        const card = document.getElementById(containerId);
-        if (!card) return;
-        const container = card.querySelector('.ranking-body');
-        const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+    let currentRank = 1;
+    let prevCount = null;
 
-        if (sorted.length === 0) {
-            container.innerHTML = '<div class="no-data">データがありません</div>';
-            return;
+    container.innerHTML = sorted.map(([name, count], index) => {
+        if (prevCount !== null && count < prevCount) {
+            currentRank = index + 1;
         }
+        prevCount = count;
 
-        let currentRank = 1;
-        let prevCount = null;
+        let rankClass = '';
+        if (currentRank === 1) rankClass = 'rank-gold';
+        else if (currentRank === 2) rankClass = 'rank-silver';
+        else if (currentRank === 3) rankClass = 'rank-bronze';
 
-        container.innerHTML = sorted.map(([name, count], index) => {
-            // Tie-breaking logic (Standard Competition Ranking)
-            if (prevCount !== null && count < prevCount) {
-                currentRank = index + 1;
-            }
-            prevCount = count;
-
-            let rankClass = '';
-            if (currentRank === 1) rankClass = 'rank-gold';
-            else if (currentRank === 2) rankClass = 'rank-silver';
-            else if (currentRank === 3) rankClass = 'rank-bronze';
-
-            return `
+        return `
             <div class="ranking-item">
                 <div class="rank-badge ${rankClass}">${currentRank}</div>
                 <div class="rank-name">${name}</div>
                 <div class="rank-count">${count}回</div>
             </div>
         `;
-        }).join('');
-    }
+    }).join('');
+}
 
-    function showLoading(show) {
-        document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none';
-    }
+function showLoading(show) {
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay) overlay.style.display = show ? 'flex' : 'none';
+}
 
-    // Global execution
-    init();
+// Start app
+init();
