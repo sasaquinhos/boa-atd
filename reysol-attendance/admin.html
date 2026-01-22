@@ -68,10 +68,16 @@
                                 style="margin-left: auto;">リーグを登録</button>
                         </div>
                     </div>
-                    <div id="leagues-list-admin"
-                        style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem;">
-                        <!-- Leagues will be injected here -->
-                    </div>
+
+                    <!-- League List (Collapsible) -->
+                    <details open
+                        style="margin-top: 1rem; background: #fff; border: 1px solid #ddd; border-radius: 4px; padding: 0.5rem;">
+                        <summary style="cursor: pointer; font-weight: bold; padding: 0.5rem;">登録済みリーグ一覧</summary>
+                        <div id="leagues-list-admin"
+                            style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem;">
+                            <!-- Leagues injected here -->
+                        </div>
+                    </details>
                 </div>
                 <div class="control-group">
                     <h3>メンバー追加</h3>
@@ -284,6 +290,29 @@
             </div>
         </div>
     </div>
+
+    <!-- Edit League Modal -->
+    <div id="edit-league-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="close-edit-league-modal">&times;</span>
+            <h2>リーグ情報の修正</h2>
+            <input type="hidden" id="edit-league-id">
+            <div class="input-group">
+                <label>リーグ名</label>
+                <input type="text" id="edit-league-name">
+            </div>
+            <div class="input-group">
+                <label>開始月</label>
+                <input type="month" id="edit-league-start">
+            </div>
+            <div class="input-group">
+                <label>終了月</label>
+                <input type="month" id="edit-league-end">
+            </div>
+            <button id="update-league-btn" class="primary-btn" style="width: 100%; margin-top: 1rem;">更新</button>
+        </div>
+    </div>
+
     <script src="app.js?v=20260120_1300"></script>
 </body>
 
