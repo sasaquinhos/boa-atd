@@ -1615,21 +1615,38 @@ function renderLeaguesAdmin() {
         return;
     }
 
-    list.innerHTML = state.leagues.map(league => `
-        <div style="display:flex; align-items:center; justify-content:space-between; background:#fff; padding:0.5rem 1rem; border-radius:4px; border:1px solid #ddd;">
+    // Sort by start date specific (Newest First)
+    const sortedLeagues = [...state.leagues].sort((a, b) => {
+        if (a.start < b.start) return 1;
+        if (a.start > b.start) return -1;
+        return 0;
+    });
+
+    list.innerHTML = sortedLeagues.map(league => `
+        <div style="display:flex; align-items:center; justify-content:space-between; background:#f9f9f9; padding:0.5rem 1rem; border-radius:4px; border:1px solid #eee;">
             <div>
                 <strong style="font-size:1rem;">${league.name}</strong>
                 <div style="font-size:0.8rem; color:#666;">${league.start} ～ ${league.end}</div>
             </div>
-            <button class="delete-league-btn" data-id="${league.id}" style="background:#ffebee; color:#d32f2f; border:none; padding:0.3rem 0.6rem; border-radius:4px; cursor:pointer; font-size:0.8rem;">削除</button>
+            <div style="display:flex; gap:0.5rem;">
+                <button class="edit-league-btn" data-id="${league.id}" style="background:#e3f2fd; color:#1565c0; border:none; padding:0.3rem 0.6rem; border-radius:4px; cursor:pointer; font-size:0.8rem;">修正</button>
+                <button class="delete-league-btn" data-id="${league.id}" style="background:#ffebee; color:#d32f2f; border:none; padding:0.3rem 0.6rem; border-radius:4px; cursor:pointer; font-size:0.8rem;">削除</button>
+            </div>
         </div>
     `).join('');
 
-    // Attach delete listeners
+    // Attach listeners
     list.querySelectorAll('.delete-league-btn').forEach(btn => {
         btn.onclick = (e) => {
             const leagueId = e.target.dataset.id;
             deleteLeague(leagueId);
+        };
+    });
+
+    list.querySelectorAll('.edit-league-btn').forEach(btn => {
+        btn.onclick = (e) => {
+            const leagueId = e.target.dataset.id;
+            openEditLeagueModal(leagueId);
         };
     });
 }
@@ -1682,6 +1699,59 @@ async function syncLeagues() {
         key: 'leagues',
         value: JSON.stringify(state.leagues)
     });
+}
+
+// --- Edit League Modal Logic ---
+function setupEditLeagueModalListeners() {
+    const modal = document.getElementById('edit-league-modal');
+    const closeBtn = document.getElementById('close-edit-league-modal');
+    const updateBtn = document.getElementById('update-league-btn');
+
+    if (closeBtn) {
+        closeBtn.onclick = () => modal.style.display = 'none';
+    }
+    window.addEventListener('click', (e) => {
+        if (e.target === modal) modal.style.display = 'none';
+    });
+
+    if (updateBtn) {
+        updateBtn.onclick = updateLeague;
+    }
+}
+
+function openEditLeagueModal(leagueId) {
+    const league = state.leagues.find(l => l.id === leagueId);
+    if (!league) return;
+
+    document.getElementById('edit-league-id').value = league.id;
+    document.getElementById('edit-league-name').value = league.name;
+    document.getElementById('edit-league-start').value = league.start;
+    document.getElementById('edit-league-end').value = league.end;
+
+    document.getElementById('edit-league-modal').style.display = 'block';
+}
+
+function updateLeague() {
+    const id = document.getElementById('edit-league-id').value;
+    const name = document.getElementById('edit-league-name').value.trim();
+    const start = document.getElementById('edit-league-start').value;
+    const end = document.getElementById('edit-league-end').value;
+
+    if (!name || !start || !end) {
+        alert('全ての項目を入力してください');
+        return;
+    }
+
+    const index = state.leagues.findIndex(l => l.id === id);
+    if (index === -1) return;
+
+    state.leagues[index] = { ...state.leagues[index], name, start, end };
+
+    saveToLocal();
+    renderLeaguesAdmin();
+    syncLeagues();
+
+    document.getElementById('edit-league-modal').style.display = 'none';
 }
 
 // Utilities
