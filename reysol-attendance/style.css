@@ -59,6 +59,26 @@ summary {
     cursor: pointer;
     font-weight: bold;
     color: var(--reysol-black);
+    list-style: none;
+    /* Hide default marker */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+summary::-webkit-details-marker {
+    display: none;
+}
+
+summary::after {
+    content: '▼';
+    font-size: 0.8rem;
+    color: #999;
+    transition: transform 0.3s;
+}
+
+details[open]>summary::after {
+    transform: rotate(180deg);
 }
 
 .admin-panel {
