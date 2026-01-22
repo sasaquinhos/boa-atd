@@ -11,6 +11,19 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Sans+JP:wght@400;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <style>
+        #debug-log {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+            font-family: monospace;
+            font-size: 0.8rem;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+    </style>
 </head>
 
 <body>
@@ -73,6 +86,9 @@
                 <div class="ranking-body">読み込み中...</div>
             </div>
         </div>
+
+        <!-- Debug Log Container -->
+        <div id="debug-log">Debug Log initialized...</div>
     </main>
 
     <div id="loading-overlay"
@@ -80,7 +96,7 @@
         読み込み中...
     </div>
 
-    <script src="rankings.js?v=20260122"></script>
+    <script src="rankings.js?v=20260122_debug"></script>
 </body>
 
 </html>
