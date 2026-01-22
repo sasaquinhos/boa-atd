@@ -3,6 +3,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwcuqJk9zuxWuvwjk06Ueqm
 const state = {
     matches: [],
     attendance: {},
+    attendanceByMatch: {}, // Grouped: { matchId: [ { memberName, data }, ... ] }
     members: [],
     leagues: [],
     selectedLeague: null,
@@ -88,7 +89,10 @@ function loadFromLocal() {
 
         if (data.members) state.members = data.members;
         if (data.matches) state.matches = data.matches;
-        if (data.attendance) state.attendance = data.attendance;
+        if (data.attendance) {
+            state.attendance = data.attendance;
+            groupAttendanceByMatch();
+        }
         if (data.leagues) state.leagues = data.leagues;
 
         return true;
@@ -111,6 +115,20 @@ function saveToLocal() {
     } catch (e) {
         console.error('Error saving to local storage:', e);
     }
+}
+
+function groupAttendanceByMatch() {
+    state.attendanceByMatch = {};
+    Object.keys(state.attendance).forEach(key => {
+        const [matchId, memberName] = key.split('_');
+        if (!state.attendanceByMatch[matchId]) {
+            state.attendanceByMatch[matchId] = [];
+        }
+        state.attendanceByMatch[matchId].push({
+            memberName: memberName,
+            data: state.attendance[key]
+        });
+    });
 }
 
 function setupLeagueSelect() {
@@ -234,13 +252,12 @@ function renderHomeRankings() {
     const bigFlag = {};
 
     leagueMatches.forEach(match => {
-        state.members.forEach(member => {
-            const key = `${match.id}_${member.name}`;
-            const data = state.attendance[key];
-            if (!data) return;
-            if (data.jankenParticipate) jankenCandidate[member.name] = (jankenCandidate[member.name] || 0) + 1;
-            if (data.morningWithdraw) morningWithdraw[member.name] = (morningWithdraw[member.name] || 0) + 1;
-            if (data.bigFlag) bigFlag[member.name] = (bigFlag[member.name] || 0) + 1;
+        const records = state.attendanceByMatch[match.id] || [];
+        records.forEach(record => {
+            const data = record.data;
+            if (data.jankenParticipate) jankenCandidate[record.memberName] = (jankenCandidate[record.memberName] || 0) + 1;
+            if (data.morningWithdraw) morningWithdraw[record.memberName] = (morningWithdraw[record.memberName] || 0) + 1;
+            if (data.bigFlag) bigFlag[record.memberName] = (bigFlag[record.memberName] || 0) + 1;
         });
     });
 
@@ -268,12 +285,11 @@ function renderAwayRankings() {
     const lineOrg = {};
 
     leagueMatches.forEach(match => {
-        state.members.forEach(member => {
-            const key = `${match.id}_${member.name}`;
-            const data = state.attendance[key];
-            if (!data) return;
-            if (data.status === 6) queueStart[member.name] = (queueStart[member.name] || 0) + 1;
-            if (data.status === 7) lineOrg[member.name] = (lineOrg[member.name] || 0) + 1;
+        const records = state.attendanceByMatch[match.id] || [];
+        records.forEach(record => {
+            const data = record.data;
+            if (data.status === 6) queueStart[record.memberName] = (queueStart[record.memberName] || 0) + 1;
+            if (data.status === 7) lineOrg[record.memberName] = (lineOrg[record.memberName] || 0) + 1;
         });
     });
 
