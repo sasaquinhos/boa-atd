@@ -382,8 +382,8 @@ function renderMatches() {
                 }
 
                 // DEBUG: Logic Trace (Mobile)
-                if (!window.hasLogicDebugged && sortedLeagues.length > 0) {
-                    window.hasLogicDebugged = true;
+                if (!window.debug_v2 && sortedLeagues.length > 0) {
+                    window.debug_v2 = true;
                     // Gather info for ALL leagues to see why fallback fails
                     const latestM = sortedMatches.length > 0 ? parseDate(sortedMatches[0].date) : null;
 
