@@ -291,17 +291,111 @@ function renderMatches() {
 
         const currentUser = currentUserSelect ? currentUserSelect.value : null;
 
-        // Apply limit (global sync)
+        // User View Logic (League & Match Selection)
         let matchesToRender = sortedMatches;
-        const limitInput = document.getElementById('match-limit-input');
-        // Only update value if the user isn't currently typing to avoid cursor jumps/reversion
-        if (limitInput && document.activeElement !== limitInput) {
-            limitInput.value = state.matchLimit;
+
+        const userLeagueSelect = document.getElementById('current-league-select');
+        const userMatchSelect = document.getElementById('current-match-select');
+
+        // 1. League Selection & Filtering
+        let leagueFilteredMatches = sortedMatches;
+
+        if (userLeagueSelect) {
+            // Populate if empty (First run)
+            if (userLeagueSelect.options.length <= 1 && state.leagues && state.leagues.length > 0) {
+                // Sort leagues by start date descending for display
+                const sortedLeagues = [...state.leagues].sort((a, b) => new Date(b.start) - new Date(a.start));
+
+                userLeagueSelect.innerHTML = '<option value="">-- 全ての期間 --</option>' +
+                    sortedLeagues.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+
+                // Default Selection: League covering Today, or most recent
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                const currentLeague = sortedLeagues.find(l => {
+                    const s = new Date(l.start);
+                    const e = new Date(l.end);
+                    return today >= s && today <= e;
+                });
+
+                if (currentLeague) {
+                    userLeagueSelect.value = currentLeague.id;
+                } else if (sortedLeagues.length > 0) {
+                    userLeagueSelect.value = sortedLeagues[0].id; // Fallback to latest
+                }
+            }
+
+            // Apply Filter
+            const selectedLeagueId = userLeagueSelect.value;
+            if (selectedLeagueId) {
+                const league = state.leagues.find(l => l.id == selectedLeagueId);
+                if (league) {
+                    const s = new Date(league.start);
+                    // End date should include the full day
+                    const e = new Date(league.end);
+                    e.setHours(23, 59, 59, 999);
+
+                    leagueFilteredMatches = sortedMatches.filter(m => {
+                        const d = new Date(m.date);
+                        return d >= s && d <= e;
+                    });
+                }
+            }
+
+            userLeagueSelect.onchange = () => renderMatches();
         }
 
-        const limitCount = parseInt(state.matchLimit);
-        if (!isNaN(limitCount)) {
-            matchesToRender = sortedMatches.slice(0, limitCount);
+        // 2. Match Selection
+        if (userMatchSelect) {
+            const currentSelection = userMatchSelect.value;
+
+            // Generate Options from Filtered List
+            userMatchSelect.innerHTML = leagueFilteredMatches.map(m => {
+                const d = new Date(m.date);
+                const dateStr = `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
+                return `<option value="${m.id}">${dateStr} ${m.opponent}</option>`;
+            }).join('');
+
+            // Restore Selection or Set Default
+            if (currentSelection && leagueFilteredMatches.some(m => m.id == currentSelection)) {
+                userMatchSelect.value = currentSelection;
+            } else {
+                // Default: Closest Future Match in LIST
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const futureMatches = leagueFilteredMatches.filter(m => new Date(m.date) >= today);
+
+                if (futureMatches.length > 0) {
+                    userMatchSelect.value = futureMatches[futureMatches.length - 1].id;
+                } else if (leagueFilteredMatches.length > 0) {
+                    userMatchSelect.value = leagueFilteredMatches[0].id;
+                }
+            }
+
+            // Final Render Selection
+            const selectedId = userMatchSelect.value;
+            if (selectedId) {
+                matchesToRender = sortedMatches.filter(m => m.id == selectedId);
+                if (matchesToRender.length > 0) {
+                    state.expandedMatches.add(matchesToRender[0].id);
+                }
+            } else {
+                matchesToRender = []; // No matches available in this league
+            }
+
+            // Bind change event
+            userMatchSelect.onchange = () => renderMatches();
+        } else {
+            // Fallback to old Limit logic
+            const limitInput = document.getElementById('match-limit-input');
+            if (limitInput && document.activeElement !== limitInput) {
+                limitInput.value = state.matchLimit;
+            }
+            const limitCount = parseInt(state.matchLimit);
+            if (!isNaN(limitCount)) {
+                matchesToRender = sortedMatches.slice(0, limitCount);
+            }
         }
 
         if (currentUserSelect && !currentUser) {
