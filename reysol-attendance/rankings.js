@@ -7,42 +7,47 @@ const state = {
     members: [],
     leagues: [],
     selectedLeague: null,
-    selectedLocation: 'home'
+    selectedLocation: 'home',
+    loading: false
 };
 
 const STORAGE_KEY = 'reysol_attendance_data';
 
 async function init() {
-    console.log('Initializing rankings...');
+    console.log('Initializing rankings... URL:', API_URL);
 
-    // 1. Try to load from local storage
+    // 1. Try to load from local data (Stale)
     const hasLocalData = loadFromLocal();
 
     if (hasLocalData) {
-        console.log('Loaded local data, rendering immediately');
+        console.log('Using local data for immediate render');
         setupLeagueSelect();
         renderRankings();
+        setupEventListeners();
     } else {
-        console.log('No local data, showing loader');
+        console.log('No local data, blocking UI');
         showLoading(true);
     }
 
     try {
-        console.log('Fetching fresh data...');
+        // 2. Fetch fresh data (Revalidate)
         await loadData();
+
+        // Update selection and UI
         setupLeagueSelect();
         renderRankings();
+
+        if (!hasLocalData) {
+            setupEventListeners();
+        }
     } catch (e) {
         console.error('Data sync failed:', e);
         if (!hasLocalData) {
-            alert('データの読み込みに失敗しました');
+            alert('データの読み込みに失敗しました: ' + e.message);
         }
     } finally {
         showLoading(false);
     }
-
-    // Attach listeners once
-    setupEventListeners();
 }
 
 function setupEventListeners() {
@@ -52,20 +57,21 @@ function setupEventListeners() {
 
 async function loadData() {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
 
     try {
-        const response = await fetch(`${API_URL}?t=${new Date().getTime()}`, {
+        const res = await fetch(`${API_URL}?t=${new Date().getTime()}`, {
             signal: controller.signal
         });
         clearTimeout(timeoutId);
 
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const data = await response.json();
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
 
-        state.matches = data.matches || [];
-        state.attendance = data.attendance || {};
-        state.members = data.members || [];
+        const data = await res.json();
+
+        if (data.members) state.members = data.members;
+        if (data.matches) state.matches = data.matches;
+        if (data.attendance) state.attendance = data.attendance;
 
         if (data.settings && data.settings.leagues) {
             try {
@@ -76,8 +82,7 @@ async function loadData() {
             }
         }
 
-        // We'll group on-demand during render to keep init fast
-        // Reset grouped data on fresh load
+        // Reset dynamic cache
         state.attendanceByMatch = {};
 
         // Save to local storage
@@ -98,9 +103,7 @@ function loadFromLocal() {
 
         if (data.members) state.members = data.members;
         if (data.matches) state.matches = data.matches;
-        if (data.attendance) {
-            state.attendance = data.attendance;
-        }
+        if (data.attendance) state.attendance = data.attendance;
         if (data.leagues) state.leagues = data.leagues;
 
         return true;
@@ -125,11 +128,9 @@ function saveToLocal() {
     }
 }
 
-// Helper to get records for specific matches only
 function ensureGroupedData(matchIds) {
     matchIds.forEach(id => {
-        if (state.attendanceByMatch[id]) return; // Already indexed
-
+        if (state.attendanceByMatch[id]) return;
         state.attendanceByMatch[id] = [];
         state.members.forEach(member => {
             const key = `${id}_${member.name}`;
@@ -147,18 +148,16 @@ function setupLeagueSelect() {
     const leagueSelect = document.getElementById('year-select');
     if (!leagueSelect) return;
 
-    if (state.leagues.length === 0) {
+    if (!state.leagues || state.leagues.length === 0) {
         leagueSelect.innerHTML = '<option value="">リーグが登録されていません</option>';
         state.selectedLeague = null;
         return;
     }
 
-    // Preserving selection if possible
     const currentId = state.selectedLeague ? state.selectedLeague.id : null;
-
     leagueSelect.innerHTML = state.leagues.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
 
-    if (currentId && state.leagues.some(l => l.id === currentId)) {
+    if (currentId && state.leagues.find(l => l.id === currentId)) {
         leagueSelect.value = currentId;
     } else {
         state.selectedLeague = state.leagues[0];
@@ -254,46 +253,40 @@ function renderHomeRankings() {
         return;
     }
 
-    const start = state.selectedLeague.start;
-    const end = state.selectedLeague.end;
-
+    const { start, end } = state.selectedLeague;
     const leagueMatches = state.matches.filter(m => {
-        const matchMonth = m.date.substring(0, 7);
-        const isMatchInLeague = matchMonth >= start && matchMonth <= end;
-        return isMatchInLeague && (m.location === 'home' || !m.location);
+        const mMonth = m.date.substring(0, 7);
+        return mMonth >= start && mMonth <= end && (m.location === 'home' || !m.location);
     });
 
-    // Janken Confirmed Ranking
-    const jankenConfirmed = {};
+    const jConf = {};
     leagueMatches.forEach(m => {
         if (m.jankenConfirmed) {
-            m.jankenConfirmed.split(',').map(s => s.trim()).filter(s => s).forEach(name => {
-                jankenConfirmed[name] = (jankenConfirmed[name] || 0) + 1;
+            m.jankenConfirmed.split(',').map(s => s.trim()).filter(s => s).forEach(n => {
+                jConf[n] = (jConf[n] || 0) + 1;
             });
         }
     });
+    renderRankingCard('janken-confirmed-ranking', jConf);
 
-    renderRankingCard('janken-confirmed-ranking', jankenConfirmed);
-
-    const jankenCandidate = {};
-    const morningWithdraw = {};
-    const bigFlag = {};
+    const jCand = {};
+    const mWit = {};
+    const bFlag = {};
 
     ensureGroupedData(leagueMatches.map(m => m.id));
 
     leagueMatches.forEach(match => {
-        const records = state.attendanceByMatch[match.id] || [];
-        records.forEach(record => {
-            const data = record.data;
-            if (data.jankenParticipate) jankenCandidate[record.memberName] = (jankenCandidate[record.memberName] || 0) + 1;
-            if (data.morningWithdraw) morningWithdraw[record.memberName] = (morningWithdraw[record.memberName] || 0) + 1;
-            if (data.bigFlag) bigFlag[record.memberName] = (bigFlag[record.memberName] || 0) + 1;
+        (state.attendanceByMatch[match.id] || []).forEach(rec => {
+            const d = rec.data;
+            if (d.jankenParticipate) jCand[rec.memberName] = (jCand[rec.memberName] || 0) + 1;
+            if (d.morningWithdraw) mWit[rec.memberName] = (mWit[rec.memberName] || 0) + 1;
+            if (d.bigFlag) bFlag[rec.memberName] = (bFlag[rec.memberName] || 0) + 1;
         });
     });
 
-    renderRankingCard('janken-candidate-ranking', jankenCandidate);
-    renderRankingCard('morning-withdraw-ranking', morningWithdraw);
-    renderRankingCard('big-flag-ranking', bigFlag);
+    renderRankingCard('janken-candidate-ranking', jCand);
+    renderRankingCard('morning-withdraw-ranking', mWit);
+    renderRankingCard('big-flag-ranking', bFlag);
 }
 
 function renderAwayRankings() {
@@ -302,41 +295,37 @@ function renderAwayRankings() {
         return;
     }
 
-    const start = state.selectedLeague.start;
-    const end = state.selectedLeague.end;
-
+    const { start, end } = state.selectedLeague;
     const leagueMatches = state.matches.filter(m => {
-        const matchMonth = m.date.substring(0, 7);
-        const isMatchInLeague = matchMonth >= start && matchMonth <= end;
-        return isMatchInLeague && m.location === 'away';
+        const mMonth = m.date.substring(0, 7);
+        return mMonth >= start && mMonth <= end && m.location === 'away';
     });
 
-    const queueStart = {};
-    const lineOrg = {};
+    const qStart = {};
+    const lOrg = {};
 
     ensureGroupedData(leagueMatches.map(m => m.id));
 
     leagueMatches.forEach(match => {
-        const records = state.attendanceByMatch[match.id] || [];
-        records.forEach(record => {
-            const data = record.data;
-            if (data.status === 6) queueStart[record.memberName] = (queueStart[record.memberName] || 0) + 1;
-            if (data.status === 7) lineOrg[record.memberName] = (lineOrg[record.memberName] || 0) + 1;
+        (state.attendanceByMatch[match.id] || []).forEach(rec => {
+            const d = rec.data;
+            if (d.status === 6) qStart[rec.memberName] = (qStart[rec.memberName] || 0) + 1;
+            if (d.status === 7) lOrg[rec.memberName] = (lOrg[rec.memberName] || 0) + 1;
         });
     });
 
-    renderRankingCard('queue-start-ranking', queueStart);
-    renderRankingCard('line-org-ranking', lineOrg);
+    renderRankingCard('queue-start-ranking', qStart);
+    renderRankingCard('line-org-ranking', lOrg);
 }
 
 function clearRankings() {
-    document.querySelectorAll('.ranking-body').forEach(container => {
-        container.innerHTML = '<div class="no-data">リーグを選択してください</div>';
+    document.querySelectorAll('.ranking-body').forEach(c => {
+        c.innerHTML = '<div class="no-data">リーグを選択してください</div>';
     });
 }
 
-function renderRankingCard(containerId, counts) {
-    const card = document.getElementById(containerId);
+function renderRankingCard(id, counts) {
+    const card = document.getElementById(id);
     if (!card) return;
     const container = card.querySelector('.ranking-body');
     const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
@@ -375,5 +364,5 @@ function showLoading(show) {
     if (overlay) overlay.style.display = show ? 'flex' : 'none';
 }
 
-// Start app
+// Kick off
 init();
