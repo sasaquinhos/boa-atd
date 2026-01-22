@@ -254,119 +254,110 @@ async function apiCall(action, payload = {}) {
 }
 
 // Render Functions
+// Render Functions
 function renderMatches() {
-    matchesContainer.innerHTML = '';
+    // Admin Mode: Render selections only
+    const isAdmin = !!document.getElementById('matches-select-admin');
 
     // Sort matches by date (descending)
     const sortedMatches = [...state.matches].sort((a, b) => new Date(b.date) - new Date(a.date));
 
-    // Initialize expandedMatches if empty and we have matches
+    // Initialize expandedMatches if empty and we have matches (Might not be needed for admin anymore, but good for user side)
     if (state.expandedMatches.size === 0 && sortedMatches.length > 0) {
         state.expandedMatches.add(sortedMatches[0].id);
     }
 
-    const isAdmin = !!document.getElementById('add-member-btn');
-    const currentUser = currentUserSelect ? currentUserSelect.value : null;
-
-    // Apply limit (global sync)
-    let matchesToRender = sortedMatches;
-    const limitInput = document.getElementById('match-limit-input');
-    // Only update value if the user isn't currently typing to avoid cursor jumps/reversion
-    if (limitInput && document.activeElement !== limitInput) {
-        limitInput.value = state.matchLimit;
-    }
-
-    const limitCount = parseInt(state.matchLimit);
-    if (!isNaN(limitCount)) {
-        matchesToRender = sortedMatches.slice(0, limitCount);
-    }
-
-    if (!isAdmin && currentUserSelect && !currentUser) {
-        matchesContainer.innerHTML = '<p style="text-align:center; padding:2rem; color:#666;">ユーザーを選択してください。</p>';
-        return;
-    }
-
-    matchesToRender.forEach(match => {
-        const matchEl = document.createElement('div');
-        const isExpanded = state.expandedMatches.has(match.id);
-        matchEl.className = `match-card ${isExpanded ? '' : 'collapsed'}`;
-        matchEl.dataset.matchId = match.id;
-
-        // Admin: Show "Edit Match" and "Delete Match" buttons
-        // User: No buttons
-        const adminControlsHtml = isAdmin ? `
-            <div class="match-controls">
-                <button class="edit-match-btn" data-id="${match.id}">編集</button>
-                <button class="delete-match-btn" data-id="${match.id}" style="margin-left:0.5rem;">削除</button>
-            </div>
-        ` : '';
-
-        const jankenAdminHtml = (isAdmin && match.location === 'home') ? `
-            <div class="janken-admin-section" style="margin: 0.5rem 1rem; padding-top: 0.5rem; border-top: 1px dashed #eee;">
-                <label style="font-size:0.8rem; font-weight:bold; color:#555;">じゃんけん大会参加確定者</label>
-                <div class="janken-tags-container" style="display:flex; flex-wrap:wrap; gap:0.2rem; margin-bottom:0.2rem; padding:0.2rem; border:1px solid #ddd; background:#fff; min-height:2rem; border-radius:4px;">
-                    ${(match.jankenConfirmed || '').split(',').map(s => s.trim()).filter(s => s).map(name => `
-                        <span class="janken-tag" style="background:#e3f2fd; padding:0.1rem 0.4rem; border-radius:10px; font-size:0.8rem; display:inline-flex; align-items:center;">
-                            ${name}
-                            <span class="remove-janken-tag" data-match-id="${match.id}" data-name="${name}" style="margin-left:0.3rem; cursor:pointer; color:#d32f2f; font-weight:bold;">×</span>
-                        </span>
-                    `).join('')}
-                </div>
-                <select class="janken-add-select" data-match-id="${match.id}" style="width:100%; padding:0.2rem; font-size:0.9rem; border-radius:4px; border:1px solid #ddd;">
-                    <option value="">＋ メンバーを追加</option>
-                    ${state.members.filter(m => !(match.jankenConfirmed || '').split(',').map(s => s.trim()).includes(m.name)).map(m => `
-                        <option value="${m.name}">${m.name}</option>
-                    `).join('')}
-                </select>
-            </div>
-        ` : '';
-
-        // Filter members: 
-        // Admin: Show NONE (inputs hidden, only summary)
-        // User: Show only SELECTED user
-        let membersToRender = [];
-        let hideName = false;
-
-        if (isAdmin) {
-            membersToRender = [];
-        } else if (currentUser) {
-            // Find the member object
-            const memberObj = state.members.find(m => m.name === currentUser);
-            if (memberObj) {
-                membersToRender = [memberObj];
-                hideName = true;
-            }
+    if (isAdmin) {
+        // ADMIN MODE: Populate Select Boxes
+        const matchesSelect = document.getElementById('matches-select-admin');
+        if (matchesSelect) {
+            const currentVal = matchesSelect.value;
+            matchesSelect.innerHTML = '<option value="">-- 試合を選択 --</option>' +
+                sortedMatches.map(m => {
+                    const d = new Date(m.date);
+                    const dateStr = `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
+                    return `<option value="${m.id}">${dateStr} ${m.opponent}</option>`;
+                }).join('');
+            matchesSelect.value = currentVal;
         }
 
-        matchEl.innerHTML = `
-            <div class="match-header ${match.location === 'away' ? 'location-away' : 'location-home'}">
-                <div class="match-info">
-                    <h2>${match.opponent}</h2>
-                    <span class="match-date">${formatDate(match.date)}</span>
-                    <span class="match-location-badge ${match.location === 'away' ? 'location-away' : 'location-home'}">
-                        ${match.location === 'away' ? 'アウェイ' : 'ホーム'}
-                        ${match.location === 'away' ? (match.seatType === 'reserved' ? ' (指定席)' : ' (自由席)') : ''}
-                    </span>
-                </div>
-                ${adminControlsHtml}
-            </div>
-            ${jankenAdminHtml}
-            <div class="members-list">
-                ${membersToRender.map(member => createMemberRow(match.id, member, hideName)).join('')}
-            </div>
-            <div id="summary-${match.id}" class="match-summary-container">
-                ${generateMatchSummaryContent(match.id)}
-            </div>
-        `;
-        matchesContainer.appendChild(matchEl);
-    });
-
-    if (isAdmin) {
         renderMembersAdmin();
         renderLeaguesAdmin();
-    }
 
-    attachMatchListeners();
+        // No match cards to render in Admin mode
+    } else {
+        // USER MODE: Render Match Cards
+        matchesContainer.innerHTML = '';
+
+        const currentUser = currentUserSelect ? currentUserSelect.value : null;
+
+        // Apply limit (global sync)
+        let matchesToRender = sortedMatches;
+        const limitInput = document.getElementById('match-limit-input');
+        // Only update value if the user isn't currently typing to avoid cursor jumps/reversion
+        if (limitInput && document.activeElement !== limitInput) {
+            limitInput.value = state.matchLimit;
+        }
+
+        const limitCount = parseInt(state.matchLimit);
+        if (!isNaN(limitCount)) {
+            matchesToRender = sortedMatches.slice(0, limitCount);
+        }
+
+        if (currentUserSelect && !currentUser) {
+            matchesContainer.innerHTML = '<p style="text-align:center; padding:2rem; color:#666;">ユーザーを選択してください。</p>';
+            return;
+        }
+
+        matchesToRender.forEach(match => {
+            const matchEl = document.createElement('div');
+            const isExpanded = state.expandedMatches.has(match.id);
+            matchEl.className = `match-card ${isExpanded ? '' : 'collapsed'}`;
+            matchEl.dataset.matchId = match.id;
+
+            // User: No admin controls
+            const adminControlsHtml = '';
+            const jankenAdminHtml = '';
+
+            // Filter members: 
+            // User: Show only SELECTED user
+            let membersToRender = [];
+            let hideName = false;
+
+            if (currentUser) {
+                // Find the member object
+                const memberObj = state.members.find(m => m.name === currentUser);
+                if (memberObj) {
+                    membersToRender = [memberObj];
+                    hideName = true;
+                }
+            }
+
+            matchEl.innerHTML = `
+                <div class="match-header ${match.location === 'away' ? 'location-away' : 'location-home'}">
+                    <div class="match-info">
+                        <h2>${match.opponent}</h2>
+                        <span class="match-date">${formatDate(match.date)}</span>
+                        <span class="match-location-badge ${match.location === 'away' ? 'location-away' : 'location-home'}">
+                            ${match.location === 'away' ? 'アウェイ' : 'ホーム'}
+                            ${match.location === 'away' ? (match.seatType === 'reserved' ? ' (指定席)' : ' (自由席)') : ''}
+                        </span>
+                    </div>
+                    ${adminControlsHtml}
+                </div>
+                ${jankenAdminHtml}
+                <div class="members-list">
+                    ${membersToRender.map(member => createMemberRow(match.id, member, hideName)).join('')}
+                </div>
+                <div id="summary-${match.id}" class="match-summary-container">
+                    ${generateMatchSummaryContent(match.id)}
+                </div>
+            `;
+            matchesContainer.appendChild(matchEl);
+        });
+
+        attachMatchListeners();
+    }
 }
 
 function createMemberRow(matchId, member, hideName = false) {
@@ -816,6 +807,39 @@ function setupEventListeners() {
                 });
             }
         }
+    }
+
+    // Admin Match Actions (Dropdown style)
+    const matchesSelect = document.getElementById('matches-select-admin');
+    const editMatchBtn = document.getElementById('edit-match-btn-admin');
+    const deleteMatchBtn = document.getElementById('delete-match-btn-admin');
+
+    if (editMatchBtn && matchesSelect) {
+        editMatchBtn.addEventListener('click', () => {
+            const matchId = matchesSelect.value;
+            if (matchId) {
+                openEditMatchModal(parseInt(matchId));
+            } else {
+                alert('編集する試合を選択してください');
+            }
+        });
+    }
+
+    if (deleteMatchBtn && matchesSelect) {
+        deleteMatchBtn.addEventListener('click', () => {
+            const matchId = matchesSelect.value;
+            if (matchId) {
+                if (confirm('本当にこの試合を削除しますか？')) {
+                    const id = parseInt(matchId);
+                    state.matches = state.matches.filter(m => m.id != id);
+                    saveToLocal();
+                    renderMatches();
+                    apiCall('delete_match', { id: id });
+                }
+            } else {
+                alert('削除する試合を選択してください');
+            }
+        });
     }
 
     // Admin Member Actions (Delete/Edit)
