@@ -59,10 +59,10 @@
                         </div>
                         <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
                             <span style="font-size: 0.9rem; font-weight: bold;">期間:</span>
-                            <input type="month" id="new-league-start"
+                            <input type="date" id="new-league-start"
                                 style="padding: 0.5rem; border-radius: 4px; border: 1px solid #ddd;">
                             <span>～</span>
-                            <input type="month" id="new-league-end"
+                            <input type="date" id="new-league-end"
                                 style="padding: 0.5rem; border-radius: 4px; border: 1px solid #ddd;">
                             <button id="add-league-btn" class="btn btn-primary"
                                 style="margin-left: auto;">リーグを登録</button>
@@ -70,14 +70,20 @@
                     </div>
 
                     <!-- League List (Collapsible) -->
-                    <details open
-                        style="margin-top: 1rem; background: #fff; border: 1px solid #ddd; border-radius: 4px; padding: 0.5rem;">
-                        <summary style="cursor: pointer; font-weight: bold; padding: 0.5rem;">登録済みリーグ一覧</summary>
-                        <div id="leagues-list-admin"
-                            style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem;">
-                            <!-- Leagues injected here -->
+                    <!-- League Management (Select style) -->
+                    <div style="margin-top: 1rem;">
+                        <h3 style="font-size: 1.1rem; font-weight: bold; margin-bottom: 0.5rem;">登録済みリーグ一覧</h3>
+                        <div class="input-group">
+                            <select id="leagues-select-admin"
+                                style="flex: 1; padding: 0.5rem; border-radius: 4px; border: 1px solid #ddd;">
+                                <option value="">-- リーグ名を選択 --</option>
+                            </select>
+                            <button id="edit-league-btn-admin" class="btn"
+                                style="background: #e3f2fd; color: #1976d2;">編集</button>
+                            <button id="delete-league-btn-admin" class="btn"
+                                style="background: #ffebee; color: #d32f2f;">削除</button>
                         </div>
-                    </details>
+                    </div>
                 </div>
                 <div class="control-group">
                     <h3>メンバー追加</h3>
@@ -292,10 +298,11 @@
     </div>
 
     <!-- Edit League Modal -->
-    <div id="edit-league-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" id="close-edit-league-modal">&times;</span>
-            <h2>リーグ情報の修正</h2>
+    <div id="edit-league-modal" class="modal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000;">
+        <div class="modal-content"
+            style="background: white; padding: 2rem; border-radius: 8px; width: 90%; max-width: 400px;">
+            <h2>リーグ編集</h2>
             <input type="hidden" id="edit-league-id">
             <div class="input-group">
                 <label>リーグ名</label>
@@ -303,13 +310,16 @@
             </div>
             <div class="input-group">
                 <label>開始月</label>
-                <input type="month" id="edit-league-start">
+                <input type="date" id="edit-league-start">
             </div>
             <div class="input-group">
                 <label>終了月</label>
-                <input type="month" id="edit-league-end">
+                <input type="date" id="edit-league-end">
             </div>
-            <button id="update-league-btn" class="primary-btn" style="width: 100%; margin-top: 1rem;">更新</button>
+            <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1rem;">
+                <button id="cancel-edit-league" class="btn" style="background: #ccc;">キャンセル</button>
+                <button id="save-edit-league" class="btn btn-primary">保存</button>
+            </div>
         </div>
     </div>
 
