@@ -465,7 +465,7 @@ function createMemberRow(matchId, member, hideName = false) {
                                 <div class="guest-inputs-container" style="margin-top:0;">
                                     <div class="guest-input-group">
                                         <input type="number" class="guest-input guest-input-unified" min="0" value="${guestValue}" placeholder="0" style="width: 60px;" ${!isAttending ? 'disabled' : ''}>
-                                        <span style="font-size: 0.8rem; color: #666; margin-left: 0.5rem;">名 (${SECTION_LABELS[member.section] || 'TOP'})</span>
+                                        <span style="font-size: 0.8rem; color: #666; margin-left: 0.5rem;">名</span>
                                     </div>
                                 </div>
                             </div>
