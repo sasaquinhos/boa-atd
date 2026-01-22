@@ -71,22 +71,9 @@
 
                     <!-- League List (Collapsible) -->
                     <!-- League Management (Select style) -->
-                    <div style="margin-top: 1rem;">
-                        <h3 style="font-size: 1.1rem; font-weight: bold; margin-bottom: 0.5rem;">登録済みリーグ一覧</h3>
-                        <div class="input-group">
-                            <select id="leagues-select-admin"
-                                style="flex: 1; padding: 0.5rem; border-radius: 4px; border: 1px solid #ddd;">
-                                <option value="">-- リーグ名を選択 --</option>
-                            </select>
-                            <button id="edit-league-btn-admin" class="btn"
-                                style="background: #e3f2fd; color: #1976d2;">編集</button>
-                            <button id="delete-league-btn-admin" class="btn"
-                                style="background: #ffebee; color: #d32f2f;">削除</button>
-                        </div>
-                    </div>
                 </div>
                 <div class="control-group">
-                    <h3>メンバー追加</h3>
+                    <h3>メンバー登録</h3>
                     <div class="input-group" style="flex-wrap: wrap;">
                         <input type="text" id="new-member-name" placeholder="名前を入力" style="flex: 1; min-width: 200px;">
                         <div style="display: flex; align-items: center; margin: 0 1rem;">
@@ -98,7 +85,7 @@
                     </div>
                 </div>
                 <div class="control-group">
-                    <h3>試合日追加</h3>
+                    <h3>試合日登録</h3>
                     <div style="display: flex; flex-direction: column; gap: 0.5rem;">
                         <div class="input-group">
                             <input type="date" id="new-match-date">
@@ -164,6 +151,19 @@
                         </div>
 
                         <button id="add-match-btn" class="btn btn-primary">試合を追加</button>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <h3>登録済みリーグ名一覧</h3>
+                    <div class="input-group">
+                        <select id="leagues-select-admin"
+                            style="flex: 1; padding: 0.5rem; border-radius: 4px; border: 1px solid #ddd;">
+                            <option value="">-- リーグ名を選択 --</option>
+                        </select>
+                        <button id="edit-league-btn-admin" class="btn"
+                            style="background: #e3f2fd; color: #1976d2;">編集</button>
+                        <button id="delete-league-btn-admin" class="btn"
+                            style="background: #ffebee; color: #d32f2f;">削除</button>
                     </div>
                 </div>
                 <div class="control-group">
