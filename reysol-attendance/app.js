@@ -1629,8 +1629,8 @@ function renderLeaguesAdmin() {
                 <div style="font-size:0.8rem; color:#666;">${league.start} ～ ${league.end}</div>
             </div>
             <div style="display:flex; gap:0.5rem;">
-                <button class="edit-league-btn" data-id="${league.id}" style="background:#e3f2fd; color:#1565c0; border:none; padding:0.3rem 0.6rem; border-radius:4px; cursor:pointer; font-size:0.8rem;">修正</button>
-                <button class="delete-league-btn" data-id="${league.id}" style="background:#ffebee; color:#d32f2f; border:none; padding:0.3rem 0.6rem; border-radius:4px; cursor:pointer; font-size:0.8rem;">削除</button>
+                <button class="edit-league-btn" data-id="${league.id}">修正</button>
+                <button class="delete-league-btn" data-id="${league.id}">削除</button>
             </div>
         </div>
     `).join('');
