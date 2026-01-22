@@ -50,6 +50,30 @@
         <section class="controls-section">
             <div class="admin-panel"> <!-- Always open for admin -->
                 <div class="control-group">
+                    <h3>リーグ名登録</h3>
+                    <div
+                        style="display: flex; flex-direction: column; gap: 0.5rem; background: #e8f5e9; padding: 1rem; border-radius: 8px; border: 1px solid #c8e6c9; margin-bottom: 1rem;">
+                        <div class="input-group" style="flex-wrap: wrap;">
+                            <input type="text" id="new-league-name" placeholder="リーグ名 (例: 2024 J1)"
+                                style="flex: 1; min-width: 200px;">
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                            <span style="font-size: 0.9rem; font-weight: bold;">期間:</span>
+                            <input type="month" id="new-league-start"
+                                style="padding: 0.5rem; border-radius: 4px; border: 1px solid #ddd;">
+                            <span>～</span>
+                            <input type="month" id="new-league-end"
+                                style="padding: 0.5rem; border-radius: 4px; border: 1px solid #ddd;">
+                            <button id="add-league-btn" class="btn btn-primary"
+                                style="margin-left: auto;">リーグを登録</button>
+                        </div>
+                    </div>
+                    <div id="leagues-list-admin"
+                        style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem;">
+                        <!-- Leagues will be injected here -->
+                    </div>
+                </div>
+                <div class="control-group">
                     <h3>メンバー追加</h3>
                     <div class="input-group" style="flex-wrap: wrap;">
                         <input type="text" id="new-member-name" placeholder="名前を入力" style="flex: 1; min-width: 200px;">
