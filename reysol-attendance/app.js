@@ -275,14 +275,6 @@ function renderMatches() {
     // Admin Mode: Render selections only
     const isAdmin = !!document.getElementById('matches-select-admin');
 
-    // DEBUG: Mobile Diagnosis (Force Alert)
-    if (!isAdmin && !window.hasDebugAlerted) {
-        window.hasDebugAlerted = true;
-        const leagueEl = document.getElementById('current-league-select');
-        const matchEl = document.getElementById('current-match-select');
-        alert(`Render Check:\nMatches: ${state.matches?.length}\nLeagues: ${state.leagues?.length}\nLeagueEl: ${!!leagueEl}\nMatchEl: ${!!matchEl}`);
-    }
-
     // Sort matches by date (descending)
     const sortedMatches = [...state.matches].sort((a, b) => parseDate(b.date) - parseDate(a.date));
 
@@ -378,6 +370,22 @@ function renderMatches() {
                     if (matchLeague) {
                         defaultLeagueId = matchLeague.id;
                     }
+                }
+
+                // DEBUG: Logic Trace (Mobile)
+                if (!window.hasLogicDebugged && sortedLeagues.length > 0) {
+                    window.hasLogicDebugged = true;
+                    const l = sortedLeagues[0];
+                    const s = parseDate(l.start);
+                    const e = parseDate(l.end);
+                    const latestM = sortedMatches.length > 0 ? parseDate(sortedMatches[0].date) : null;
+
+                    // Re-calculate fallback calc for debug display
+                    const eFull = new Date(e);
+                    eFull.setHours(23, 59, 59, 999);
+                    const isFallbackMatch = latestM ? (latestM >= s && latestM <= eFull) : false;
+
+                    alert(`Logic Check:\nToday: ${today.getMonth() + 1}/${today.getDate()}\nL_Start: ${s.getMonth() + 1}/${s.getDate()}\nL_End: ${e.getMonth() + 1}/${e.getDate()}\nM_Date: ${latestM ? (latestM.getMonth() + 1) + '/' + latestM.getDate() : 'N/A'}\nIsFallback: ${isFallbackMatch}\nDefaultID: ${defaultLeagueId}`);
                 }
 
                 // Set value if determined
