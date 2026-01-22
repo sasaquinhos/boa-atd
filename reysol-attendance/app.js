@@ -384,17 +384,22 @@ function renderMatches() {
                 // DEBUG: Logic Trace (Mobile)
                 if (!window.hasLogicDebugged && sortedLeagues.length > 0) {
                     window.hasLogicDebugged = true;
-                    const l = sortedLeagues[0];
-                    const s = parseDate(l.start);
-                    const e = parseDate(l.end);
+                    // Gather info for ALL leagues to see why fallback fails
                     const latestM = sortedMatches.length > 0 ? parseDate(sortedMatches[0].date) : null;
 
-                    // Re-calculate fallback calc for debug display
-                    const eFull = new Date(e);
-                    eFull.setHours(23, 59, 59, 999);
-                    const isFallbackMatch = latestM ? (latestM >= s && latestM <= eFull) : false;
+                    let log = `Match: ${latestM ? (latestM.getMonth() + 1) + '/' + latestM.getDate() : 'None'}\n`;
+                    log += `DefaultID: ${defaultLeagueId}\n`;
+                    log += `Leagues check:\n`;
 
-                    alert(`Logic Check:\nObj: ${JSON.stringify(l)}\nToday: ${today.getMonth() + 1}/${today.getDate()}\nL_Start: ${s.getMonth() + 1}/${s.getDate()}\nL_End: ${e.getMonth() + 1}/${e.getDate()}\nM_Date: ${latestM ? (latestM.getMonth() + 1) + '/' + latestM.getDate() : 'N/A'}\nIsFallback: ${isFallbackMatch}\nDefaultID: ${defaultLeagueId}`);
+                    sortedLeagues.forEach(l => {
+                        const s = parseDate(l.start);
+                        const e = parseDate(l.end);
+                        e.setHours(23, 59, 59, 999);
+                        const covers = latestM ? (latestM >= s && latestM <= e) : false;
+                        log += `[${l.name}] ${s.getMonth() + 1}/${s.getDate()}-${e.getMonth() + 1}/${e.getDate()} : ${covers}\n`;
+                    });
+
+                    alert(log);
                 }
 
                 // Set value if determined
