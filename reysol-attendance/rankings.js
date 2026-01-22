@@ -253,8 +253,10 @@ function renderHomeRankings() {
         return;
     }
 
-    const normalizedStart = start.replace(/\//g, '-');
-    const normalizedEnd = end.replace(/\//g, '-');
+    const start = state.selectedLeague.start || "";
+    const end = state.selectedLeague.end || "";
+    const normalizedStart = String(start).replace(/\//g, '-');
+    const normalizedEnd = String(end).replace(/\//g, '-');
 
     const leagueMatches = state.matches.filter(m => {
         if (!m.date) return false;
@@ -301,8 +303,10 @@ function renderAwayRankings() {
         return;
     }
 
-    const normalizedStart = start.replace(/\//g, '-');
-    const normalizedEnd = end.replace(/\//g, '-');
+    const start = state.selectedLeague.start || "";
+    const end = state.selectedLeague.end || "";
+    const normalizedStart = String(start).replace(/\//g, '-');
+    const normalizedEnd = String(end).replace(/\//g, '-');
 
     const leagueMatches = state.matches.filter(m => {
         if (!m.date) return false;
