@@ -346,6 +346,7 @@ function renderMatches() {
                 const currentLeague = sortedLeagues.find(l => {
                     const s = parseDate(l.start);
                     const e = parseDate(l.end);
+                    e.setHours(23, 59, 59, 999); // Fix: Extend to end of day
                     return today >= s && today <= e;
                 });
 
@@ -382,8 +383,8 @@ function renderMatches() {
                 }
 
                 // DEBUG: Logic Trace (Mobile)
-                if (!window.debug_v2 && sortedLeagues.length > 0) {
-                    window.debug_v2 = true;
+                if (!window.debug_v3 && sortedLeagues.length > 0) {
+                    window.debug_v3 = true;
                     // Gather info for ALL leagues to see why fallback fails
                     const latestM = sortedMatches.length > 0 ? parseDate(sortedMatches[0].date) : null;
 
