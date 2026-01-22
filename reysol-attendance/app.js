@@ -816,766 +816,767 @@ function setupEventListeners() {
                 });
             }
         }
-
-        // Admin Member Actions (Delete/Edit)
-        const membersSelect = document.getElementById('members-select-admin');
-        const editBtn = document.getElementById('edit-member-btn-admin');
-        const deleteBtn = document.getElementById('delete-member-btn-admin');
-
-        if (editBtn && membersSelect) {
-            editBtn.addEventListener('click', () => {
-                const memberName = membersSelect.value;
-                if (memberName) {
-                    openEditMemberModal(memberName);
-                } else {
-                    alert('編集するメンバーを選択してください');
-                }
-            });
-        }
-
-        if (deleteBtn && membersSelect) {
-            deleteBtn.addEventListener('click', () => {
-                const memberName = membersSelect.value;
-                if (memberName) {
-                    if (confirm(`メンバー「${memberName}」を削除しますか？\n(過去の出欠データからも削除されます)`)) {
-                        state.members = state.members.filter(m => m.name !== memberName);
-                        // Cleanup attendance data for this member locally
-                        Object.keys(state.attendance).forEach(key => {
-                            if (key.endsWith(`_${memberName} `)) {
-                                delete state.attendance[key];
-                            }
-                        });
-                        saveToLocal();
-                        renderMatches();
-                        apiCall('delete_member', { name: memberName });
-                    }
-                } else {
-                    alert('削除するメンバーを選択してください');
-                }
-            });
-        }
-
-        // Edit Member Modal Elements
-        const editModal = document.getElementById('edit-member-modal');
-        const editNameInput = document.getElementById('edit-member-name');
-        const saveEditBtn = document.getElementById('save-edit-member');
-        const cancelEditBtn = document.getElementById('cancel-edit-member');
-        let currentEditingMemberName = null;
-
-        function openEditMemberModal(name) {
-            const member = state.members.find(m => m.name === name);
-            if (member) {
-                currentEditingMemberName = name;
-                editNameInput.value = member.name;
-                const radios = document.getElementsByName('edit-member-section');
-                radios.forEach(r => {
-                    r.checked = (parseInt(r.value) === (member.section || 1));
-                });
-                editModal.style.display = 'flex';
-            }
-        }
-
-        if (saveEditBtn) {
-            saveEditBtn.onclick = () => {
-                const newName = editNameInput.value.trim();
-                const sectionRadio = document.querySelector('input[name="edit-member-section"]:checked');
-                const newSection = parseInt(sectionRadio ? sectionRadio.value : 1);
-
-                if (!newName) {
-                    alert('名前を入力してください');
-                    return;
-                }
-
-                if (newName !== currentEditingMemberName && state.members.some(m => m.name === newName)) {
-                    alert('その名前は既に使用されています');
-                    return;
-                }
-
-                const member = state.members.find(m => m.name === currentEditingMemberName);
-                if (member) {
-                    // Update attendance keys if name changed locally
-                    if (newName !== currentEditingMemberName) {
-                        const newAttendance = {};
-                        Object.keys(state.attendance).forEach(key => {
-                            if (key.endsWith(`_${currentEditingMemberName} `)) {
-                                const matchId = key.split('_')[0];
-                                newAttendance[`${matchId}_${newName} `] = state.attendance[key];
-                            } else {
-                                newAttendance[key] = state.attendance[key];
-                            }
-                        });
-                        state.attendance = newAttendance;
-                    }
-
-                    // Update member data
-                    member.name = newName;
-                    member.section = newSection;
-
-                    saveToLocal();
-                    renderMatches();
-                    editModal.style.display = 'none';
-
-                    apiCall('update_member', {
-                        originalName: currentEditingMemberName,
-                        name: newName,
-                        section: newSection
-                    });
-
-                    currentEditingMemberName = null;
-                }
-            };
-        }
-
-        if (cancelEditBtn) {
-            cancelEditBtn.onclick = () => {
-                editModal.style.display = 'none';
-                currentEditingMemberName = null;
-            };
-        }
-
-        // Initialize League Modal Listeners
-        setupEditLeagueModalListeners();
     }
 
-    function attachMatchListeners() {
-        // Match Header Toggle (Expand/Collapse)
-        document.querySelectorAll('.match-header').forEach(header => {
-            header.addEventListener('click', (e) => {
-                // Don't toggle if clicking on admin buttons
-                if (e.target.closest('.match-controls')) return;
+    // Admin Member Actions (Delete/Edit)
+    const membersSelect = document.getElementById('members-select-admin');
+    const editBtn = document.getElementById('edit-member-btn-admin');
+    const deleteBtn = document.getElementById('delete-member-btn-admin');
 
-                const matchEl = e.target.closest('.match-card');
-                const matchId = parseInt(matchEl.dataset.matchId);
-
-                if (state.expandedMatches.has(matchId)) {
-                    state.expandedMatches.delete(matchId);
-                    matchEl.classList.add('collapsed');
-                } else {
-                    state.expandedMatches.add(matchId);
-                    matchEl.classList.remove('collapsed');
-                }
-            });
-        });
-
-        // Attendance Changes (Sub-status)
-        document.querySelectorAll('.status-options input[type="radio"]').forEach(radio => {
-            radio.addEventListener('change', (e) => {
-                const row = e.target.closest('.attendance-row');
-                const key = row.dataset.key;
-                const matchId = key.split('_')[0];
-                const memberName = key.split('_')[1];
-                const status = parseInt(e.target.value);
-
-                if (!state.attendance[key]) state.attendance[key] = { status: null, guestsMain: '', guestsBack: '', bigFlag: false, jankenParticipate: false, morningWithdraw: false };
-                state.attendance[key].status = status;
-
-                saveToLocal();
-                updateMatchSummary(matchId);
-
-                // API Call
-                apiCall('update_attendance', {
-                    matchId: matchId,
-                    memberName: memberName,
-                    status: status,
-                    guestsMain: state.attendance[key].guestsMain,
-                    guestsBack: state.attendance[key].guestsBack,
-                    morningWithdraw: state.attendance[key].morningWithdraw
-                });
-            });
-        });
-
-        // Presence Changes (Attendance vs Absence)
-        document.querySelectorAll('.presence-radio').forEach(radio => {
-            radio.addEventListener('change', (e) => {
-                const row = e.target.closest('.attendance-row');
-                const details = row.querySelector('.attendance-details');
-                const key = row.dataset.key;
-                const matchId = key.split('_')[0];
-                const namePart = key.substring(matchId.length + 1);
-                const val = e.target.value;
-
-                if (!state.attendance[key]) state.attendance[key] = { status: null, guestsMain: '', guestsBack: '', bigFlag: false, jankenParticipate: false, morningWithdraw: false };
-
-                if (val === 'absence') {
-                    state.attendance[key].status = 5;
-                    state.attendance[key].guestsMain = '';
-                    state.attendance[key].guestsBack = '';
-                    state.attendance[key].bigFlag = false;
-
-                    // UI Reset
-                    const guestInput = row.querySelector('.guest-input-unified');
-                    if (guestInput) guestInput.value = '';
-                    const bigFlagCheckbox = row.querySelector('.big-flag-checkbox');
-                    if (bigFlagCheckbox) bigFlagCheckbox.checked = false;
-
-                    details.classList.add('disabled-section');
-                    details.querySelectorAll('input').forEach(input => input.disabled = true);
-                } else {
-                    // Return to attendance.
-                    const match = state.matches.find(m => m.id == matchId);
-                    const isAwayReserved = match && match.location === 'away' && match.seatType === 'reserved';
-
-                    // If switching from Absent (5) or it's current null/empty, reset sub-status
-                    // BUT for Away Reserved, we don't have sub-radios, so we use 1 as default "Attending"
-                    if (state.attendance[key].status === 5 || !state.attendance[key].status) {
-                        state.attendance[key].status = isAwayReserved ? 1 : 0; // 0: Attending but sub-status unpicked
-                    }
-
-                    details.classList.remove('disabled-section');
-                    details.querySelectorAll('input').forEach(input => input.disabled = false);
-
-                    // Ensure the correct sub-status radio is checked visually, or uncheck all if 0
-                    const currentStatus = state.attendance[key].status;
-                    const subRadios = row.querySelectorAll('.status-options input[type="radio"]');
-                    subRadios.forEach(r => {
-                        r.checked = (parseInt(r.value) === currentStatus);
-                    });
-                }
-
-                saveToLocal();
-                updateMatchSummary(matchId);
-
-                // API Call
-                apiCall('update_attendance', {
-                    matchId: matchId,
-                    memberName: namePart,
-                    status: state.attendance[key].status,
-                    guestsMain: state.attendance[key].guestsMain,
-                    guestsBack: state.attendance[key].guestsBack,
-                    bigFlag: state.attendance[key].bigFlag,
-                    jankenParticipate: state.attendance[key].jankenParticipate,
-                    morningWithdraw: state.attendance[key].morningWithdraw
-                });
-            });
-        });
-
-        // Guest Count Changes (Unified)
-        document.querySelectorAll('.guest-input-unified').forEach(input => {
-            input.addEventListener('input', (e) => {
-                const row = e.target.closest('.attendance-row');
-                const key = row.dataset.key;
-                const matchId = key.split('_')[0];
-                const namePart = key.substring(matchId.length + 1);
-
-                const member = state.members.find(m => m.name === namePart);
-                const section = member ? (member.section || 1) : 1;
-
-                if (!state.attendance[key]) state.attendance[key] = { status: null, guestsMain: '', guestsBack: '', bigFlag: false, jankenParticipate: false, morningWithdraw: false };
-
-                const val = e.target.value;
-
-                if (section === 2) { // Back
-                    state.attendance[key].guestsMain = '';
-                    state.attendance[key].guestsBack = val;
-                } else { // Main
-                    state.attendance[key].guestsMain = val;
-                    state.attendance[key].guestsBack = '';
-                }
-
-                saveToLocal();
-                updateMatchSummary(matchId);
-
-                // API Call
-                // Debounce? For now direct call.
-                apiCall('update_attendance', {
-                    matchId: matchId,
-                    memberName: namePart,
-                    status: state.attendance[key].status,
-                    guestsMain: state.attendance[key].guestsMain,
-                    guestsBack: state.attendance[key].guestsBack,
-                    morningWithdraw: state.attendance[key].morningWithdraw
-                });
-            });
-        });
-
-        // Big Flag Checkbox
-        document.querySelectorAll('.big-flag-checkbox').forEach(checkbox => {
-            checkbox.addEventListener('change', (e) => {
-                const row = e.target.closest('.attendance-row');
-                const key = row.dataset.key;
-                const matchId = key.split('_')[0];
-                const namePart = key.substring(matchId.length + 1);
-
-                if (!state.attendance[key]) state.attendance[key] = { status: null, guestsMain: '', guestsBack: '', bigFlag: false, jankenParticipate: false, morningWithdraw: false };
-                state.attendance[key].bigFlag = e.target.checked;
-
-                saveToLocal();
-                updateMatchSummary(matchId);
-
-                // API Call
-                apiCall('update_attendance', {
-                    matchId: matchId,
-                    memberName: namePart,
-                    status: state.attendance[key].status,
-                    guestsMain: state.attendance[key].guestsMain,
-                    guestsBack: state.attendance[key].guestsBack,
-                    bigFlag: state.attendance[key].bigFlag,
-                    jankenParticipate: state.attendance[key].jankenParticipate,
-                    morningWithdraw: state.attendance[key].morningWithdraw
-                });
-            });
-        });
-
-        // Janken Participate Checkbox
-        document.querySelectorAll('.janken-participate-checkbox').forEach(checkbox => {
-            checkbox.addEventListener('change', (e) => {
-                const row = e.target.closest('.attendance-row');
-                const key = row.dataset.key;
-                const matchId = key.split('_')[0];
-                const namePart = key.substring(matchId.length + 1);
-
-                if (!state.attendance[key]) state.attendance[key] = { status: null, guestsMain: '', guestsBack: '', bigFlag: false, jankenParticipate: false, morningWithdraw: false };
-                state.attendance[key].jankenParticipate = e.target.checked;
-
-                saveToLocal();
-                updateMatchSummary(matchId);
-
-                // API Call
-                apiCall('update_attendance', {
-                    matchId: matchId,
-                    memberName: namePart,
-                    status: state.attendance[key].status,
-                    guestsMain: state.attendance[key].guestsMain,
-                    guestsBack: state.attendance[key].guestsBack,
-                    bigFlag: state.attendance[key].bigFlag,
-                    jankenParticipate: state.attendance[key].jankenParticipate,
-                    morningWithdraw: state.attendance[key].morningWithdraw
-                });
-            });
-        });
-
-        // Morning Withdraw Checkbox
-        document.querySelectorAll('.morning-withdraw-checkbox').forEach(checkbox => {
-            checkbox.addEventListener('change', (e) => {
-                const row = e.target.closest('.attendance-row');
-                const key = row.dataset.key;
-                const matchId = key.split('_')[0];
-                const namePart = key.substring(matchId.length + 1);
-
-                if (!state.attendance[key]) state.attendance[key] = { status: null, guestsMain: '', guestsBack: '', bigFlag: false, jankenParticipate: false, morningWithdraw: false };
-                state.attendance[key].morningWithdraw = e.target.checked;
-
-                saveToLocal();
-                updateMatchSummary(matchId);
-
-                // API Call
-                apiCall('update_attendance', {
-                    matchId: matchId,
-                    memberName: namePart,
-                    status: state.attendance[key].status,
-                    guestsMain: state.attendance[key].guestsMain,
-                    guestsBack: state.attendance[key].guestsBack,
-                    bigFlag: state.attendance[key].bigFlag,
-                    jankenParticipate: state.attendance[key].jankenParticipate,
-                    morningWithdraw: state.attendance[key].morningWithdraw
-                });
-            });
-        });
-
-        // Save Janken Confirmed (Admin)
-        // Janken Admin Actions (Dropdown & Tags)
-        // Add Member
-        document.querySelectorAll('.janken-add-select').forEach(select => {
-            select.addEventListener('change', (e) => {
-                const matchId = e.target.dataset.matchId;
-                const name = e.target.value;
-                if (!name) return;
-
-                const match = state.matches.find(m => m.id == matchId);
-                if (match) {
-                    const current = (match.jankenConfirmed || '').split(',').map(s => s.trim()).filter(s => s);
-                    if (!current.includes(name)) {
-                        current.push(name);
-                        const val = current.join(', ');
-                        match.jankenConfirmed = val;
-                        saveToLocal();
-                        renderMatches(); // Re-render to update UI
-                        apiCall('update_match', { id: matchId, jankenConfirmed: val });
-                    }
-                }
-            });
-        });
-
-        // Remove Tag
-        document.querySelectorAll('.remove-janken-tag').forEach(span => {
-            span.addEventListener('click', (e) => {
-                const matchId = e.target.dataset.matchId;
-                const name = e.target.dataset.name;
-
-                const match = state.matches.find(m => m.id == matchId);
-                if (match) {
-                    const current = (match.jankenConfirmed || '').split(',').map(s => s.trim()).filter(s => s);
-                    const newVal = current.filter(n => n !== name).join(', ');
-                    match.jankenConfirmed = newVal;
-                    saveToLocal();
-                    renderMatches();
-                    apiCall('update_match', { id: matchId, jankenConfirmed: newVal });
-                }
-            });
-        });
-
-        // Delete Match
-        document.querySelectorAll('.delete-match-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                if (confirm('この試合を削除しますか？')) {
-                    const id = parseInt(e.target.dataset.id);
-                    state.matches = state.matches.filter(m => m.id !== id);
-                    saveToLocal();
-                    renderMatches();
-                    apiCall('delete_match', { id: id });
-                }
-            });
-        });
-
-        // Edit Match
-        document.querySelectorAll('.edit-match-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const id = parseInt(e.target.dataset.id);
-                openEditMatchModal(id);
-            });
+    if (editBtn && membersSelect) {
+        editBtn.addEventListener('click', () => {
+            const memberName = membersSelect.value;
+            if (memberName) {
+                openEditMemberModal(memberName);
+            } else {
+                alert('編集するメンバーを選択してください');
+            }
         });
     }
 
-    function openEditMatchModal(matchId) {
-        const match = state.matches.find(m => m.id === matchId);
-        if (!match) return;
-
-        const modal = document.getElementById('edit-match-modal');
-        const dateInput = document.getElementById('edit-match-date');
-        const opponentInput = document.getElementById('edit-match-opponent');
-        const deadlineInput = document.getElementById('edit-match-deadline');
-        const queueFlagInput = document.getElementById('edit-match-queue-flag');
-        const queueTimeInput = document.getElementById('edit-match-queue-time');
-        const lineOrgFlagInput = document.getElementById('edit-match-line-org-flag');
-        const lineOrgTimeInput = document.getElementById('edit-match-line-org-time');
-
-        const formatForInput = (dateStr, isDateTime = false) => {
-            if (!dateStr) return '';
-            const d = new Date(dateStr);
-            if (isNaN(d.getTime())) return dateStr;
-
-            const pad = (num) => String(num).padStart(2, '0');
-            const year = d.getFullYear();
-            const month = pad(d.getMonth() + 1);
-            const day = pad(d.getDate());
-
-            if (isDateTime) {
-                const hours = pad(d.getHours());
-                const minutes = pad(d.getMinutes());
-                return `${year}-${month}-${day}T${hours}:${minutes}`;
-            }
-            return `${year}-${month}-${day}`;
-        };
-
-        dateInput.value = formatForInput(match.date);
-        opponentInput.value = match.opponent;
-
-        // Set radios
-        const locRadios = document.getElementsByName('edit-match-location');
-        locRadios.forEach(r => r.checked = (r.value === (match.location || 'home')));
-
-        const seatRadios = document.getElementsByName('edit-match-seat-type');
-        seatRadios.forEach(r => r.checked = (r.value === (match.seatType || 'free')));
-
-        // Set other fields with proper formatting
-        deadlineInput.value = formatForInput(match.deadline, true);
-        queueFlagInput.checked = !!match.queueFlag;
-        queueTimeInput.value = formatForInput(match.queueTime, true);
-        lineOrgFlagInput.checked = !!match.lineOrgFlag;
-        lineOrgTimeInput.value = formatForInput(match.lineOrgTime, true);
-        document.getElementById('edit-match-away-notice').value = match.awayNotice || '';
-
-        // Function for modal UI updates
-        const updateModalUI = (isManualChange = false) => {
-            const loc = Array.from(locRadios).find(r => r.checked)?.value || 'home';
-            const seat = Array.from(seatRadios).find(r => r.checked)?.value || 'free';
-
-            const seatContainer = document.getElementById('edit-away-seat-type-container');
-            const generalDetails = document.getElementById('edit-away-general-details');
-            const queueSec = document.getElementById('edit-match-queue-section');
-            const lineSec = document.getElementById('edit-match-line-org-section');
-
-            const isAway = (loc === 'away');
-            const isFree = (seat === 'free');
-
-            const wasAwayFreeVisible = (generalDetails.style.display === 'flex' &&
-                queueSec && queueSec.style.display === 'flex');
-
-            if (isAway) {
-                seatContainer.style.display = 'flex';
-                generalDetails.style.display = 'flex';
-
-                if (queueSec) queueSec.style.display = isFree ? 'flex' : 'none';
-                if (lineSec) lineSec.style.display = isFree ? 'flex' : 'none';
-
-                if (isManualChange && isAway && isFree && !wasAwayFreeVisible) {
-                    queueFlagInput.checked = true;
-                    lineOrgFlagInput.checked = true;
+    if (deleteBtn && membersSelect) {
+        deleteBtn.addEventListener('click', () => {
+            const memberName = membersSelect.value;
+            if (memberName) {
+                if (confirm(`メンバー「${memberName}」を削除しますか？\n(過去の出欠データからも削除されます)`)) {
+                    state.members = state.members.filter(m => m.name !== memberName);
+                    // Cleanup attendance data for this member locally
+                    Object.keys(state.attendance).forEach(key => {
+                        if (key.endsWith(`_${memberName} `)) {
+                            delete state.attendance[key];
+                        }
+                    });
+                    saveToLocal();
+                    renderMatches();
+                    apiCall('delete_member', { name: memberName });
                 }
             } else {
-                seatContainer.style.display = 'none';
-                generalDetails.style.display = 'none';
+                alert('削除するメンバーを選択してください');
             }
+        });
+    }
 
-            document.getElementById('edit-queue-time-container').style.display = queueFlagInput.checked ? 'flex' : 'none';
-            document.getElementById('edit-line-org-time-container').style.display = lineOrgFlagInput.checked ? 'flex' : 'none';
-        };
+    // Edit Member Modal Elements
+    const editModal = document.getElementById('edit-member-modal');
+    const editNameInput = document.getElementById('edit-member-name');
+    const saveEditBtn = document.getElementById('save-edit-member');
+    const cancelEditBtn = document.getElementById('cancel-edit-member');
+    let currentEditingMemberName = null;
 
-        // Attach listeners for modal
-        locRadios.forEach(r => r.onchange = () => updateModalUI(true));
-        seatRadios.forEach(r => r.onchange = () => updateModalUI(true));
-        queueFlagInput.onchange = () => updateModalUI(false);
-        lineOrgFlagInput.onchange = () => updateModalUI(false);
+    function openEditMemberModal(name) {
+        const member = state.members.find(m => m.name === name);
+        if (member) {
+            currentEditingMemberName = name;
+            editNameInput.value = member.name;
+            const radios = document.getElementsByName('edit-member-section');
+            radios.forEach(r => {
+                r.checked = (parseInt(r.value) === (member.section || 1));
+            });
+            editModal.style.display = 'flex';
+        }
+    }
 
-        updateModalUI(false);
-        modal.style.display = 'flex';
+    if (saveEditBtn) {
+        saveEditBtn.onclick = () => {
+            const newName = editNameInput.value.trim();
+            const sectionRadio = document.querySelector('input[name="edit-member-section"]:checked');
+            const newSection = parseInt(sectionRadio ? sectionRadio.value : 1);
 
-        // Save/Cancel
-        document.getElementById('save-edit-match').onclick = () => {
-            const loc = Array.from(locRadios).find(r => r.checked)?.value || 'home';
-            const seat = Array.from(seatRadios).find(r => r.checked)?.value || 'free';
-
-            const updatedMatch = {
-                id: matchId,
-                date: dateInput.value,
-                opponent: opponentInput.value.trim(),
-                location: loc,
-                seatType: (loc === 'away' ? seat : ''),
-                deadline: (loc === 'away' ? deadlineInput.value : ''),
-                awayNotice: document.getElementById('edit-match-away-notice').value,
-                queueFlag: (loc === 'away' && seat === 'free' ? queueFlagInput.checked : false),
-                queueTime: (loc === 'away' && seat === 'free' && queueFlagInput.checked ? queueTimeInput.value : ''),
-                lineOrgFlag: (loc === 'away' && seat === 'free' ? lineOrgFlagInput.checked : false),
-                lineOrgTime: (loc === 'away' && seat === 'free' && lineOrgFlagInput.checked ? lineOrgTimeInput.value : '')
-            };
-
-            if (!updatedMatch.date || !updatedMatch.opponent) {
-                alert('日付と対戦相手を入力してください');
+            if (!newName) {
+                alert('名前を入力してください');
                 return;
             }
 
-            // Update local state
-            const idx = state.matches.findIndex(m => m.id === matchId);
-            if (idx !== -1) {
-                state.matches[idx] = { ...state.matches[idx], ...updatedMatch };
-                saveToLocal();
-                renderMatches();
-                modal.style.display = 'none';
-                apiCall('update_match', updatedMatch);
+            if (newName !== currentEditingMemberName && state.members.some(m => m.name === newName)) {
+                alert('その名前は既に使用されています');
+                return;
             }
-        };
 
-        document.getElementById('cancel-edit-match').onclick = () => {
-            modal.style.display = 'none';
-        };
-    }
-
-    function renderMembersAdmin() {
-        const select = document.getElementById('members-select-admin');
-        if (!select) return;
-
-        const currentValue = select.value;
-        select.innerHTML = '<option value="">-- メンバーを選択 --</option>' +
-            state.members.sort((a, b) => a.name.localeCompare(b.name)).map(member => `
-            <option value="${member.name}" ${member.name === currentValue ? 'selected' : ''}>${member.name} (${SECTION_LABELS[member.section] || 'TOP'})</option>
-        `).join('');
-    }
-
-    function updateMatchSummary(matchId) {
-        const container = document.getElementById(`summary-${matchId}`);
-        if (container) {
-            container.innerHTML = generateMatchSummaryContent(matchId);
-        }
-    }
-
-    function generateMatchSummaryContent(matchId) {
-        const summary = {}; // { statusId: [names] }
-        let memberMain = 0;
-        let memberBack = 0;
-        let guestMain = 0;
-        let guestBack = 0;
-        let outsideTotal = 0;
-
-        // Initialize map
-        STATUS_OPTIONS.forEach(opt => summary[opt.id] = []);
-
-        const match = state.matches.find(m => m.id == matchId);
-        if (!match) return '';
-
-        state.members.forEach(member => {
-            const key = `${matchId}_${member.name}`;
-            const data = state.attendance[key];
-
-            if (data && data.status !== null && data.status !== "") {
-                let effectiveStatus = data.status;
-
-                // Validate away-specific statuses
-                if (effectiveStatus == 6 && !match.queueFlag) effectiveStatus = null;
-                if (effectiveStatus == 7 && !match.lineOrgFlag) effectiveStatus = null;
-
-                if (effectiveStatus && summary[effectiveStatus]) {
-                    summary[effectiveStatus].push(member.name);
+            const member = state.members.find(m => m.name === currentEditingMemberName);
+            if (member) {
+                // Update attendance keys if name changed locally
+                if (newName !== currentEditingMemberName) {
+                    const newAttendance = {};
+                    Object.keys(state.attendance).forEach(key => {
+                        if (key.endsWith(`_${currentEditingMemberName} `)) {
+                            const matchId = key.split('_')[0];
+                            newAttendance[`${matchId}_${newName} `] = state.attendance[key];
+                        } else {
+                            newAttendance[key] = state.attendance[key];
+                        }
+                    });
+                    state.attendance = newAttendance;
                 }
 
-                // Exclude Absent (5) and Outside Hakunetsu (4) from section totals
-                // Allow status 0 (Attending but pending) to be counted
-                if (effectiveStatus !== null && effectiveStatus != 5 && effectiveStatus !== 4) {
-                    if (member.section === 2) {
-                        memberBack += 1;
-                    } else {
-                        memberMain += 1;
-                    }
+                // Update member data
+                member.name = newName;
+                member.section = newSection;
 
-                    // Count guests for section totals
-                    if (data.guestsMain) guestMain += parseInt(data.guestsMain) || 0;
-                    if (data.guestsBack) guestBack += parseInt(data.guestsBack) || 0;
-                } else if (effectiveStatus === 4) {
-                    // Count status 4 ("柏熱以外で") separately
-                    outsideTotal += 1; // The member themselves
-                    outsideTotal += (parseInt(data.guestsMain) || 0) + (parseInt(data.guestsBack) || 0);
+                saveToLocal();
+                renderMatches();
+                editModal.style.display = 'none';
+
+                apiCall('update_member', {
+                    originalName: currentEditingMemberName,
+                    name: newName,
+                    section: newSection
+                });
+
+                currentEditingMemberName = null;
+            }
+        };
+    }
+
+    if (cancelEditBtn) {
+        cancelEditBtn.onclick = () => {
+            editModal.style.display = 'none';
+            currentEditingMemberName = null;
+        };
+    }
+
+    // Initialize League Modal Listeners
+    setupEditLeagueModalListeners();
+}
+
+function attachMatchListeners() {
+    // Match Header Toggle (Expand/Collapse)
+    document.querySelectorAll('.match-header').forEach(header => {
+        header.addEventListener('click', (e) => {
+            // Don't toggle if clicking on admin buttons
+            if (e.target.closest('.match-controls')) return;
+
+            const matchEl = e.target.closest('.match-card');
+            const matchId = parseInt(matchEl.dataset.matchId);
+
+            if (state.expandedMatches.has(matchId)) {
+                state.expandedMatches.delete(matchId);
+                matchEl.classList.add('collapsed');
+            } else {
+                state.expandedMatches.add(matchId);
+                matchEl.classList.remove('collapsed');
+            }
+        });
+    });
+
+    // Attendance Changes (Sub-status)
+    document.querySelectorAll('.status-options input[type="radio"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            const row = e.target.closest('.attendance-row');
+            const key = row.dataset.key;
+            const matchId = key.split('_')[0];
+            const memberName = key.split('_')[1];
+            const status = parseInt(e.target.value);
+
+            if (!state.attendance[key]) state.attendance[key] = { status: null, guestsMain: '', guestsBack: '', bigFlag: false, jankenParticipate: false, morningWithdraw: false };
+            state.attendance[key].status = status;
+
+            saveToLocal();
+            updateMatchSummary(matchId);
+
+            // API Call
+            apiCall('update_attendance', {
+                matchId: matchId,
+                memberName: memberName,
+                status: status,
+                guestsMain: state.attendance[key].guestsMain,
+                guestsBack: state.attendance[key].guestsBack,
+                morningWithdraw: state.attendance[key].morningWithdraw
+            });
+        });
+    });
+
+    // Presence Changes (Attendance vs Absence)
+    document.querySelectorAll('.presence-radio').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            const row = e.target.closest('.attendance-row');
+            const details = row.querySelector('.attendance-details');
+            const key = row.dataset.key;
+            const matchId = key.split('_')[0];
+            const namePart = key.substring(matchId.length + 1);
+            const val = e.target.value;
+
+            if (!state.attendance[key]) state.attendance[key] = { status: null, guestsMain: '', guestsBack: '', bigFlag: false, jankenParticipate: false, morningWithdraw: false };
+
+            if (val === 'absence') {
+                state.attendance[key].status = 5;
+                state.attendance[key].guestsMain = '';
+                state.attendance[key].guestsBack = '';
+                state.attendance[key].bigFlag = false;
+
+                // UI Reset
+                const guestInput = row.querySelector('.guest-input-unified');
+                if (guestInput) guestInput.value = '';
+                const bigFlagCheckbox = row.querySelector('.big-flag-checkbox');
+                if (bigFlagCheckbox) bigFlagCheckbox.checked = false;
+
+                details.classList.add('disabled-section');
+                details.querySelectorAll('input').forEach(input => input.disabled = true);
+            } else {
+                // Return to attendance.
+                const match = state.matches.find(m => m.id == matchId);
+                const isAwayReserved = match && match.location === 'away' && match.seatType === 'reserved';
+
+                // If switching from Absent (5) or it's current null/empty, reset sub-status
+                // BUT for Away Reserved, we don't have sub-radios, so we use 1 as default "Attending"
+                if (state.attendance[key].status === 5 || !state.attendance[key].status) {
+                    state.attendance[key].status = isAwayReserved ? 1 : 0; // 0: Attending but sub-status unpicked
+                }
+
+                details.classList.remove('disabled-section');
+                details.querySelectorAll('input').forEach(input => input.disabled = false);
+
+                // Ensure the correct sub-status radio is checked visually, or uncheck all if 0
+                const currentStatus = state.attendance[key].status;
+                const subRadios = row.querySelectorAll('.status-options input[type="radio"]');
+                subRadios.forEach(r => {
+                    r.checked = (parseInt(r.value) === currentStatus);
+                });
+            }
+
+            saveToLocal();
+            updateMatchSummary(matchId);
+
+            // API Call
+            apiCall('update_attendance', {
+                matchId: matchId,
+                memberName: namePart,
+                status: state.attendance[key].status,
+                guestsMain: state.attendance[key].guestsMain,
+                guestsBack: state.attendance[key].guestsBack,
+                bigFlag: state.attendance[key].bigFlag,
+                jankenParticipate: state.attendance[key].jankenParticipate,
+                morningWithdraw: state.attendance[key].morningWithdraw
+            });
+        });
+    });
+
+    // Guest Count Changes (Unified)
+    document.querySelectorAll('.guest-input-unified').forEach(input => {
+        input.addEventListener('input', (e) => {
+            const row = e.target.closest('.attendance-row');
+            const key = row.dataset.key;
+            const matchId = key.split('_')[0];
+            const namePart = key.substring(matchId.length + 1);
+
+            const member = state.members.find(m => m.name === namePart);
+            const section = member ? (member.section || 1) : 1;
+
+            if (!state.attendance[key]) state.attendance[key] = { status: null, guestsMain: '', guestsBack: '', bigFlag: false, jankenParticipate: false, morningWithdraw: false };
+
+            const val = e.target.value;
+
+            if (section === 2) { // Back
+                state.attendance[key].guestsMain = '';
+                state.attendance[key].guestsBack = val;
+            } else { // Main
+                state.attendance[key].guestsMain = val;
+                state.attendance[key].guestsBack = '';
+            }
+
+            saveToLocal();
+            updateMatchSummary(matchId);
+
+            // API Call
+            // Debounce? For now direct call.
+            apiCall('update_attendance', {
+                matchId: matchId,
+                memberName: namePart,
+                status: state.attendance[key].status,
+                guestsMain: state.attendance[key].guestsMain,
+                guestsBack: state.attendance[key].guestsBack,
+                morningWithdraw: state.attendance[key].morningWithdraw
+            });
+        });
+    });
+
+    // Big Flag Checkbox
+    document.querySelectorAll('.big-flag-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', (e) => {
+            const row = e.target.closest('.attendance-row');
+            const key = row.dataset.key;
+            const matchId = key.split('_')[0];
+            const namePart = key.substring(matchId.length + 1);
+
+            if (!state.attendance[key]) state.attendance[key] = { status: null, guestsMain: '', guestsBack: '', bigFlag: false, jankenParticipate: false, morningWithdraw: false };
+            state.attendance[key].bigFlag = e.target.checked;
+
+            saveToLocal();
+            updateMatchSummary(matchId);
+
+            // API Call
+            apiCall('update_attendance', {
+                matchId: matchId,
+                memberName: namePart,
+                status: state.attendance[key].status,
+                guestsMain: state.attendance[key].guestsMain,
+                guestsBack: state.attendance[key].guestsBack,
+                bigFlag: state.attendance[key].bigFlag,
+                jankenParticipate: state.attendance[key].jankenParticipate,
+                morningWithdraw: state.attendance[key].morningWithdraw
+            });
+        });
+    });
+
+    // Janken Participate Checkbox
+    document.querySelectorAll('.janken-participate-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', (e) => {
+            const row = e.target.closest('.attendance-row');
+            const key = row.dataset.key;
+            const matchId = key.split('_')[0];
+            const namePart = key.substring(matchId.length + 1);
+
+            if (!state.attendance[key]) state.attendance[key] = { status: null, guestsMain: '', guestsBack: '', bigFlag: false, jankenParticipate: false, morningWithdraw: false };
+            state.attendance[key].jankenParticipate = e.target.checked;
+
+            saveToLocal();
+            updateMatchSummary(matchId);
+
+            // API Call
+            apiCall('update_attendance', {
+                matchId: matchId,
+                memberName: namePart,
+                status: state.attendance[key].status,
+                guestsMain: state.attendance[key].guestsMain,
+                guestsBack: state.attendance[key].guestsBack,
+                bigFlag: state.attendance[key].bigFlag,
+                jankenParticipate: state.attendance[key].jankenParticipate,
+                morningWithdraw: state.attendance[key].morningWithdraw
+            });
+        });
+    });
+
+    // Morning Withdraw Checkbox
+    document.querySelectorAll('.morning-withdraw-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', (e) => {
+            const row = e.target.closest('.attendance-row');
+            const key = row.dataset.key;
+            const matchId = key.split('_')[0];
+            const namePart = key.substring(matchId.length + 1);
+
+            if (!state.attendance[key]) state.attendance[key] = { status: null, guestsMain: '', guestsBack: '', bigFlag: false, jankenParticipate: false, morningWithdraw: false };
+            state.attendance[key].morningWithdraw = e.target.checked;
+
+            saveToLocal();
+            updateMatchSummary(matchId);
+
+            // API Call
+            apiCall('update_attendance', {
+                matchId: matchId,
+                memberName: namePart,
+                status: state.attendance[key].status,
+                guestsMain: state.attendance[key].guestsMain,
+                guestsBack: state.attendance[key].guestsBack,
+                bigFlag: state.attendance[key].bigFlag,
+                jankenParticipate: state.attendance[key].jankenParticipate,
+                morningWithdraw: state.attendance[key].morningWithdraw
+            });
+        });
+    });
+
+    // Save Janken Confirmed (Admin)
+    // Janken Admin Actions (Dropdown & Tags)
+    // Add Member
+    document.querySelectorAll('.janken-add-select').forEach(select => {
+        select.addEventListener('change', (e) => {
+            const matchId = e.target.dataset.matchId;
+            const name = e.target.value;
+            if (!name) return;
+
+            const match = state.matches.find(m => m.id == matchId);
+            if (match) {
+                const current = (match.jankenConfirmed || '').split(',').map(s => s.trim()).filter(s => s);
+                if (!current.includes(name)) {
+                    current.push(name);
+                    const val = current.join(', ');
+                    match.jankenConfirmed = val;
+                    saveToLocal();
+                    renderMatches(); // Re-render to update UI
+                    apiCall('update_match', { id: matchId, jankenConfirmed: val });
                 }
             }
         });
+    });
 
-        const isAway = match && match.location === 'away';
-        let html = '<div class="match-summary"><div class="summary-title">集計</div>';
+    // Remove Tag
+    document.querySelectorAll('.remove-janken-tag').forEach(span => {
+        span.addEventListener('click', (e) => {
+            const matchId = e.target.dataset.matchId;
+            const name = e.target.dataset.name;
 
-        if (!isAway) {
-            // Janken Summary (Top Priority)
-            const jankenParticipants = state.members.filter(member => {
-                const key = `${matchId}_${member.name}`;
-                const data = state.attendance[key];
-                return data && data.jankenParticipate;
-            }).map(m => m.name);
+            const match = state.matches.find(m => m.id == matchId);
+            if (match) {
+                const current = (match.jankenConfirmed || '').split(',').map(s => s.trim()).filter(s => s);
+                const newVal = current.filter(n => n !== name).join(', ');
+                match.jankenConfirmed = newVal;
+                saveToLocal();
+                renderMatches();
+                apiCall('update_match', { id: matchId, jankenConfirmed: newVal });
+            }
+        });
+    });
 
-            if (jankenParticipants.length > 0) {
-                html += `
+    // Delete Match
+    document.querySelectorAll('.delete-match-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            if (confirm('この試合を削除しますか？')) {
+                const id = parseInt(e.target.dataset.id);
+                state.matches = state.matches.filter(m => m.id !== id);
+                saveToLocal();
+                renderMatches();
+                apiCall('delete_match', { id: id });
+            }
+        });
+    });
+
+    // Edit Match
+    document.querySelectorAll('.edit-match-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = parseInt(e.target.dataset.id);
+            openEditMatchModal(id);
+        });
+    });
+}
+
+function openEditMatchModal(matchId) {
+    const match = state.matches.find(m => m.id === matchId);
+    if (!match) return;
+
+    const modal = document.getElementById('edit-match-modal');
+    const dateInput = document.getElementById('edit-match-date');
+    const opponentInput = document.getElementById('edit-match-opponent');
+    const deadlineInput = document.getElementById('edit-match-deadline');
+    const queueFlagInput = document.getElementById('edit-match-queue-flag');
+    const queueTimeInput = document.getElementById('edit-match-queue-time');
+    const lineOrgFlagInput = document.getElementById('edit-match-line-org-flag');
+    const lineOrgTimeInput = document.getElementById('edit-match-line-org-time');
+
+    const formatForInput = (dateStr, isDateTime = false) => {
+        if (!dateStr) return '';
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return dateStr;
+
+        const pad = (num) => String(num).padStart(2, '0');
+        const year = d.getFullYear();
+        const month = pad(d.getMonth() + 1);
+        const day = pad(d.getDate());
+
+        if (isDateTime) {
+            const hours = pad(d.getHours());
+            const minutes = pad(d.getMinutes());
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+        return `${year}-${month}-${day}`;
+    };
+
+    dateInput.value = formatForInput(match.date);
+    opponentInput.value = match.opponent;
+
+    // Set radios
+    const locRadios = document.getElementsByName('edit-match-location');
+    locRadios.forEach(r => r.checked = (r.value === (match.location || 'home')));
+
+    const seatRadios = document.getElementsByName('edit-match-seat-type');
+    seatRadios.forEach(r => r.checked = (r.value === (match.seatType || 'free')));
+
+    // Set other fields with proper formatting
+    deadlineInput.value = formatForInput(match.deadline, true);
+    queueFlagInput.checked = !!match.queueFlag;
+    queueTimeInput.value = formatForInput(match.queueTime, true);
+    lineOrgFlagInput.checked = !!match.lineOrgFlag;
+    lineOrgTimeInput.value = formatForInput(match.lineOrgTime, true);
+    document.getElementById('edit-match-away-notice').value = match.awayNotice || '';
+
+    // Function for modal UI updates
+    const updateModalUI = (isManualChange = false) => {
+        const loc = Array.from(locRadios).find(r => r.checked)?.value || 'home';
+        const seat = Array.from(seatRadios).find(r => r.checked)?.value || 'free';
+
+        const seatContainer = document.getElementById('edit-away-seat-type-container');
+        const generalDetails = document.getElementById('edit-away-general-details');
+        const queueSec = document.getElementById('edit-match-queue-section');
+        const lineSec = document.getElementById('edit-match-line-org-section');
+
+        const isAway = (loc === 'away');
+        const isFree = (seat === 'free');
+
+        const wasAwayFreeVisible = (generalDetails.style.display === 'flex' &&
+            queueSec && queueSec.style.display === 'flex');
+
+        if (isAway) {
+            seatContainer.style.display = 'flex';
+            generalDetails.style.display = 'flex';
+
+            if (queueSec) queueSec.style.display = isFree ? 'flex' : 'none';
+            if (lineSec) lineSec.style.display = isFree ? 'flex' : 'none';
+
+            if (isManualChange && isAway && isFree && !wasAwayFreeVisible) {
+                queueFlagInput.checked = true;
+                lineOrgFlagInput.checked = true;
+            }
+        } else {
+            seatContainer.style.display = 'none';
+            generalDetails.style.display = 'none';
+        }
+
+        document.getElementById('edit-queue-time-container').style.display = queueFlagInput.checked ? 'flex' : 'none';
+        document.getElementById('edit-line-org-time-container').style.display = lineOrgFlagInput.checked ? 'flex' : 'none';
+    };
+
+    // Attach listeners for modal
+    locRadios.forEach(r => r.onchange = () => updateModalUI(true));
+    seatRadios.forEach(r => r.onchange = () => updateModalUI(true));
+    queueFlagInput.onchange = () => updateModalUI(false);
+    lineOrgFlagInput.onchange = () => updateModalUI(false);
+
+    updateModalUI(false);
+    modal.style.display = 'flex';
+
+    // Save/Cancel
+    document.getElementById('save-edit-match').onclick = () => {
+        const loc = Array.from(locRadios).find(r => r.checked)?.value || 'home';
+        const seat = Array.from(seatRadios).find(r => r.checked)?.value || 'free';
+
+        const updatedMatch = {
+            id: matchId,
+            date: dateInput.value,
+            opponent: opponentInput.value.trim(),
+            location: loc,
+            seatType: (loc === 'away' ? seat : ''),
+            deadline: (loc === 'away' ? deadlineInput.value : ''),
+            awayNotice: document.getElementById('edit-match-away-notice').value,
+            queueFlag: (loc === 'away' && seat === 'free' ? queueFlagInput.checked : false),
+            queueTime: (loc === 'away' && seat === 'free' && queueFlagInput.checked ? queueTimeInput.value : ''),
+            lineOrgFlag: (loc === 'away' && seat === 'free' ? lineOrgFlagInput.checked : false),
+            lineOrgTime: (loc === 'away' && seat === 'free' && lineOrgFlagInput.checked ? lineOrgTimeInput.value : '')
+        };
+
+        if (!updatedMatch.date || !updatedMatch.opponent) {
+            alert('日付と対戦相手を入力してください');
+            return;
+        }
+
+        // Update local state
+        const idx = state.matches.findIndex(m => m.id === matchId);
+        if (idx !== -1) {
+            state.matches[idx] = { ...state.matches[idx], ...updatedMatch };
+            saveToLocal();
+            renderMatches();
+            modal.style.display = 'none';
+            apiCall('update_match', updatedMatch);
+        }
+    };
+
+    document.getElementById('cancel-edit-match').onclick = () => {
+        modal.style.display = 'none';
+    };
+}
+
+function renderMembersAdmin() {
+    const select = document.getElementById('members-select-admin');
+    if (!select) return;
+
+    const currentValue = select.value;
+    select.innerHTML = '<option value="">-- メンバーを選択 --</option>' +
+        state.members.sort((a, b) => a.name.localeCompare(b.name)).map(member => `
+            <option value="${member.name}" ${member.name === currentValue ? 'selected' : ''}>${member.name} (${SECTION_LABELS[member.section] || 'TOP'})</option>
+        `).join('');
+}
+
+function updateMatchSummary(matchId) {
+    const container = document.getElementById(`summary-${matchId}`);
+    if (container) {
+        container.innerHTML = generateMatchSummaryContent(matchId);
+    }
+}
+
+function generateMatchSummaryContent(matchId) {
+    const summary = {}; // { statusId: [names] }
+    let memberMain = 0;
+    let memberBack = 0;
+    let guestMain = 0;
+    let guestBack = 0;
+    let outsideTotal = 0;
+
+    // Initialize map
+    STATUS_OPTIONS.forEach(opt => summary[opt.id] = []);
+
+    const match = state.matches.find(m => m.id == matchId);
+    if (!match) return '';
+
+    state.members.forEach(member => {
+        const key = `${matchId}_${member.name}`;
+        const data = state.attendance[key];
+
+        if (data && data.status !== null && data.status !== "") {
+            let effectiveStatus = data.status;
+
+            // Validate away-specific statuses
+            if (effectiveStatus == 6 && !match.queueFlag) effectiveStatus = null;
+            if (effectiveStatus == 7 && !match.lineOrgFlag) effectiveStatus = null;
+
+            if (effectiveStatus && summary[effectiveStatus]) {
+                summary[effectiveStatus].push(member.name);
+            }
+
+            // Exclude Absent (5) and Outside Hakunetsu (4) from section totals
+            // Allow status 0 (Attending but pending) to be counted
+            if (effectiveStatus !== null && effectiveStatus != 5 && effectiveStatus !== 4) {
+                if (member.section === 2) {
+                    memberBack += 1;
+                } else {
+                    memberMain += 1;
+                }
+
+                // Count guests for section totals
+                if (data.guestsMain) guestMain += parseInt(data.guestsMain) || 0;
+                if (data.guestsBack) guestBack += parseInt(data.guestsBack) || 0;
+            } else if (effectiveStatus === 4) {
+                // Count status 4 ("柏熱以外で") separately
+                outsideTotal += 1; // The member themselves
+                outsideTotal += (parseInt(data.guestsMain) || 0) + (parseInt(data.guestsBack) || 0);
+            }
+        }
+    });
+
+    const isAway = match && match.location === 'away';
+    let html = '<div class="match-summary"><div class="summary-title">集計</div>';
+
+    if (!isAway) {
+        // Janken Summary (Top Priority)
+        const jankenParticipants = state.members.filter(member => {
+            const key = `${matchId}_${member.name}`;
+            const data = state.attendance[key];
+            return data && data.jankenParticipate;
+        }).map(m => m.name);
+
+        if (jankenParticipants.length > 0) {
+            html += `
                 <div class="summary-item active" style="background-color: #ffebee; border: 1px solid #ef5350;">
                     <span class="summary-count" style="color: #c62828;">じゃんけん大会立候補者: ${jankenParticipants.length}名</span>
                     <span class="summary-names">(${jankenParticipants.join(', ')})</span>
                 </div>
             `;
-            }
+        }
 
-            // Morning Withdraw Summary (Moved below Janken Candidates)
-            const morningMembers = state.members.filter(member => {
-                const key = `${matchId}_${member.name}`;
-                const data = state.attendance[key];
-                return data && data.morningWithdraw;
-            }).map(m => m.name);
+        // Morning Withdraw Summary (Moved below Janken Candidates)
+        const morningMembers = state.members.filter(member => {
+            const key = `${matchId}_${member.name}`;
+            const data = state.attendance[key];
+            return data && data.morningWithdraw;
+        }).map(m => m.name);
 
-            if (morningMembers.length > 0) {
-                html += `
+        if (morningMembers.length > 0) {
+            html += `
                 <div class="summary-item active" style="background-color: #f1f8e9; border: 1px solid #8bc34a; margin-top: 0.5rem;">
                     <span class="summary-count" style="color: #33691e;">朝の引き込み: ${morningMembers.length}名</span>
                     <span class="summary-names">(${morningMembers.join(', ')})</span>
                 </div>
             `;
+        }
+    }
+
+    const totalMain = memberMain + guestMain;
+    const totalBack = memberBack + guestBack;
+
+    // Add Total Count Breakdown
+    if (totalMain > 0 || totalBack > 0 || outsideTotal > 0) {
+        let sectionTotalsHtml = '';
+        let reservedNamesHtml = '';
+
+        if (isAway) {
+            // Away: Simple total
+            sectionTotalsHtml += `<div>合計 ${totalMain + totalBack}名 <small style="font-weight:normal;">(メンバー${memberMain + memberBack} / 同伴${guestMain + guestBack})</small></div>`;
+            if (outsideTotal > 0) sectionTotalsHtml += `<div style="padding-top: 0.1rem; margin-top: 0.1rem;">ゴール裏以外 合計${outsideTotal}名</div>`;
+
+            // If Away Reserved, prepare names list
+            if (match.seatType === 'reserved') {
+                const attendees = [];
+                state.members.forEach(member => {
+                    const key = `${matchId}_${member.name}`;
+                    const data = state.attendance[key];
+                    if (data && data.status && data.status != 5) {
+                        attendees.push(member.name);
+                    }
+                });
+                if (attendees.length > 0) {
+                    reservedNamesHtml = `<div class="summary-item active" style="margin-top: 0.3rem;"><span class="summary-names" style="font-size: 0.85rem;">出席者: (${attendees.join(', ')})</span></div>`;
+                }
             }
+        } else {
+            // Home: Breakdown by section
+            if (totalMain > 0) sectionTotalsHtml += `<div>TOP 合計${totalMain}名 <small style="font-weight:normal;">(メンバー${memberMain} / 同伴${guestMain})</small></div>`;
+            if (totalBack > 0) sectionTotalsHtml += `<div>FRONT 合計${totalBack}名 <small style="font-weight:normal;">(メンバー${memberBack} / 同伴${guestBack})</small></div>`;
+            if (outsideTotal > 0) sectionTotalsHtml += `<div style="padding-top: 0.1rem; margin-top: 0.1rem;">柏熱以外 合計${outsideTotal}名</div>`;
         }
 
-        const totalMain = memberMain + guestMain;
-        const totalBack = memberBack + guestBack;
-
-        // Add Total Count Breakdown
-        if (totalMain > 0 || totalBack > 0 || outsideTotal > 0) {
-            let sectionTotalsHtml = '';
-            let reservedNamesHtml = '';
-
-            if (isAway) {
-                // Away: Simple total
-                sectionTotalsHtml += `<div>合計 ${totalMain + totalBack}名 <small style="font-weight:normal;">(メンバー${memberMain + memberBack} / 同伴${guestMain + guestBack})</small></div>`;
-                if (outsideTotal > 0) sectionTotalsHtml += `<div style="padding-top: 0.1rem; margin-top: 0.1rem;">ゴール裏以外 合計${outsideTotal}名</div>`;
-
-                // If Away Reserved, prepare names list
-                if (match.seatType === 'reserved') {
-                    const attendees = [];
-                    state.members.forEach(member => {
-                        const key = `${matchId}_${member.name}`;
-                        const data = state.attendance[key];
-                        if (data && data.status && data.status != 5) {
-                            attendees.push(member.name);
-                        }
-                    });
-                    if (attendees.length > 0) {
-                        reservedNamesHtml = `<div class="summary-item active" style="margin-top: 0.3rem;"><span class="summary-names" style="font-size: 0.85rem;">出席者: (${attendees.join(', ')})</span></div>`;
-                    }
-                }
-            } else {
-                // Home: Breakdown by section
-                if (totalMain > 0) sectionTotalsHtml += `<div>TOP 合計${totalMain}名 <small style="font-weight:normal;">(メンバー${memberMain} / 同伴${guestMain})</small></div>`;
-                if (totalBack > 0) sectionTotalsHtml += `<div>FRONT 合計${totalBack}名 <small style="font-weight:normal;">(メンバー${memberBack} / 同伴${guestBack})</small></div>`;
-                if (outsideTotal > 0) sectionTotalsHtml += `<div style="padding-top: 0.1rem; margin-top: 0.1rem;">柏熱以外 合計${outsideTotal}名</div>`;
-            }
-
-            html += `
+        html += `
             <div class="summary-item active" style="font-weight: bold; background-color: #fff8e1; border: 2px solid #FCD116; border-radius: 4px; flex-direction: column; align-items: flex-start; gap: 0.2rem;">
                 ${sectionTotalsHtml}
             </div>
             ${reservedNamesHtml}
         `;
-        }
+    }
 
 
-        const isAwayFree = isAway && match.seatType === 'free';
+    const isAwayFree = isAway && match.seatType === 'free';
 
-        // Determine order of status items to display
-        let displayOrder = [...STATUS_OPTIONS.filter(opt => opt.id !== 5 && opt.id !== 6 && opt.id !== 7)]; // Default order
-        if (isAwayFree) {
-            // For Away Free, match radio button order: Queue(6), LineOrg(7), then others
-            const awayOrder = [];
-            if (match.lineOrgFlag) awayOrder.unshift(STATUS_OPTIONS.find(o => o.id === 7));
-            if (match.queueFlag) awayOrder.unshift(STATUS_OPTIONS.find(o => o.id === 6));
-            displayOrder = [...awayOrder, ...displayOrder];
-        } else if (!isAway) {
-            // For Home, append 6 and 7 at the end (though they usually aren't used for Home)
-            displayOrder = [...displayOrder, STATUS_OPTIONS.find(o => o.id === 6), STATUS_OPTIONS.find(o => o.id === 7)];
-        }
+    // Determine order of status items to display
+    let displayOrder = [...STATUS_OPTIONS.filter(opt => opt.id !== 5 && opt.id !== 6 && opt.id !== 7)]; // Default order
+    if (isAwayFree) {
+        // For Away Free, match radio button order: Queue(6), LineOrg(7), then others
+        const awayOrder = [];
+        if (match.lineOrgFlag) awayOrder.unshift(STATUS_OPTIONS.find(o => o.id === 7));
+        if (match.queueFlag) awayOrder.unshift(STATUS_OPTIONS.find(o => o.id === 6));
+        displayOrder = [...awayOrder, ...displayOrder];
+    } else if (!isAway) {
+        // For Home, append 6 and 7 at the end (though they usually aren't used for Home)
+        displayOrder = [...displayOrder, STATUS_OPTIONS.find(o => o.id === 6), STATUS_OPTIONS.find(o => o.id === 7)];
+    }
 
-        if (!isAway || isAwayFree) {
-            displayOrder.forEach(opt => {
-                if (!opt) return;
-                const names = summary[opt.id];
-                if (names && names.length > 0) {
-                    let label = opt.label;
-                    if (isAway && opt.id === 4) label = 'ゴール裏以外';
-                    html += `
+    if (!isAway || isAwayFree) {
+        displayOrder.forEach(opt => {
+            if (!opt) return;
+            const names = summary[opt.id];
+            if (names && names.length > 0) {
+                let label = opt.label;
+                if (isAway && opt.id === 4) label = 'ゴール裏以外';
+                html += `
                     <div class="summary-item active">
                         <span class="summary-count">${label}: ${names.length}名</span>
                         <span class="summary-names">(${names.join(', ')})</span>
                     </div>
                 `;
-                }
-            });
-        }
+            }
+        });
+    }
 
 
-        // Big Flag Summary
-        const bigFlagMembers = state.members.filter(member => {
-            const key = `${matchId}_${member.name}`;
-            const data = state.attendance[key];
-            return data && data.bigFlag;
-        }).map(m => m.name);
+    // Big Flag Summary
+    const bigFlagMembers = state.members.filter(member => {
+        const key = `${matchId}_${member.name}`;
+        const data = state.attendance[key];
+        return data && data.bigFlag;
+    }).map(m => m.name);
 
-        if (bigFlagMembers.length > 0) {
-            html += `
+    if (bigFlagMembers.length > 0) {
+        html += `
             <div class="summary-item active" style="background-color: #e3f2fd; border: 1px solid #64b5f6; margin-top: 0.5rem;">
                 <span class="summary-count" style="color: #0d47a1;">ビッグフラッグ搬入手伝い: ${bigFlagMembers.length}名</span>
                 <span class="summary-names">(${bigFlagMembers.join(', ')})</span>
             </div>
         `;
-        }
-
-
-
-
-        html += '</div>';
-        return html;
     }
 
 
-    function generateAttendanceTable(matchId) {
-        let html = `
+
+
+    html += '</div>';
+    return html;
+}
+
+
+function generateAttendanceTable(matchId) {
+    let html = `
         <details class="attendance-table-details">
             <summary>詳細リストを表示</summary>
             <table class="attendance-table">
@@ -1591,32 +1592,32 @@ function setupEventListeners() {
                 <tbody>
     `;
 
-        // Sort members for consistency (e.g. by Section then Name)
-        const sortedMembers = [...state.members].sort((a, b) => {
-            if (a.section !== b.section) return a.section - b.section; // 1 (TOP) then 2 (FRONT)
-            return a.name.localeCompare(b.name);
-        });
+    // Sort members for consistency (e.g. by Section then Name)
+    const sortedMembers = [...state.members].sort((a, b) => {
+        if (a.section !== b.section) return a.section - b.section; // 1 (TOP) then 2 (FRONT)
+        return a.name.localeCompare(b.name);
+    });
 
-        sortedMembers.forEach(member => {
-            const key = `${matchId}_${member.name}`;
-            const data = state.attendance[key] || {};
+    sortedMembers.forEach(member => {
+        const key = `${matchId}_${member.name}`;
+        const data = state.attendance[key] || {};
 
-            let statusLabel = '-';
-            if (data.status) {
-                const statusObj = STATUS_OPTIONS.find(s => s.id == data.status);
-                statusLabel = statusObj ? statusObj.label : '-';
-            }
+        let statusLabel = '-';
+        if (data.status) {
+            const statusObj = STATUS_OPTIONS.find(s => s.id == data.status);
+            statusLabel = statusObj ? statusObj.label : '-';
+        }
 
-            const sectionLabel = SECTION_LABELS[member.section] || 'TOP';
-            const guestsMain = data.guestsMain || '-';
-            const guestsBack = data.guestsBack || '-';
+        const sectionLabel = SECTION_LABELS[member.section] || 'TOP';
+        const guestsMain = data.guestsMain || '-';
+        const guestsBack = data.guestsBack || '-';
 
-            // Row highlighting based on status
-            let rowClass = '';
-            if (data.status === 5) rowClass = 'status-absent'; // 欠席
-            else if (data.status) rowClass = 'status-attending'; // 出席
+        // Row highlighting based on status
+        let rowClass = '';
+        if (data.status === 5) rowClass = 'status-absent'; // 欠席
+        else if (data.status) rowClass = 'status-attending'; // 出席
 
-            html += `
+        html += `
             <tr class="${rowClass}">
                 <td>${member.name}</td>
                 <td><span class="badge section-${member.section}">${sectionLabel}</span></td>
@@ -1625,154 +1626,154 @@ function setupEventListeners() {
                 <td style="text-align:center;">${guestsBack}</td>
             </tr>
         `;
-        });
+    });
 
-        html += `
+    html += `
                 </tbody>
             </table>
         </details>
         `;
-        return html;
-    }
+    return html;
+}
 
-    function renderLeaguesAdmin() {
-        const select = document.getElementById('leagues-select-admin');
-        if (!select) return;
+function renderLeaguesAdmin() {
+    const select = document.getElementById('leagues-select-admin');
+    if (!select) return;
 
-        // Sort by start date (newest first)
-        const sortedLeagues = [...state.leagues].sort((a, b) => {
-            if (a.start < b.start) return 1;
-            if (a.start > b.start) return -1;
-            return 0;
-        });
+    // Sort by start date (newest first)
+    const sortedLeagues = [...state.leagues].sort((a, b) => {
+        if (a.start < b.start) return 1;
+        if (a.start > b.start) return -1;
+        return 0;
+    });
 
-        const currentVal = select.value;
+    const currentVal = select.value;
 
-        select.innerHTML = '<option value="">-- リーグ名を選択 --</option>' +
-            sortedLeagues.map(league => `
+    select.innerHTML = '<option value="">-- リーグ名を選択 --</option>' +
+        sortedLeagues.map(league => `
                 <option value="${league.id}">${league.name} (${league.start} ～ ${league.end})</option>
             `).join('');
 
-        if (currentVal && state.leagues.some(l => l.id === currentVal)) {
-            select.value = currentVal;
-        }
+    if (currentVal && state.leagues.some(l => l.id === currentVal)) {
+        select.value = currentVal;
+    }
+}
+
+function addLeague() {
+    const nameInput = document.getElementById('new-league-name');
+    const startInput = document.getElementById('new-league-start');
+    const endInput = document.getElementById('new-league-end');
+
+    const name = nameInput.value.trim();
+    // Convert YYYY-MM-DD to YYYY-MM for storage
+    const start = startInput.value ? startInput.value.slice(0, 7) : '';
+    const end = endInput.value ? endInput.value.slice(0, 7) : '';
+
+    if (!name || !start || !end) {
+        alert('リーグ名と期間を入力してください');
+        return;
     }
 
-    function addLeague() {
-        const nameInput = document.getElementById('new-league-name');
-        const startInput = document.getElementById('new-league-start');
-        const endInput = document.getElementById('new-league-end');
+    const newLeague = {
+        id: Date.now().toString(),
+        name,
+        start,
+        end
+    };
 
-        const name = nameInput.value.trim();
-        // Convert YYYY-MM-DD to YYYY-MM for storage
-        const start = startInput.value ? startInput.value.slice(0, 7) : '';
-        const end = endInput.value ? endInput.value.slice(0, 7) : '';
+    state.leagues.push(newLeague);
+    saveToLocal();
+    renderLeaguesAdmin();
 
-        if (!name || !start || !end) {
-            alert('リーグ名と期間を入力してください');
-            return;
-        }
+    // Reset inputs
+    nameInput.value = '';
+    startInput.value = '';
+    endInput.value = '';
 
-        const newLeague = {
-            id: Date.now().toString(),
-            name,
-            start,
-            end
-        };
+    // API Call
+    syncLeagues();
+}
 
-        state.leagues.push(newLeague);
-        saveToLocal();
-        renderLeaguesAdmin();
-
-        // Reset inputs
-        nameInput.value = '';
-        startInput.value = '';
-        endInput.value = '';
-
-        // API Call
-        syncLeagues();
-    }
-
-    function deleteLeague(leagueId) {
-        if (confirm('このリーグを削除しますか？')) {
-            state.leagues = state.leagues.filter(l => l.id !== leagueId);
-            saveToLocal();
-            renderLeaguesAdmin();
-            syncLeagues();
-        }
-    }
-
-    async function syncLeagues() {
-        await apiCall('update_setting', {
-            key: 'leagues',
-            value: JSON.stringify(state.leagues)
-        });
-    }
-
-    // --- Edit League Modal Logic ---
-    function setupEditLeagueModalListeners() {
-        const modal = document.getElementById('edit-league-modal');
-        // closeBtn removed to match other modals
-        const cancelBtn = document.getElementById('cancel-edit-league');
-        const saveBtn = document.getElementById('save-edit-league');
-
-        const closeModal = () => modal.style.display = 'none';
-
-        if (cancelBtn) cancelBtn.onclick = closeModal;
-
-        window.addEventListener('click', (e) => {
-            if (e.target === modal) closeModal();
-        });
-
-        if (saveBtn) {
-            saveBtn.onclick = updateLeague;
-        }
-    }
-
-    function openEditLeagueModal(leagueId) {
-        const league = state.leagues.find(l => l.id === leagueId);
-        if (!league) return;
-
-        document.getElementById('edit-league-id').value = league.id;
-        document.getElementById('edit-league-name').value = league.name;
-        // Append -01 to YYYY-MM to make it valid for date input
-        document.getElementById('edit-league-start').value = league.start ? league.start + '-01' : '';
-        document.getElementById('edit-league-end').value = league.end ? league.end + '-01' : '';
-
-        document.getElementById('edit-league-modal').style.display = 'flex';
-    }
-
-    function updateLeague() {
-        const id = document.getElementById('edit-league-id').value;
-        const name = document.getElementById('edit-league-name').value.trim();
-        const startVal = document.getElementById('edit-league-start').value;
-        const endVal = document.getElementById('edit-league-end').value;
-
-        const start = startVal ? startVal.slice(0, 7) : '';
-        const end = endVal ? endVal.slice(0, 7) : '';
-
-        if (!name || !start || !end) {
-            alert('全ての項目を入力してください');
-            return;
-        }
-
-        const index = state.leagues.findIndex(l => l.id === id);
-        if (index === -1) return;
-
-        state.leagues[index] = { ...state.leagues[index], name, start, end };
-
+function deleteLeague(leagueId) {
+    if (confirm('このリーグを削除しますか？')) {
+        state.leagues = state.leagues.filter(l => l.id !== leagueId);
         saveToLocal();
         renderLeaguesAdmin();
         syncLeagues();
+    }
+}
 
-        document.getElementById('edit-league-modal').style.display = 'none';
+async function syncLeagues() {
+    await apiCall('update_setting', {
+        key: 'leagues',
+        value: JSON.stringify(state.leagues)
+    });
+}
+
+// --- Edit League Modal Logic ---
+function setupEditLeagueModalListeners() {
+    const modal = document.getElementById('edit-league-modal');
+    // closeBtn removed to match other modals
+    const cancelBtn = document.getElementById('cancel-edit-league');
+    const saveBtn = document.getElementById('save-edit-league');
+
+    const closeModal = () => modal.style.display = 'none';
+
+    if (cancelBtn) cancelBtn.onclick = closeModal;
+
+    window.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+
+    if (saveBtn) {
+        saveBtn.onclick = updateLeague;
+    }
+}
+
+function openEditLeagueModal(leagueId) {
+    const league = state.leagues.find(l => l.id === leagueId);
+    if (!league) return;
+
+    document.getElementById('edit-league-id').value = league.id;
+    document.getElementById('edit-league-name').value = league.name;
+    // Append -01 to YYYY-MM to make it valid for date input
+    document.getElementById('edit-league-start').value = league.start ? league.start + '-01' : '';
+    document.getElementById('edit-league-end').value = league.end ? league.end + '-01' : '';
+
+    document.getElementById('edit-league-modal').style.display = 'flex';
+}
+
+function updateLeague() {
+    const id = document.getElementById('edit-league-id').value;
+    const name = document.getElementById('edit-league-name').value.trim();
+    const startVal = document.getElementById('edit-league-start').value;
+    const endVal = document.getElementById('edit-league-end').value;
+
+    const start = startVal ? startVal.slice(0, 7) : '';
+    const end = endVal ? endVal.slice(0, 7) : '';
+
+    if (!name || !start || !end) {
+        alert('全ての項目を入力してください');
+        return;
     }
 
-    // Utilities
-    function formatDate(dateString) {
-        const d = new Date(dateString);
-        return `${d.getMonth() + 1}/${d.getDate()} (${['日', '月', '火', '水', '木', '金', '土'][d.getDay()]})`;
-    }
+    const index = state.leagues.findIndex(l => l.id === id);
+    if (index === -1) return;
 
-    // Start
-    init();
+    state.leagues[index] = { ...state.leagues[index], name, start, end };
+
+    saveToLocal();
+    renderLeaguesAdmin();
+    syncLeagues();
+
+    document.getElementById('edit-league-modal').style.display = 'none';
+}
+
+// Utilities
+function formatDate(dateString) {
+    const d = new Date(dateString);
+    return `${d.getMonth() + 1}/${d.getDate()} (${['日', '月', '火', '水', '木', '金', '土'][d.getDay()]})`;
+}
+
+// Start
+init();
