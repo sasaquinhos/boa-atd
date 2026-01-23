@@ -339,8 +339,12 @@ function renderMatches() {
                     return db - da; // Descending
                 });
 
-                userLeagueSelect.innerHTML = '<option value="">-- 全ての期間 --</option>' +
-                    sortedLeagues.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+                // REMOVED: '-- All Periods --' option as requested by user.
+                userLeagueSelect.innerHTML = sortedLeagues.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+
+                // Force empty value initially so we can trigger default selection below logic if needed,
+                // although browser might select first option automatically.
+                userLeagueSelect.value = "";
             }
 
             // --- 2. Determine Default Selection (If empty) ---
@@ -349,7 +353,6 @@ function renderMatches() {
                 const sortedLeagues = [...state.leagues].sort((a, b) => parseDate(b.start) - parseDate(a.start));
 
                 const today = new Date();
-                console.log("[Mobile Debug] Determining Default League. Today:", today.toLocaleDateString());
 
                 let defaultLeagueId = null;
 
@@ -361,7 +364,8 @@ function renderMatches() {
                     // End Date Logic: If YYYY-MM, assume End of Month
                     let e = parseDate(l.end);
                     if (l.end && String(l.end).match(/^\d{4}[-/]\d{1,2}$/)) {
-                        e = new Date(e.getFullYear(), e.getMonth() + 1, 0, 23, 59, 59, 999);
+                        const d = parseDate(l.end);
+                        e = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
                     } else {
                         e.setHours(23, 59, 59, 999);
                     }
@@ -381,14 +385,12 @@ function renderMatches() {
 
                 if (activeLeague) {
                     defaultLeagueId = activeLeague.id;
-                    console.log("[Mobile Debug] Active League Found:", activeLeague.name);
                 } else {
                     // Logic B: Fallback to Latest Match's League
                     const latestMatch = [...state.matches].sort((a, b) => parseDate(b.date) - parseDate(a.date))[0];
                     if (latestMatch) {
                         if (latestMatch.leagueId) {
                             defaultLeagueId = latestMatch.leagueId;
-                            console.log("[Mobile Debug] Fallback by ID:", defaultLeagueId);
                         } else {
                             const matchDate = parseDate(latestMatch.date);
                             const matchedLeague = sortedLeagues.find(l => {
@@ -396,7 +398,8 @@ function renderMatches() {
                                 s.setHours(0, 0, 0, 0);
                                 let e = parseDate(l.end);
                                 if (l.end && String(l.end).match(/^\d{4}[-/]\d{1,2}$/)) {
-                                    e = new Date(e.getFullYear(), e.getMonth() + 1, 0, 23, 59, 59, 999);
+                                    const d = parseDate(l.end);
+                                    e = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
                                 } else {
                                     e.setHours(23, 59, 59, 999);
                                 }
@@ -404,21 +407,18 @@ function renderMatches() {
                             });
                             if (matchedLeague) {
                                 defaultLeagueId = matchedLeague.id;
-                                console.log("[Mobile Debug] Fallback by Date:", matchedLeague.name);
                             }
                         }
                     }
                 }
 
                 if (defaultLeagueId) {
-                    console.log("[Mobile Debug] Setting Default:", defaultLeagueId);
                     userLeagueSelect.value = String(defaultLeagueId);
 
                     // Forced UI Update
                     requestAnimationFrame(() => {
                         const el = document.getElementById('current-league-select');
                         if (el) {
-                            console.log("[Mobile Debug] Force Update RAF");
                             el.value = String(defaultLeagueId);
                         }
                     });
@@ -435,12 +435,11 @@ function renderMatches() {
 
                     let e = parseDate(league.end);
                     if (league.end && String(league.end).match(/^\d{4}[-/]\d{1,2}$/)) {
-                        e = new Date(e.getFullYear(), e.getMonth() + 1, 0, 23, 59, 59, 999);
+                        const d = parseDate(league.end);
+                        e = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
                     } else {
                         e.setHours(23, 59, 59, 999);
                     }
-
-                    console.log(`[Filter Debug] Filtering for ${league.name}. Range: ${s.toLocaleDateString()} ~ ${e.toLocaleDateString()}`);
 
                     leagueFilteredMatches = sortedMatches.filter((m, index) => {
                         const d = parseDate(m.date);
@@ -456,38 +455,6 @@ function renderMatches() {
                         const isMatch = isDateMatch || isIdMatch;
                         return isMatch;
                     });
-                    console.log(`[Filter Debug] Matches found: ${leagueFilteredMatches.length}`);
-
-                    // --- DEBUG OVERLAY POPULATION ---
-                    const debugEl = document.getElementById('debug-content');
-                    if (debugEl) {
-                        const debugHTML = `
-                         <h3>Debug Info</h3>
-                         <p>Total Matches: ${state.matches.length}</p>
-                         <p>Filtered Matches: ${leagueFilteredMatches.length}</p>
-                         <p>Selected League: ${league.name} (${s.toLocaleDateString()} - ${e.toLocaleDateString()})</p>
-                         <p>League ID: ${league.id}</p>
-                         <h4>First 5 Matches Check:</h4>
-                         <ul>
-                             ${sortedMatches.slice(0, 10).map(m => {
-                            const d = parseDate(m.date);
-                            const isDateMatch = d >= s && d <= e;
-                            let isIdMatch = false;
-                            if (m.leagueId) isIdMatch = String(m.leagueId) === String(league.id);
-                            return `<li>
-                                     ${m.date} <br/>
-                                     Parsing: ${d.toLocaleString()} <br/>
-                                     DateMatch: ${isDateMatch} (s=${s.toLocaleDateString()}, e=${e.toLocaleDateString()}) <br/>
-                                     IdMatch: ${isIdMatch} (Item:${m.leagueId} vs Sel:${league.id}) <br/>
-                                     FINAL: ${isDateMatch || isIdMatch}
-                                 </li>`;
-                        }).join('')}
-                         </ul>
-                         `;
-                        debugEl.innerHTML = debugHTML;
-                        // Show debug overlay if query param ?debug=true is present OR just show it for now
-                        document.getElementById('debug-overlay').style.display = 'block';
-                    }
                 }
             }
 
