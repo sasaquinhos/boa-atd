@@ -325,46 +325,48 @@ function renderMatches() {
         let leagueFilteredMatches = sortedMatches;
 
         if (userLeagueSelect) {
-            // Populate if empty (First run)
+            // --- 1. Populate Options (Idempotent) ---
             if (userLeagueSelect.options.length <= 1 && state.leagues && state.leagues.length > 0) {
                 // Sort leagues by start date descending
-                const sortedLeagues = [...state.leagues].sort((a, b) => parseDate(b.start) - parseDate(a.start));
+                const sortedLeagues = [...state.leagues].sort((a, b) => {
+                    const da = parseDate(a.start);
+                    const db = parseDate(b.start);
+                    return db - da; // Descending
+                });
 
                 userLeagueSelect.innerHTML = '<option value="">-- 全ての期間 --</option>' +
                     sortedLeagues.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+            }
 
-                // Determine default league based on date
-                // [DEBUG] Logging for Mobile Diagnosis
+            // --- 2. Determine Default Selection (If empty) ---
+            // Run this if value is empty, OR if we think the UI might have reset (mobile issue)
+            if (!userLeagueSelect.value && state.leagues && state.leagues.length > 0) {
+                const sortedLeagues = [...state.leagues].sort((a, b) => parseDate(b.start) - parseDate(a.start));
+
                 const today = new Date();
-                today.setHours(0, 0, 0, 0); // Normalize time
-                console.log("[Mobile Debug] Today:", today.toISOString());
-                console.log("[Mobile Debug] Checking leagues:", sortedLeagues.map(l => `${l.name} (${l.start} - ${l.end})`));
+                console.log("[Mobile Debug] Determining Default League. Today:", today.toLocaleDateString());
 
                 let defaultLeagueId = null;
 
-                // 1. Find active league (today is within range) with matches
-                // FIX: Ensure parseDate handles time correctly for comparison
+                // Logic A: Active League (Today inside Start ~ End)
                 const activeLeague = sortedLeagues.find(l => {
                     const s = parseDate(l.start);
                     s.setHours(0, 0, 0, 0);
 
-                    // End date handling for YYYY-MM
+                    // End Date Logic: If YYYY-MM, assume End of Month
                     let e = parseDate(l.end);
                     if (l.end && String(l.end).match(/^\d{4}[-/]\d{1,2}$/)) {
-                        const d = parseDate(l.end);
-                        e = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
+                        e = new Date(e.getFullYear(), e.getMonth() + 1, 0, 23, 59, 59, 999);
                     } else {
                         e.setHours(23, 59, 59, 999);
                     }
 
                     const isWithin = today >= s && today <= e;
 
-                    // Check if this league has actual matches
-                    // FIX: Fallback to date comparison if leagueId is missing
+                    // Check if matches exist for this league (ID check OR Date check)
                     const hasMatches = state.matches.some(m => {
                         if (m.leagueId && String(m.leagueId) === String(l.id)) return true;
-
-                        // Date fallback
+                        // Date Fallback
                         const d = parseDate(m.date);
                         return d >= s && d <= e;
                     });
@@ -374,26 +376,22 @@ function renderMatches() {
 
                 if (activeLeague) {
                     defaultLeagueId = activeLeague.id;
-                    console.log("[Mobile Debug] Found active league:", activeLeague.name);
+                    console.log("[Mobile Debug] Active League Found:", activeLeague.name);
                 } else {
-                    // 2. Fallback: League with the latest match data
-                    // Find the latest match
+                    // Logic B: Fallback to Latest Match's League
                     const latestMatch = [...state.matches].sort((a, b) => parseDate(b.date) - parseDate(a.date))[0];
                     if (latestMatch) {
                         if (latestMatch.leagueId) {
                             defaultLeagueId = latestMatch.leagueId;
-                            console.log("[Mobile Debug] Fallback to latest match league (ID):", defaultLeagueId);
+                            console.log("[Mobile Debug] Fallback by ID:", defaultLeagueId);
                         } else {
-                            // Find league by date
                             const matchDate = parseDate(latestMatch.date);
-                            const matchedLeague = sortedLeagues.find(lg => {
-                                const s = parseDate(lg.start);
+                            const matchedLeague = sortedLeagues.find(l => {
+                                const s = parseDate(l.start);
                                 s.setHours(0, 0, 0, 0);
-
-                                let e = parseDate(lg.end);
-                                if (lg.end && String(lg.end).match(/^\d{4}[-/]\d{1,2}$/)) {
-                                    const d = parseDate(lg.end);
-                                    e = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
+                                let e = parseDate(l.end);
+                                if (l.end && String(l.end).match(/^\d{4}[-/]\d{1,2}$/)) {
+                                    e = new Date(e.getFullYear(), e.getMonth() + 1, 0, 23, 59, 59, 999);
                                 } else {
                                     e.setHours(23, 59, 59, 999);
                                 }
@@ -401,46 +399,63 @@ function renderMatches() {
                             });
                             if (matchedLeague) {
                                 defaultLeagueId = matchedLeague.id;
-                                console.log("[Mobile Debug] Fallback to latest match league (Date):", matchedLeague.name);
+                                console.log("[Mobile Debug] Fallback by Date:", matchedLeague.name);
                             }
                         }
                     }
                 }
 
-                // Set value if determined
                 if (defaultLeagueId) {
+                    console.log("[Mobile Debug] Setting Default:", defaultLeagueId);
                     userLeagueSelect.value = String(defaultLeagueId);
 
-                    // Double check with delay for persistent mobile UI issues
+                    // Forced UI Update
                     requestAnimationFrame(() => {
                         const el = document.getElementById('current-league-select');
                         if (el) {
+                            console.log("[Mobile Debug] Force Update RAF");
                             el.value = String(defaultLeagueId);
-                            console.log("[Mobile Debug] RAF Forced value set to:", el.value);
                         }
                     });
                 }
             }
 
-            // Apply Filter
+            // --- 3. Apply Filtering ---
             const selectedLeagueId = userLeagueSelect.value;
             if (selectedLeagueId) {
                 const league = state.leagues.find(l => l.id == selectedLeagueId);
                 if (league) {
                     const s = parseDate(league.start);
+                    s.setHours(0, 0, 0, 0);
 
                     let e = parseDate(league.end);
                     if (league.end && String(league.end).match(/^\d{4}[-/]\d{1,2}$/)) {
-                        const d = parseDate(league.end);
-                        e = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
+                        e = new Date(e.getFullYear(), e.getMonth() + 1, 0, 23, 59, 59, 999);
                     } else {
                         e.setHours(23, 59, 59, 999);
                     }
 
-                    leagueFilteredMatches = sortedMatches.filter(m => {
+                    console.log(`[Filter Debug] Filtering for ${league.name}. Range: ${s.toLocaleDateString()} ~ ${e.toLocaleDateString()}`);
+
+                    leagueFilteredMatches = sortedMatches.filter((m, index) => {
                         const d = parseDate(m.date);
-                        return d >= s && d <= e;
+                        const isMatch = d >= s && d <= e;
+
+                        // Check explicit league ID if available
+                        let isIdMatch = false;
+                        if (m.leagueId) {
+                            isIdMatch = String(m.leagueId) === String(league.id);
+                        }
+
+                        // Log first few items for debug
+                        if (index < 3) {
+                            console.log(`[Filter Debug] Match: ${m.opponent} (${d.toLocaleDateString()}) => Range:${isMatch}, ID:${isIdMatch}`);
+                        }
+
+                        // Use ID match if available, otherwise Date Range
+                        return m.leagueId ? isIdMatch : isMatch;
                     });
+                    console.log(`[Filter Debug] Matches found: ${leagueFilteredMatches.length}`);
                 }
             }
 
