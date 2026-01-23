@@ -439,7 +439,7 @@ function renderMatches() {
 
                     leagueFilteredMatches = sortedMatches.filter((m, index) => {
                         const d = parseDate(m.date);
-                        const isMatch = d >= s && d <= e;
+                        const isDateMatch = d >= s && d <= e;
 
                         // Check explicit league ID if available
                         let isIdMatch = false;
@@ -447,13 +447,17 @@ function renderMatches() {
                             isIdMatch = String(m.leagueId) === String(league.id);
                         }
 
+                        // RELAXED FILTERING:
+                        // Prioritize Date Range to handle data inconsistencies on mobile.
+                        // Include if Date matches OR ID matches.
+                        const isMatch = isDateMatch || isIdMatch;
+
                         // Log first few items for debug
                         if (index < 3) {
-                            console.log(`[Filter Debug] Match: ${m.opponent} (${d.toLocaleDateString()}) => Range:${isMatch}, ID:${isIdMatch}`);
+                            console.log(`[Filter Debug] Match: ${m.opponent} (${d.toLocaleDateString()}) => Date:${isDateMatch}, ID:${isIdMatch} -> Final:${isMatch}`);
                         }
 
-                        // Use ID match if available, otherwise Date Range
-                        return m.leagueId ? isIdMatch : isMatch;
+                        return isMatch;
                     });
                     console.log(`[Filter Debug] Matches found: ${leagueFilteredMatches.length}`);
                 }
