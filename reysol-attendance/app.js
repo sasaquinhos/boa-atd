@@ -447,19 +447,42 @@ function renderMatches() {
                             isIdMatch = String(m.leagueId) === String(league.id);
                         }
 
-                        // RELAXED FILTERING:
-                        // Prioritize Date Range to handle data inconsistencies on mobile.
-                        // Include if Date matches OR ID matches.
+                        // RELAXED FILTERING: Match by Date OR ID
                         const isMatch = isDateMatch || isIdMatch;
-
-                        // Log first few items for debug
-                        if (index < 3) {
-                            console.log(`[Filter Debug] Match: ${m.opponent} (${d.toLocaleDateString()}) => Date:${isDateMatch}, ID:${isIdMatch} -> Final:${isMatch}`);
-                        }
-
                         return isMatch;
                     });
                     console.log(`[Filter Debug] Matches found: ${leagueFilteredMatches.length}`);
+
+                    // --- DEBUG OVERLAY POPULATION ---
+                    const debugEl = document.getElementById('debug-content');
+                    if (debugEl) {
+                        const debugHTML = `
+                         <h3>Debug Info</h3>
+                         <p>Total Matches: ${state.matches.length}</p>
+                         <p>Filtered Matches: ${leagueFilteredMatches.length}</p>
+                         <p>Selected League: ${league.name} (${s.toLocaleDateString()} - ${e.toLocaleDateString()})</p>
+                         <p>League ID: ${league.id}</p>
+                         <h4>First 5 Matches Check:</h4>
+                         <ul>
+                             ${sortedMatches.slice(0, 10).map(m => {
+                            const d = parseDate(m.date);
+                            const isDateMatch = d >= s && d <= e;
+                            let isIdMatch = false;
+                            if (m.leagueId) isIdMatch = String(m.leagueId) === String(league.id);
+                            return `<li>
+                                     ${m.date} <br/>
+                                     Parsing: ${d.toLocaleString()} <br/>
+                                     DateMatch: ${isDateMatch} (s=${s.toLocaleDateString()}, e=${e.toLocaleDateString()}) <br/>
+                                     IdMatch: ${isIdMatch} (Item:${m.leagueId} vs Sel:${league.id}) <br/>
+                                     FINAL: ${isDateMatch || isIdMatch}
+                                 </li>`;
+                        }).join('')}
+                         </ul>
+                         `;
+                        debugEl.innerHTML = debugHTML;
+                        // Show debug overlay if query param ?debug=true is present OR just show it for now
+                        document.getElementById('debug-overlay').style.display = 'block';
+                    }
                 }
             }
 
