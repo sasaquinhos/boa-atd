@@ -14,6 +14,12 @@
 </head>
 
 <body>
+    <div id="debug-overlay"
+        style="display:none; background:rgba(0,0,0,0.9); color:lime; position:fixed; top:0; left:0; width:100%; height:80vh; overflow:scroll; z-index:9999; font-size:12px; font-family:monospace; padding:10px; border-bottom: 2px solid white;">
+        <button onclick="document.getElementById('debug-overlay').style.display='none'"
+            style="font-size:16px; padding:10px; margin-bottom:10px;">CLOSE DEBUG</button>
+        <div id="debug-content">Waiting for data...</div>
+    </div>
     <header class="header">
         <div class="container header-container">
             <h1 class="app-title">ボアソルチ出欠確認</h1>
