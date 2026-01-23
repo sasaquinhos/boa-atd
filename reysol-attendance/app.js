@@ -347,8 +347,15 @@ function renderMatches() {
                 const activeLeague = sortedLeagues.find(l => {
                     const s = parseDate(l.start);
                     s.setHours(0, 0, 0, 0);
-                    const e = parseDate(l.end);
-                    e.setHours(23, 59, 59, 999);
+
+                    // End date handling for YYYY-MM
+                    let e = parseDate(l.end);
+                    if (l.end && String(l.end).match(/^\d{4}[-/]\d{1,2}$/)) {
+                        const d = parseDate(l.end);
+                        e = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
+                    } else {
+                        e.setHours(23, 59, 59, 999);
+                    }
 
                     const isWithin = today >= s && today <= e;
 
@@ -382,8 +389,14 @@ function renderMatches() {
                             const matchedLeague = sortedLeagues.find(lg => {
                                 const s = parseDate(lg.start);
                                 s.setHours(0, 0, 0, 0);
-                                const e = parseDate(lg.end);
-                                e.setHours(23, 59, 59, 999);
+
+                                let e = parseDate(lg.end);
+                                if (lg.end && String(lg.end).match(/^\d{4}[-/]\d{1,2}$/)) {
+                                    const d = parseDate(lg.end);
+                                    e = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
+                                } else {
+                                    e.setHours(23, 59, 59, 999);
+                                }
                                 return matchDate >= s && matchDate <= e;
                             });
                             if (matchedLeague) {
@@ -401,11 +414,9 @@ function renderMatches() {
                     // Double check with delay for persistent mobile UI issues
                     requestAnimationFrame(() => {
                         const el = document.getElementById('current-league-select');
-                        if (el && el.value !== String(defaultLeagueId)) {
-                            console.log("[Mobile Debug] Retrying value set via RAF");
+                        if (el) {
                             el.value = String(defaultLeagueId);
-                            // Ensure filter is applied if value was stuck
-                            // trigger rendering again if needed, or rely on user interaction
+                            console.log("[Mobile Debug] RAF Forced value set to:", el.value);
                         }
                     });
                 }
@@ -417,9 +428,14 @@ function renderMatches() {
                 const league = state.leagues.find(l => l.id == selectedLeagueId);
                 if (league) {
                     const s = parseDate(league.start);
-                    // End date should include the full day
-                    const e = parseDate(league.end);
-                    e.setHours(23, 59, 59, 999);
+
+                    let e = parseDate(league.end);
+                    if (league.end && String(league.end).match(/^\d{4}[-/]\d{1,2}$/)) {
+                        const d = parseDate(league.end);
+                        e = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
+                    } else {
+                        e.setHours(23, 59, 59, 999);
+                    }
 
                     leagueFilteredMatches = sortedMatches.filter(m => {
                         const d = parseDate(m.date);
