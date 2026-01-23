@@ -6,36 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ボアソルチ出欠確認</title>
     <!-- Cache Busting Style -->
-    <link rel="stylesheet" href="reysol-attendance/style.css?v=20260123_DEBUGFINAL">
-    <script>
-        window.onerror = function (msg, url, line, col, error) {
-            const el = document.getElementById('debug-content');
-            if (el) {
-                el.innerHTML += `<div style="color:red; border:1px solid red; margin:5px; padding:5px;">
-                    <strong>Global Error:</strong> ${msg}<br/>
-                    ${url}:${line}:${col}<br/>
-                    ${error ? error.stack : ''}
-                </div>`;
-                document.getElementById('debug-overlay').style.display = 'block';
-            }
-        };
-    </script>
+    <link rel="stylesheet" href="reysol-attendance/style.css?v=20260123_CLEAN">
 </head>
 
 <body>
-    <!-- Display Block by default for debugging -->
-    <div id="debug-overlay"
-        style="display:block; background:rgba(0,0,0,0.85); color:lime; position:fixed; top:0; left:0; width:100%; height:50vh; overflow:scroll; z-index:9999; font-size:11px; font-family:monospace; padding:10px; border-bottom: 2px solid white;">
-        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-            <strong>MOBILE DEBUG v3</strong>
-            <button onclick="document.getElementById('debug-overlay').style.display='none'"
-                style="font-size:14px; padding:5px;">CLOSE</button>
-        </div>
-        <div id="debug-content">
-            Initializing...<br />
-            Global Handler Ready.<br />
-        </div>
-    </div>
     <header class="header">
         <div class="container header-container">
             <h1 class="app-title">ボアソルチ出欠確認</h1>
@@ -84,7 +58,7 @@
         </div>
     </main>
 
-    <script src="reysol-attendance/app.js?v=20260123_FIX_PARSEDATE_V4"></script>
+    <script src="reysol-attendance/app.js?v=20260123_CLEAN"></script>
 </body>
 
 </html>
