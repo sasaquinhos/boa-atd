@@ -46,17 +46,22 @@ function parseDate(input) {
         return isNaN(input.getTime()) ? new Date() : new Date(input.getTime());
     }
     if (typeof input === 'number') return new Date(input);
-    const str = String(input);
+    const str = String(input).trim();
 
     let d;
-    // Extract YYYY, MM, DD
-    const match = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
-    if (match) {
-        // Construct Local Date
-        d = new Date(parseInt(match[1]), parseInt(match[2]) - 1, parseInt(match[3]));
+    // 1. Try YYYY-MM-DD
+    const matchFull = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+    if (matchFull) {
+        d = new Date(parseInt(matchFull[1]), parseInt(matchFull[2]) - 1, parseInt(matchFull[3]));
     } else {
-        // Fallback
-        d = new Date(str.replace(/-/g, '/'));
+        // 2. Try YYYY-MM (for League Start/End)
+        const matchMonth = str.match(/^(\d{4})[-/](\d{1,2})$/);
+        if (matchMonth) {
+            d = new Date(parseInt(matchMonth[1]), parseInt(matchMonth[2]) - 1, 1);
+        } else {
+            // 3. Fallback to standard parser (with slash replacement)
+            d = new Date(str.replace(/-/g, '/'));
+        }
     }
 
     // Final Safety Check
