@@ -48,24 +48,38 @@ function parseDate(input) {
     if (typeof input === 'number') return new Date(input);
     const str = String(input).trim();
 
+    // 1. If it's a full ISO string (contains T or Z), let native parser handle it.
+    // Modern browsers handle ISO strings correctly as UTC.
+    if (str.includes('T') || str.includes('Z')) {
+        const d = new Date(str);
+        if (!isNaN(d.getTime())) return d;
+    }
+
     let d;
-    // 1. Try YYYY-MM-DD
-    const matchFull = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+    // 2. Try YYYY-MM-DD (Exact match)
+    // We use anchor $ to ensure we don't partially match ISO strings.
+    const matchFull = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/);
     if (matchFull) {
-        d = new Date(parseInt(matchFull[1]), parseInt(matchFull[2]) - 1, parseInt(matchFull[3]));
+        // Constructing with year, monthIndex, day treats it as LOCAL time.
+        d = new Date(parseInt(matchFull[1], 10), parseInt(matchFull[2], 10) - 1, parseInt(matchFull[3], 10));
     } else {
-        // 2. Try YYYY-MM (for League Start/End)
+        // 3. Try YYYY-MM (for League Start/End)
         const matchMonth = str.match(/^(\d{4})[-/](\d{1,2})$/);
         if (matchMonth) {
-            d = new Date(parseInt(matchMonth[1]), parseInt(matchMonth[2]) - 1, 1);
+            d = new Date(parseInt(matchMonth[1], 10), parseInt(matchMonth[2], 10) - 1, 1);
         } else {
-            // 3. Fallback to standard parser (with slash replacement)
+            // 4. Fallback to standard parser (with slash replacement for Safari compatibility)
+            // Replacing - with / makes "YYYY-MM-DD" be parsed as Local in most browsers.
             d = new Date(str.replace(/-/g, '/'));
         }
     }
 
     // Final Safety Check
-    return isNaN(d.getTime()) ? new Date() : d;
+    if (isNaN(d.getTime())) {
+        console.warn('parseDate failed for:', input);
+        return new Date();
+    }
+    return d;
 }
 
 // Initialization
