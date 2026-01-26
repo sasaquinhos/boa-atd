@@ -595,7 +595,7 @@ function createMemberRow(matchId, member, hideName = false) {
 
     const formatDateWithDayAndTime = (dateStr) => {
         if (!dateStr) return '';
-        const d = new Date(dateStr);
+        const d = parseDate(dateStr);
         if (isNaN(d.getTime())) return dateStr;
         const days = ['日', '月', '火', '水', '木', '金', '土'];
         const pad = (n) => String(n).padStart(2, '0');
@@ -624,7 +624,7 @@ function createMemberRow(matchId, member, hideName = false) {
     const currentGuests = (parseInt(data.guestsMain) || 0) + (parseInt(data.guestsBack) || 0);
     const guestValue = currentGuests > 0 ? currentGuests : '';
 
-    const matchDate = match ? new Date(match.date) : null;
+    const matchDate = match ? parseDate(match.date) : null;
 
     if (isAway) {
         let noticeHtml = '';
@@ -2006,7 +2006,7 @@ function updateLeague() {
 
 // Utilities
 function formatDate(dateString) {
-    const d = new Date(dateString);
+    const d = parseDate(dateString);
     return `${d.getMonth() + 1}/${d.getDate()} (${['日', '月', '火', '水', '木', '金', '土'][d.getDay()]})`;
 }
 
