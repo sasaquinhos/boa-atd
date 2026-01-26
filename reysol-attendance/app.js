@@ -1817,20 +1817,22 @@ function generateMatchSummaryContent(matchId) {
         renderAbsentItem();
     }
 
-    // Big Flag Summary
-    const bigFlagMembers = state.members.filter(member => {
-        const key = `${matchId}_${member.name}`;
-        const data = state.attendance[key];
-        return data && data.bigFlag;
-    }).map(m => m.name);
+    // Big Flag Summary (Home only)
+    if (!isAway) {
+        const bigFlagMembers = state.members.filter(member => {
+            const key = `${matchId}_${member.name}`;
+            const data = state.attendance[key];
+            return data && data.bigFlag;
+        }).map(m => m.name);
 
-    if (bigFlagMembers.length > 0) {
-        html += `
-            <div class="summary-item active" style="background-color: #e3f2fd; border: 1px solid #64b5f6; margin-top: 0.5rem;">
-                <span class="summary-count" style="color: #0d47a1;">ビッグフラッグ搬入手伝い: ${bigFlagMembers.length}名</span>
-                <span class="summary-names">(${bigFlagMembers.join(', ')})</span>
-            </div>
-        `;
+        if (bigFlagMembers.length > 0) {
+            html += `
+                <div class="summary-item active" style="background-color: #e3f2fd; border: 1px solid #64b5f6; margin-top: 0.5rem;">
+                    <span class="summary-count" style="color: #0d47a1;">ビッグフラッグ搬入手伝い: ${bigFlagMembers.length}名</span>
+                    <span class="summary-names">(${bigFlagMembers.join(', ')})</span>
+                </div>
+            `;
+        }
     }
 
     // Away: Absent comes AFTER Big Flag (at the very bottom)
