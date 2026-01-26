@@ -1769,7 +1769,7 @@ function generateMatchSummaryContent(matchId) {
 
     const isAwayFree = isAway && match.seatType === 'free';
 
-    // Determine order of status items to display
+    // Determine order of status items to display (Explicitly exclude 5 for manual placement)
     let displayOrder = [...STATUS_OPTIONS.filter(opt => opt.id !== 5 && opt.id !== 6 && opt.id !== 7)]; // Default order
     if (isAwayFree) {
         // For Away Free, match radio button order: Queue(6), LineOrg(7), then others
@@ -1799,6 +1799,23 @@ function generateMatchSummaryContent(matchId) {
         });
     }
 
+    // Function to render Absent Item
+    const renderAbsentItem = () => {
+        const names = summary[5];
+        if (names && names.length > 0) {
+            html += `
+                <div class="summary-item active">
+                    <span class="summary-count">欠席: ${names.length}名</span>
+                    <span class="summary-names">(${names.join(', ')})</span>
+                </div>
+            `;
+        }
+    };
+
+    // Home: Absent comes BEFORE Big Flag
+    if (!isAway) {
+        renderAbsentItem();
+    }
 
     // Big Flag Summary
     const bigFlagMembers = state.members.filter(member => {
@@ -1816,8 +1833,10 @@ function generateMatchSummaryContent(matchId) {
         `;
     }
 
-
-
+    // Away: Absent comes AFTER Big Flag (at the very bottom)
+    if (isAway) {
+        renderAbsentItem();
+    }
 
     html += '</div>';
     return html;
