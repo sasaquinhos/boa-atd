@@ -529,12 +529,28 @@ function renderMatches() {
         }
 
 
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
         if (currentUserSelect && !currentUser) {
-            matchesContainer.innerHTML = '<p style="text-align:center; padding:2rem; color:#666;">ユーザーを選択してください。</p>';
-            return;
+            // Filter out past matches. They can be rendered even without a user.
+            const futureMatchesToRender = matchesToRender.filter(m => {
+                const md = parseDate(m.date);
+                md.setHours(0, 0, 0, 0);
+                return md >= today;
+            });
+
+            if (futureMatchesToRender.length > 0) {
+                matchesContainer.innerHTML = '<p style="text-align:center; padding:2rem; color:#666;">ユーザーを選択してください。</p>';
+                return;
+            }
         }
 
         matchesToRender.forEach(match => {
+            const matchDate = parseDate(match.date);
+            matchDate.setHours(0, 0, 0, 0);
+            const isPastMatch = matchDate < today;
+
             const matchEl = document.createElement('div');
             const isExpanded = state.expandedMatches.has(match.id);
             matchEl.className = `match-card ${isExpanded ? '' : 'collapsed'}`;
@@ -558,6 +574,13 @@ function renderMatches() {
                 }
             }
 
+            // Hide members-list (input area) for past matches
+            const membersListHtml = isPastMatch ? '' : `
+                <div class="members-list">
+                    ${membersToRender.map(member => createMemberRow(match.id, member, hideName)).join('')}
+                </div>
+            `;
+
             matchEl.innerHTML = `
                 <div class="match-header ${match.location === 'away' ? 'location-away' : 'location-home'}">
                     <div class="match-info">
@@ -571,9 +594,7 @@ function renderMatches() {
                     ${adminControlsHtml}
                 </div>
                 ${jankenAdminHtml}
-                <div class="members-list">
-                    ${membersToRender.map(member => createMemberRow(match.id, member, hideName)).join('')}
-                </div>
+                ${membersListHtml}
                 <div id="summary-${match.id}" class="match-summary-container">
                     ${generateMatchSummaryContent(match.id)}
                 </div>
