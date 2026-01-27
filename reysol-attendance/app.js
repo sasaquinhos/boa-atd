@@ -313,6 +313,8 @@ function renderMatches() {
     if (isAdmin) {
         // ADMIN MODE: Populate Select Boxes
         const matchesSelect = document.getElementById('matches-select-admin');
+        const jankenConfig = document.getElementById('janken-admin-config');
+
         if (matchesSelect) {
             const currentVal = matchesSelect.value;
             matchesSelect.innerHTML = '<option value="">-- 試合を選択 --</option>' +
@@ -322,12 +324,27 @@ function renderMatches() {
                     return `<option value="${m.id}">${dateStr} ${m.opponent}</option>`;
                 }).join('');
             matchesSelect.value = currentVal;
+
+            matchesSelect.onchange = () => renderMatches();
+
+            // Handle Janken Config for selected match
+            if (currentVal && jankenConfig) {
+                const selectedMatch = sortedMatches.find(m => m.id == currentVal);
+                if (selectedMatch && selectedMatch.location !== 'away') {
+                    renderJankenAdminConfig(selectedMatch, jankenConfig);
+                    jankenConfig.style.display = 'block';
+                } else {
+                    jankenConfig.innerHTML = '';
+                    jankenConfig.style.display = 'none';
+                }
+            } else if (jankenConfig) {
+                jankenConfig.innerHTML = '';
+                jankenConfig.style.display = 'none';
+            }
         }
 
         renderMembersAdmin();
         renderLeaguesAdmin();
-
-        // No match cards to render in Admin mode
     } else {
         // USER MODE: Render Match Cards
         matchesContainer.innerHTML = '';
@@ -606,6 +623,79 @@ function renderMatches() {
     }
 }
 
+function renderJankenAdminConfig(match, container) {
+    const confirmedList = (match.jankenConfirmed || '').split(',').map(s => s.trim()).filter(s => s);
+
+    // Filter candidates: members who have jankenParticipate = true for THIS match
+    const candidates = state.members.filter(member => {
+        const key = `${match.id}_${member.name}`;
+        const data = state.attendance[key];
+        return data && data.jankenParticipate;
+    });
+
+    const jankenOptions = candidates.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+    const tagsHtml = confirmedList.map(name => `
+        <span class="janken-tag" style="display:inline-flex; align-items:center; background:#ffebee; border:1px solid #ef5350; color:#d32f2f; padding:2px 8px; border-radius:12px; font-size:0.85rem; margin-right:4px; margin-bottom:4px;">
+            ${name}
+            <span class="remove-janken-tag" data-match-id="${match.id}" data-name="${name}" style="margin-left:5px; cursor:pointer; font-weight:bold;">×</span>
+        </span>
+    `).join('');
+
+    container.innerHTML = `
+        <div style="font-weight:bold; font-size:0.9rem; color:#d32f2f; margin-bottom:0.5rem; display:flex; align-items:center;">
+            じゃんけん大会参加確定者の設定
+        </div>
+        <div style="display:flex; flex-wrap:wrap; align-items:center; gap:0.5rem;">
+            <select class="janken-add-select" data-match-id="${match.id}" style="padding:0.3rem; border-radius:4px; border:1px solid #ddd; font-size:0.9rem;">
+                <option value="">-- 確定者を追加 (立候補者のみ) --</option>
+                ${jankenOptions}
+            </select>
+            <div class="janken-tags-container" style="display:flex; flex-wrap:wrap; align-items:center;">
+                ${tagsHtml}
+            </div>
+        </div>
+    `;
+
+    // Attach listeners for newly added elements
+    container.querySelectorAll('.janken-add-select').forEach(select => {
+        select.addEventListener('change', (e) => {
+            const mId = e.target.dataset.matchId;
+            const name = e.target.value;
+            if (!name) return;
+
+            const m = state.matches.find(matchObj => matchObj.id == mId);
+            if (m) {
+                const current = (m.jankenConfirmed || '').split(',').map(s => s.trim()).filter(s => s);
+                if (!current.includes(name)) {
+                    current.push(name);
+                    const val = current.join(', ');
+                    m.jankenConfirmed = val;
+                    saveToLocal();
+                    renderMatches();
+                    apiCall('update_match', { id: mId, jankenConfirmed: val });
+                }
+            }
+        });
+    });
+
+    container.querySelectorAll('.remove-janken-tag').forEach(span => {
+        span.addEventListener('click', (e) => {
+            const mId = e.target.dataset.matchId;
+            const name = e.target.dataset.name;
+
+            const m = state.matches.find(matchObj => matchObj.id == mId);
+            if (m) {
+                const current = (m.jankenConfirmed || '').split(',').map(s => s.trim()).filter(s => s);
+                const newVal = current.filter(n => n !== name).join(', ');
+                m.jankenConfirmed = newVal;
+                saveToLocal();
+                renderMatches();
+                apiCall('update_match', { id: mId, jankenConfirmed: newVal });
+            }
+        });
+    });
+}
+
 function createMemberRow(matchId, member, hideName = false) {
     const memberName = member.name;
     const key = `${matchId}_${memberName}`;
@@ -778,8 +868,6 @@ function createMemberRow(matchId, member, hideName = false) {
                                 <input type="checkbox" class="janken-participate-checkbox" ${data.jankenParticipate ? 'checked' : ''}>
                                 じゃんけん大会参加${jankenLabelSuffix}
                             </label>
-                            <div class="janken-confirmed-display" style="font-size: 0.9rem; color: #333; margin-top: 0.5rem; background: #fbe9e7; padding: 0.5rem; border-radius: 4px; border: 1px solid #ffccbc;">
-                                <span style="font-weight:bold;">参加確定:</span> ${jankenConfirmedText || 'なし'}
                             </div>
                         </div>
                     </div>
@@ -1712,20 +1800,37 @@ function generateMatchSummaryContent(matchId) {
     let html = '<div class="match-summary"><div class="summary-title">集計</div>';
 
     if (!isAway) {
-        // Janken Summary (Top Priority)
+        const jankenConfirmed = (match.jankenConfirmed || '').split(',').map(s => s.trim()).filter(s => s);
         const jankenParticipants = state.members.filter(member => {
             const key = `${matchId}_${member.name}`;
             const data = state.attendance[key];
             return data && data.jankenParticipate;
         }).map(m => m.name);
 
-        if (jankenParticipants.length > 0) {
+        if (jankenConfirmed.length > 0 || jankenParticipants.length > 0) {
             html += `
-                <div class="summary-item active" style="background-color: #ffebee; border: 1px solid #ef5350;">
-                    <span class="summary-count" style="color: #c62828;">じゃんけん大会立候補者: ${jankenParticipants.length}名</span>
-                    <span class="summary-names">(${jankenParticipants.join(', ')})</span>
-                </div>
+                <div class="summary-item active" style="background-color: #ffebee; border: 1px solid #ef5350; flex-direction: column; align-items: flex-start; gap: 0.4rem;">
             `;
+
+            if (jankenConfirmed.length > 0) {
+                html += `
+                    <div style="width: 100%; padding-bottom: 0.3rem; border-bottom: 1px dashed #ef5350;">
+                        <span class="summary-count" style="color: #d32f2f; font-size: 1rem;">じゃんけん大会参加確定者:</span>
+                        <span style="color: #d32f2f; font-weight: 900; font-size: 1.15rem; margin-left: 0.3rem;">${jankenConfirmed.join(', ')}</span>
+                    </div>
+                `;
+            }
+
+            if (jankenParticipants.length > 0) {
+                html += `
+                    <div style="font-size: 0.9rem;">
+                        <span class="summary-count" style="color: #c62828;">じゃんけん大会立候補者: ${jankenParticipants.length}名</span>
+                        <span class="summary-names">(${jankenParticipants.join(', ')})</span>
+                    </div>
+                `;
+            }
+
+            html += `</div>`;
         }
 
         // Morning Withdraw Summary (Moved below Janken Candidates)
