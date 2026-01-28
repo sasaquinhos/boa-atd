@@ -630,6 +630,12 @@ function autoSelectJankenCandidate(matchId, silent = false) {
     const currentMatch = state.matches.find(m => m.id == matchId);
     if (!currentMatch) return;
 
+    // 0. Check if already confirmed
+    if (currentMatch.jankenConfirmed && currentMatch.jankenConfirmed.trim() !== '') {
+        if (!silent) alert('既に確定者がいるため、自動選出をスキップしました。');
+        return;
+    }
+
     // 1. Identify the league for this match
     let league = state.leagues.find(l => String(l.id) === String(currentMatch.leagueId));
     if (!league) {
@@ -711,18 +717,11 @@ function autoSelectJankenCandidate(matchId, silent = false) {
     // If multiple candidates have the same min wins, pick one randomly
     const winner = selectedCandidates[Math.floor(Math.random() * selectedCandidates.length)];
 
-    // 6. Update match.jankenConfirmed
-    const currentConfirmed = (currentMatch.jankenConfirmed || '').split(',').map(s => s.trim()).filter(s => s);
-    if (!currentConfirmed.includes(winner)) {
-        currentConfirmed.push(winner);
-        const val = currentConfirmed.join(', ');
-        currentMatch.jankenConfirmed = val;
-        saveToLocal();
-        renderMatches();
-        apiCall('update_match', { id: matchId, jankenConfirmed: val });
-    } else {
-        if (!silent) alert(`${winner} は既に確定しています。`);
-    }
+    // 6. Update match.jankenConfirmed (Strictly one person)
+    currentMatch.jankenConfirmed = winner;
+    saveToLocal();
+    renderMatches();
+    apiCall('update_match', { id: matchId, jankenConfirmed: winner });
 }
 
 function renderJankenAdminConfig(match, container) {
@@ -772,15 +771,11 @@ function renderJankenAdminConfig(match, container) {
 
             const m = state.matches.find(matchObj => matchObj.id == mId);
             if (m) {
-                const current = (m.jankenConfirmed || '').split(',').map(s => s.trim()).filter(s => s);
-                if (!current.includes(name)) {
-                    current.push(name);
-                    const val = current.join(', ');
-                    m.jankenConfirmed = val;
-                    saveToLocal();
-                    renderMatches();
-                    apiCall('update_match', { id: mId, jankenConfirmed: val });
-                }
+                // Strictly one person - overwrite existing
+                m.jankenConfirmed = name;
+                saveToLocal();
+                renderMatches();
+                apiCall('update_match', { id: mId, jankenConfirmed: name });
             }
         });
     });
