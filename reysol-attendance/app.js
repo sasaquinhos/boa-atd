@@ -9,7 +9,7 @@ const state = {
     leagues: []
 };
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbzEVd4owVNNMDI-zMaf_Cwx6q_U02jyB_uhu0pjb9Z5dshrVn5HG6CJkt-M5FF20Kiw/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbwclUraumpZ__1U1V1QoU9z_Ej4doIkzWuBYmVWGU2H-4TxLBLCM-g22OffIV32jd-xhQ/exec';
 
 // DOM Elements
 const matchesContainer = document.getElementById('matches-container');
@@ -123,7 +123,10 @@ async function init() {
     } finally {
         setLoading(false);
     }
+
 }
+
+
 
 async function loadData() {
     const controller = new AbortController();
@@ -623,6 +626,105 @@ function renderMatches() {
     }
 }
 
+function autoSelectJankenCandidate(matchId, silent = false) {
+    const currentMatch = state.matches.find(m => m.id == matchId);
+    if (!currentMatch) return;
+
+    // 1. Identify the league for this match
+    let league = state.leagues.find(l => String(l.id) === String(currentMatch.leagueId));
+    if (!league) {
+        // Fallback: match by date
+        const mDate = parseDate(currentMatch.date);
+        league = state.leagues.find(l => {
+            const s = parseDate(l.start);
+            s.setHours(0, 0, 0, 0);
+            let eDate = parseDate(l.end);
+            if (l.end && String(l.end).match(/^\d{4}[-/]\d{1,2}$/)) {
+                const d = parseDate(l.end);
+                eDate = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
+            } else {
+                eDate.setHours(23, 59, 59, 999);
+            }
+            return mDate >= s && mDate <= eDate;
+        });
+    }
+
+    if (!league) {
+        if (!silent) alert('この試合が属するリーグが特定できないため、自動選出ができません。');
+        return;
+    }
+
+    // 2. Filter matches within this league
+    const s = parseDate(league.start);
+    s.setHours(0, 0, 0, 0);
+    let eDate = parseDate(league.end);
+    if (league.end && String(league.end).match(/^\d{4}[-/]\d{1,2}$/)) {
+        const d = parseDate(league.end);
+        eDate = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
+    } else {
+        eDate.setHours(23, 59, 59, 999);
+    }
+
+    const leagueMatches = state.matches.filter(m => {
+        if (m.leagueId && String(m.leagueId) === String(league.id)) return true;
+        const d = parseDate(m.date);
+        return d >= s && d <= eDate;
+    });
+
+    // 3. Count wins for each candidate in this league
+    const winCounts = {};
+    leagueMatches.forEach(m => {
+        if (m.jankenConfirmed) {
+            const winners = m.jankenConfirmed.split(',').map(s => s.trim()).filter(s => s);
+            winners.forEach(w => {
+                winCounts[w] = (winCounts[w] || 0) + 1;
+            });
+        }
+    });
+
+    // 4. Get current candidates
+    const currentCandidates = state.members.filter(member => {
+        const key = `${currentMatch.id}_${member.name}`;
+        const data = state.attendance[key];
+        return data && data.jankenParticipate;
+    });
+
+    if (currentCandidates.length === 0) {
+        if (!silent) alert('立候補者がいません。');
+        return;
+    }
+
+    // 5. Pick the one with the minimum wins
+    let minWins = Infinity;
+    let selectedCandidates = [];
+
+    currentCandidates.forEach(c => {
+        const count = winCounts[c.name] || 0;
+        if (count < minWins) {
+            minWins = count;
+            selectedCandidates = [c.name];
+        } else if (count === minWins) {
+            selectedCandidates.push(c.name);
+        }
+    });
+
+    // If multiple candidates have the same min wins, pick one randomly
+    const winner = selectedCandidates[Math.floor(Math.random() * selectedCandidates.length)];
+
+    // 6. Update match.jankenConfirmed
+    const currentConfirmed = (currentMatch.jankenConfirmed || '').split(',').map(s => s.trim()).filter(s => s);
+    if (!currentConfirmed.includes(winner)) {
+        currentConfirmed.push(winner);
+        const val = currentConfirmed.join(', ');
+        currentMatch.jankenConfirmed = val;
+        saveToLocal();
+        renderMatches();
+        apiCall('update_match', { id: matchId, jankenConfirmed: val });
+    } else {
+        if (!silent) alert(`${winner} は既に確定しています。`);
+    }
+}
+
 function renderJankenAdminConfig(match, container) {
     const confirmedList = (match.jankenConfirmed || '').split(',').map(s => s.trim()).filter(s => s);
 
@@ -642,8 +744,9 @@ function renderJankenAdminConfig(match, container) {
     `).join('');
 
     container.innerHTML = `
-        <div style="font-weight:bold; font-size:0.9rem; color:#d32f2f; margin-bottom:0.5rem; display:flex; align-items:center;">
+        <div style="font-weight:bold; font-size:0.9rem; color:#d32f2f; margin-bottom:0.5rem; display:flex; align-items:center; justify-content:space-between;">
             じゃんけん大会参加確定者の設定
+            <button class="btn janken-auto-select-btn" data-match-id="${match.id}" style="padding: 2px 10px; font-size: 0.8rem; background: #d32f2f; color: white; border-radius: 4px;">参加確定</button>
         </div>
         <div style="display:flex; flex-wrap:wrap; align-items:center; gap:0.5rem;">
             <select class="janken-add-select" data-match-id="${match.id}" style="padding:0.3rem; border-radius:4px; border:1px solid #ddd; font-size:0.9rem;">
@@ -657,6 +760,10 @@ function renderJankenAdminConfig(match, container) {
     `;
 
     // Attach listeners for newly added elements
+    container.querySelector('.janken-auto-select-btn')?.addEventListener('click', (e) => {
+        autoSelectJankenCandidate(e.target.dataset.matchId);
+    });
+
     container.querySelectorAll('.janken-add-select').forEach(select => {
         select.addEventListener('change', (e) => {
             const mId = e.target.dataset.matchId;
