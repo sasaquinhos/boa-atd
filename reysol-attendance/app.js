@@ -736,16 +736,16 @@ function renderJankenAdminConfig(match, container) {
 
     const jankenOptions = candidates.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
     const tagsHtml = confirmedList.map(name => `
-        <span class="janken-tag" style="display:inline-flex; align-items:center; background:#ffebee; border:1px solid #ef5350; color:#d32f2f; padding:2px 8px; border-radius:12px; font-size:0.85rem; margin-right:4px; margin-bottom:4px;">
+        <span class="janken-tag" style="display:inline-flex; align-items:center; background:#e3f2fd; border:1px solid #90caf9; color:#1565c0; padding:2px 8px; border-radius:12px; font-size:0.85rem; margin-right:4px; margin-bottom:4px;">
             ${name}
             <span class="remove-janken-tag" data-match-id="${match.id}" data-name="${name}" style="margin-left:5px; cursor:pointer; font-weight:bold;">×</span>
         </span>
     `).join('');
 
     container.innerHTML = `
-        <div style="font-weight:bold; font-size:0.9rem; color:#d32f2f; margin-bottom:0.5rem; display:flex; align-items:center; justify-content:space-between;">
+        <div style="font-weight:bold; font-size:0.9rem; color:#1565c0; margin-bottom:0.5rem; display:flex; align-items:center; justify-content:space-between;">
             じゃんけん大会参加確定者の設定
-            <button class="btn janken-auto-select-btn" data-match-id="${match.id}" style="padding: 2px 10px; font-size: 0.8rem; background: #d32f2f; color: white; border-radius: 4px;">参加確定</button>
+            <button class="btn janken-auto-select-btn" data-match-id="${match.id}" style="padding: 2px 10px; font-size: 0.8rem; background: #1565c0; color: white; border-radius: 4px;">参加確定</button>
         </div>
         <div style="display:flex; flex-wrap:wrap; align-items:center; gap:0.5rem;">
             <select class="janken-add-select" data-match-id="${match.id}" style="padding:0.3rem; border-radius:4px; border:1px solid #ddd; font-size:0.9rem;">
@@ -1917,8 +1917,8 @@ function generateMatchSummaryContent(matchId) {
             if (jankenConfirmed.length > 0) {
                 html += `
                     <div style="width: 100%; padding-bottom: 0.3rem; border-bottom: 1px dashed #ef5350;">
-                        <span class="summary-count" style="color: #d32f2f; font-size: 1rem;">じゃんけん大会参加確定者:</span>
-                        <span style="color: #d32f2f; font-weight: 900; font-size: 1.15rem; margin-left: 0.3rem;">${jankenConfirmed.join(', ')}</span>
+                        <span class="summary-count" style="color: #1565c0; font-size: 1rem;">じゃんけん大会参加確定者:</span>
+                        <span style="color: #1565c0; font-weight: 900; font-size: 1.15rem; margin-left: 0.3rem;">${jankenConfirmed.join(', ')}</span>
                     </div>
                 `;
             }
