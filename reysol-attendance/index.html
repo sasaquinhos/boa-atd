@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ボアソルチ出欠確認 v2.3</title>
+    <!-- Cache Busting Style -->
+    <link rel="stylesheet" href="style.css?v=20260128_V1">
+</head>
+
+<body>
+    <header class="header">
+        <div class="container header-container">
+            <h1 class="app-title">ボアソルチ出欠確認</h1>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="nav-links-container">
+            <a href="manual.html" class="nav-link">操作マニュアル</a>
+            <a href="rankings.html" class="nav-link">いつもの場所を守ってくれる人たち</a>
+            <a href="admin.html" class="nav-link">管理者ページへ</a>
+        </div>
+        <!-- Controls Section -->
+        <section class="controls-section" style="display: flex; flex-direction: column; gap: 1rem;">
+            <!-- Row 1: League -->
+            <div class="control-group">
+                <label for="current-league-select" class="control-label">リーグ選択</label>
+                <select id="current-league-select" class="form-select"
+                    style="width: 100%; padding: 0.5rem; border-radius: 4px; border: 1px solid #ddd;">
+                    <option value="">-- 全ての期間 --</option>
+                </select>
+            </div>
+
+            <!-- Row 2: Match -->
+            <div class="control-group">
+                <label for="current-match-select" class="control-label">試合選択</label>
+                <select id="current-match-select" class="form-select"
+                    style="width: 100%; padding: 0.5rem; border-radius: 4px; border: 1px solid #ddd;">
+                    <option value="">-- 試合を選択 --</option>
+                </select>
+            </div>
+
+            <!-- Row 3: Member -->
+            <div class="control-group">
+                <label for="current-user-select" class="control-label">メンバー選択</label>
+                <select id="current-user-select" class="form-select user-select"
+                    style="width: 100%; padding: 0.5rem; border-radius: 4px; border: 1px solid #ddd;">
+                    <option value="">読み込み中...</option>
+                </select>
+            </div>
+        </section>
+
+        <!-- Match List -->
+        <div id="matches-container" class="matches-list">
+            <!-- Matches will be injected here -->
+        </div>
+    </main>
+
+    <script src="app.js?v=20260128_V1"></script>
+</body>
+
+</html>
