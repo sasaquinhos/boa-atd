@@ -1860,6 +1860,8 @@ function generateMatchSummaryContent(matchId) {
     // Initialize map
     STATUS_OPTIONS.forEach(opt => summary[opt.id] = []);
 
+    const unansweredMembers = [];
+
     const match = state.matches.find(m => m.id == matchId);
     if (!match) return '';
 
@@ -1895,6 +1897,8 @@ function generateMatchSummaryContent(matchId) {
                 outsideTotal += 1; // The member themselves
                 outsideTotal += (parseInt(data.guestsMain) || 0) + (parseInt(data.guestsBack) || 0);
             }
+        } else {
+            unansweredMembers.push(member.name);
         }
     });
 
@@ -2040,9 +2044,22 @@ function generateMatchSummaryContent(matchId) {
         }
     };
 
+    // Function to render Unanswered Item
+    const renderUnansweredItem = () => {
+        if (unansweredMembers.length > 0) {
+            html += `
+                <div class="summary-item active" style="opacity: 0.8;">
+                    <span class="summary-count">未回答: ${unansweredMembers.length}名</span>
+                    <span class="summary-names">(${unansweredMembers.join(', ')})</span>
+                </div>
+            `;
+        }
+    };
+
     // Home: Absent comes BEFORE Big Flag
     if (!isAway) {
         renderAbsentItem();
+        renderUnansweredItem();
     }
 
     // Big Flag Summary (Home only)
@@ -2066,6 +2083,7 @@ function generateMatchSummaryContent(matchId) {
     // Away: Absent comes AFTER Big Flag (at the very bottom)
     if (isAway) {
         renderAbsentItem();
+        renderUnansweredItem();
     }
 
     html += '</div>';
