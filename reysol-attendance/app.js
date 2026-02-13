@@ -1877,7 +1877,9 @@ function generateMatchSummaryContent(matchId) {
             if (effectiveStatus == 7 && !match.lineOrgFlag) effectiveStatus = null;
 
             if (effectiveStatus && summary[effectiveStatus]) {
-                summary[effectiveStatus].push(member.name);
+                const guestCount = (parseInt(data.guestsMain) || 0) + (parseInt(data.guestsBack) || 0);
+                const displayName = guestCount > 0 ? `${member.name} (+${guestCount})` : member.name;
+                summary[effectiveStatus].push(displayName);
             }
 
             // Exclude Absent (5) and Outside Hakunetsu (4) from section totals
@@ -1976,7 +1978,9 @@ function generateMatchSummaryContent(matchId) {
                     const key = `${matchId}_${member.name}`;
                     const data = state.attendance[key];
                     if (data && data.status && data.status != 5) {
-                        attendees.push(member.name);
+                        const guestCount = (parseInt(data.guestsMain) || 0) + (parseInt(data.guestsBack) || 0);
+                        const displayName = guestCount > 0 ? `${member.name} (+${guestCount})` : member.name;
+                        attendees.push(displayName);
                     }
                 });
                 if (attendees.length > 0) {
