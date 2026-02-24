@@ -26,6 +26,10 @@ function doPost(e) {
       result = handleDeleteMatch(doc, data);
     } else if (action === 'update_setting') {
       result = handleUpdateSetting(doc, data);
+    } else if (action === 'verify_admin') {
+      result = verifyAdminPassword(data.password);
+    } else if (action === 'update_admin_password') {
+      result = updateAdminPassword(data.oldPassword, data.newPassword);
     } else if (action === 'setup_janken_trigger') {
       result = setupMasterTrigger();
     } else {
@@ -464,6 +468,39 @@ function handleUpdateSetting(doc, data) {
   return { updated: true };
 }
 
+/**
+ * Verifies the admin password.
+ */
+function verifyAdminPassword(inputPassword) {
+  const props = PropertiesService.getScriptProperties();
+  let correctPassword = props.getProperty('ADMIN_PASSWORD');
+  
+  // Default password if not set
+  if (!correctPassword) {
+    correctPassword = 'boa';
+    props.setProperty('ADMIN_PASSWORD', correctPassword);
+  }
+  
+  return { success: inputPassword === correctPassword };
+}
+
+/**
+ * Updates the admin password.
+ */
+function updateAdminPassword(oldPassword, newPassword) {
+  const verification = verifyAdminPassword(oldPassword);
+  if (!verification.success) {
+    throw new Error('現在のパスワードが正しくありません。');
+  }
+  
+  if (!newPassword || newPassword.length < 3) {
+    throw new Error('新しいパスワードは3文字以上で入力してください。');
+  }
+  
+  PropertiesService.getScriptProperties().setProperty('ADMIN_PASSWORD', newPassword);
+  return { updated: true };
+}
+
 function doGet(e) {
   const doc = SpreadsheetApp.getActiveSpreadsheet();
   const yearParam = e && e.parameter ? e.parameter.year : null;
@@ -629,5 +666,11 @@ function setup() {
     const s = doc.insertSheet('Settings');
     s.appendRow(['Key', 'Value']);
     s.appendRow(['matchLimit', '10']);
+  }
+  
+  // Ensure default admin password is set
+  const props = PropertiesService.getScriptProperties();
+  if (!props.getProperty('ADMIN_PASSWORD')) {
+    props.setProperty('ADMIN_PASSWORD', 'boa');
   }
 }
