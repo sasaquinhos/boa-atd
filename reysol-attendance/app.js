@@ -9,7 +9,7 @@ const state = {
     leagues: []
 };
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbzYfg0z9aKbx7pFv9JFxz92kMEWJjlTmJeEXs_ekePZi-acCjf52HOZNmtuhwV8SU7dBA/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbwqw-5gsFUaPoK9K7IkK9-PXwKL9pDXUjWgPpbNapRSwWtsUUUx2yrrUBLUxTEUyUpDEw/exec';
 
 // DOM Elements
 const matchesContainer = document.getElementById('matches-container');
@@ -85,6 +85,12 @@ function parseDate(input) {
 // Initialization
 async function init() {
     console.log('Current API URL:', API_URL);
+
+    // Initial Authentication for Admin
+    const isAdminPage = !!document.getElementById('matches-select-admin');
+    if (isAdminPage) {
+        await authenticate();
+    }
 
     // 1. Try to load from local storage (Stale)
     const hasLocalData = loadFromLocal();
@@ -247,6 +253,45 @@ function setLoading(isLoading, mode = 'full') {
         overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.7);display:flex;justify-content:center;align-items:center;z-index:9999;font-size:1.5rem;';
         overlay.innerText = '読み込み中...';
         document.body.appendChild(overlay);
+    }
+}
+
+/**
+ * Handles admin authentication via server-side verification.
+ */
+async function authenticate() {
+    if (sessionStorage.getItem('isAdmin') === 'true') {
+        document.body.classList.add('authenticated');
+        return;
+    }
+
+    const password = prompt('管理者パスワードを入力してください:');
+    if (!password) {
+        window.location.href = '../index.html';
+        return;
+    }
+
+    setLoading(true, 'full');
+    try {
+        const res = await fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'verify_admin', password: password })
+        });
+        const json = await res.json();
+
+        if (json.result === 'success' && json.data.success) {
+            sessionStorage.setItem('isAdmin', 'true');
+            document.body.classList.add('authenticated');
+        } else {
+            alert('パスワードが違います。トップページに戻ります。');
+            window.location.href = '../index.html';
+        }
+    } catch (e) {
+        console.error('Authentication error:', e);
+        alert('通信エラーが発生しました。トップページに戻ります。');
+        window.location.href = '../index.html';
+    } finally {
+        setLoading(false);
     }
 }
 
@@ -1392,6 +1437,52 @@ function setupEventListeners() {
             editModal.style.display = 'none';
             currentEditingMemberName = null;
         };
+    }
+
+    // Password Update
+    const updatePasswordBtn = document.getElementById('update-password-btn');
+    if (updatePasswordBtn) {
+        updatePasswordBtn.addEventListener('click', async () => {
+            const oldPassword = document.getElementById('admin-old-password').value;
+            const newPassword = document.getElementById('admin-new-password').value;
+
+            if (!oldPassword || !newPassword) {
+                alert('現在のパスワードと新しいパスワードの両方を入力してください。');
+                return;
+            }
+
+            if (newPassword.length < 3) {
+                alert('新しいパスワードは3文字以上で入力してください。');
+                return;
+            }
+
+            if (confirm('パスワードを変更しますか？')) {
+                setLoading(true, 'full');
+                try {
+                    const res = await fetch(API_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            action: 'update_admin_password',
+                            oldPassword: oldPassword,
+                            newPassword: newPassword
+                        })
+                    });
+                    const json = await res.json();
+                    if (json.result === 'success') {
+                        alert('パスワードを更新しました。');
+                        document.getElementById('admin-old-password').value = '';
+                        document.getElementById('admin-new-password').value = '';
+                    } else {
+                        alert('エラー: ' + (json.error || '更新に失敗しました。'));
+                    }
+                } catch (e) {
+                    console.error('Password update error:', e);
+                    alert('通信エラーが発生しました。');
+                } finally {
+                    setLoading(false);
+                }
+            }
+        });
     }
 
     // Initialize League Modal Listeners
