@@ -2143,9 +2143,9 @@ function generateMatchSummaryContent(matchId) {
     const renderUnansweredItem = () => {
         if (unansweredMembers.length > 0) {
             html += `
-                <div class="summary-item active" style="opacity: 0.8;">
-                    <span class="summary-count">未回答: ${unansweredMembers.length}名</span>
-                    <span class="summary-names">(${unansweredMembers.join(', ')})</span>
+                <div class="summary-item active">
+                    <span class="summary-count" style="color: red;">未回答: ${unansweredMembers.length}名</span>
+                    <span class="summary-names" style="color: red;">(${unansweredMembers.join(', ')})</span>
                 </div>
             `;
         }
@@ -2225,11 +2225,13 @@ function generateAttendanceTable(matchId) {
 
         // Row highlighting based on status
         let rowClass = '';
+        let rowStyle = '';
         if (data.status === 5) rowClass = 'status-absent'; // 欠席
         else if (data.status) rowClass = 'status-attending'; // 出席
+        else rowStyle = 'color: red;';
 
         html += `
-            <tr class="${rowClass}">
+            <tr class="${rowClass}" style="${rowStyle}">
                 <td>${member.name}</td>
                 <td><span class="badge section-${member.section}">${sectionLabel}</span></td>
                 <td>${statusLabel}</td>
