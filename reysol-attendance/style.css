@@ -764,7 +764,7 @@ input[type="number"] {
 /* Register Button */
 .btn-register {
     width: 100%;
-    margin-top: 1.5rem;
+    margin-top: 0.5rem;
     padding: 1rem;
     font-size: 1.15rem;
     background-color: var(--reysol-black);
@@ -807,7 +807,16 @@ input[type="number"] {
 }
 
 .submit-attendance-container {
-    margin-top: 1.5rem;
+    margin-top: 0.75rem;
     border-top: 1px solid #e3f2fd;
     padding-top: 0.5rem;
+}
+
+@media (max-width: 600px) {
+    .submit-attendance-container {
+        margin-top: 0.5rem;
+    }
+    .btn-register {
+        margin-top: 0.25rem;
+    }
 }
