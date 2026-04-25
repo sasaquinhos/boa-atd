@@ -957,6 +957,11 @@ function createMemberRow(matchId, member, hideName = false) {
                                 </div>
                             </div>
                         </div>
+                        <div class="submit-attendance-container">
+                            <button class="btn btn-register submit-attendance-btn" data-key="${key}">
+                                この内容で登録する
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1068,6 +1073,11 @@ function createMemberRow(matchId, member, hideName = false) {
                                     （開場30分後にGATE9前集合）
                                 </div>
                             </div>
+                        </div>
+                        <div class="submit-attendance-container">
+                            <button class="btn btn-register submit-attendance-btn" data-key="${key}">
+                                この内容で登録する
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -1522,9 +1532,10 @@ function attachMatchListeners() {
             state.attendance[key].status = status;
 
             saveToLocal();
-            updateMatchSummary(matchId);
+            // updateMatchSummary(matchId);
 
-            // API Call
+            // API Call removed to improve lag - handled by Register button
+            /*
             apiCall('update_attendance', {
                 matchId: matchId,
                 memberName: memberName,
@@ -1533,6 +1544,7 @@ function attachMatchListeners() {
                 guestsBack: state.attendance[key].guestsBack,
                 morningWithdraw: state.attendance[key].morningWithdraw
             });
+            */
         });
     });
 
@@ -1585,9 +1597,10 @@ function attachMatchListeners() {
             }
 
             saveToLocal();
-            updateMatchSummary(matchId);
+            // updateMatchSummary(matchId);
 
-            // API Call
+            // API Call removed to improve lag - handled by Register button
+            /*
             apiCall('update_attendance', {
                 matchId: matchId,
                 memberName: namePart,
@@ -1598,6 +1611,7 @@ function attachMatchListeners() {
                 jankenParticipate: state.attendance[key].jankenParticipate,
                 morningWithdraw: state.attendance[key].morningWithdraw
             });
+            */
         });
     });
 
@@ -1625,10 +1639,10 @@ function attachMatchListeners() {
             }
 
             saveToLocal();
-            updateMatchSummary(matchId);
+            // updateMatchSummary(matchId);
 
-            // API Call
-            // Debounce? For now direct call.
+            // API Call removed to improve lag - handled by Register button
+            /*
             apiCall('update_attendance', {
                 matchId: matchId,
                 memberName: namePart,
@@ -1637,6 +1651,7 @@ function attachMatchListeners() {
                 guestsBack: state.attendance[key].guestsBack,
                 morningWithdraw: state.attendance[key].morningWithdraw
             });
+            */
         });
     });
 
@@ -1652,9 +1667,10 @@ function attachMatchListeners() {
             state.attendance[key].bigFlag = e.target.checked;
 
             saveToLocal();
-            updateMatchSummary(matchId);
+            // updateMatchSummary(matchId);
 
-            // API Call
+            // API Call removed to improve lag - handled by Register button
+            /*
             apiCall('update_attendance', {
                 matchId: matchId,
                 memberName: namePart,
@@ -1665,6 +1681,7 @@ function attachMatchListeners() {
                 jankenParticipate: state.attendance[key].jankenParticipate,
                 morningWithdraw: state.attendance[key].morningWithdraw
             });
+            */
         });
     });
 
@@ -1680,9 +1697,10 @@ function attachMatchListeners() {
             state.attendance[key].jankenParticipate = e.target.checked;
 
             saveToLocal();
-            updateMatchSummary(matchId);
+            // updateMatchSummary(matchId);
 
-            // API Call
+            // API Call removed to improve lag - handled by Register button
+            /*
             apiCall('update_attendance', {
                 matchId: matchId,
                 memberName: namePart,
@@ -1693,6 +1711,7 @@ function attachMatchListeners() {
                 jankenParticipate: state.attendance[key].jankenParticipate,
                 morningWithdraw: state.attendance[key].morningWithdraw
             });
+            */
         });
     });
 
@@ -1708,9 +1727,10 @@ function attachMatchListeners() {
             state.attendance[key].morningWithdraw = e.target.checked;
 
             saveToLocal();
-            updateMatchSummary(matchId);
+            // updateMatchSummary(matchId);
 
-            // API Call
+            // API Call removed to improve lag - handled by Register button
+            /*
             apiCall('update_attendance', {
                 matchId: matchId,
                 memberName: namePart,
@@ -1721,6 +1741,7 @@ function attachMatchListeners() {
                 jankenParticipate: state.attendance[key].jankenParticipate,
                 morningWithdraw: state.attendance[key].morningWithdraw
             });
+            */
         });
     });
 
@@ -1762,6 +1783,60 @@ function attachMatchListeners() {
                 saveToLocal();
                 renderMatches();
                 apiCall('update_match', { id: matchId, jankenConfirmed: newVal });
+            }
+        });
+    });
+
+    // Register Button Click
+    document.querySelectorAll('.submit-attendance-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const row = e.target.closest('.attendance-row');
+            const key = row.dataset.key;
+            const matchId = key.split('_')[0];
+            const namePart = key.substring(matchId.length + 1);
+            
+            const attendance = state.attendance[key] || { status: null, guestsMain: '', guestsBack: '', bigFlag: false, jankenParticipate: false, morningWithdraw: false };
+            
+            // Show loading state
+            const originalText = e.target.innerText;
+            e.target.disabled = true;
+            e.target.innerText = '登録中...';
+            
+            try {
+                await apiCall('update_attendance', {
+                    matchId: matchId,
+                    memberName: namePart,
+                    status: attendance.status,
+                    guestsMain: attendance.guestsMain,
+                    guestsBack: attendance.guestsBack,
+                    bigFlag: attendance.bigFlag,
+                    jankenParticipate: attendance.jankenParticipate,
+                    morningWithdraw: attendance.morningWithdraw
+                });
+                
+                // Final confirm in summary
+                updateMatchSummary(matchId);
+                
+                e.target.innerText = '登録完了！';
+                e.target.style.backgroundColor = '#4caf50';
+                e.target.style.color = 'white';
+                
+                setTimeout(() => {
+                    e.target.innerText = originalText;
+                    e.target.disabled = false;
+                    e.target.style.backgroundColor = '';
+                    e.target.style.color = '';
+                }, 2000);
+            } catch (err) {
+                e.target.innerText = '失敗';
+                e.target.style.backgroundColor = '#f44336';
+                e.target.style.color = 'white';
+                setTimeout(() => {
+                    e.target.innerText = originalText;
+                    e.target.disabled = false;
+                    e.target.style.backgroundColor = '';
+                    e.target.style.color = '';
+                }, 2000);
             }
         });
     });
