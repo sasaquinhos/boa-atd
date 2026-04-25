@@ -761,3 +761,53 @@ input[type="number"] {
 .away-notice-title::before {
     content: '📌';
 }
+/* Register Button */
+.btn-register {
+    width: 100%;
+    margin-top: 1.5rem;
+    padding: 1rem;
+    font-size: 1.15rem;
+    background-color: var(--reysol-black);
+    color: var(--reysol-yellow);
+    border: 2px solid var(--reysol-yellow);
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.btn-register:hover {
+    background-color: var(--reysol-yellow);
+    color: var(--reysol-black);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(252, 209, 22, 0.2);
+}
+
+.btn-register:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-register:disabled {
+    background-color: #666;
+    border-color: #666;
+    color: #999;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-register::before {
+    content: '💾';
+    font-size: 1.2rem;
+}
+
+.submit-attendance-container {
+    margin-top: 1.5rem;
+    border-top: 1px solid #e3f2fd;
+    padding-top: 0.5rem;
+}
