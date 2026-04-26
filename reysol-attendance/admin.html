@@ -107,6 +107,10 @@
                         <div class="input-group">
                             <input type="date" id="new-match-date">
                             <input type="text" id="new-match-opponent" placeholder="対戦相手 (例: vs 浦和)">
+                            <div style="display: flex; align-items: center; gap: 0.3rem;">
+                                <span style="font-size: 0.8rem; font-weight: bold; color: #666;">KO:</span>
+                                <input type="time" id="new-match-kickoff" style="width: 100px; padding: 0.4rem; font-size: 0.9rem;">
+                            </div>
                         </div>
                         <div
                             style="display: flex; align-items: center; gap: 1rem; padding: 0.5rem; background: #f9f9f9; border-radius: 4px;">
@@ -298,7 +302,13 @@
                 </div>
                 <div class="input-group" style="flex-direction: column; align-items: flex-start;">
                     <label style="font-weight: bold; font-size: 0.9rem;">対戦相手</label>
-                    <input type="text" id="edit-match-opponent" style="width: 100%;" placeholder="対戦相手 (例: vs 浦和)">
+                    <div style="display: flex; gap: 0.5rem; width: 100%;">
+                        <input type="text" id="edit-match-opponent" style="flex: 1;" placeholder="対戦相手 (例: vs 浦和)">
+                        <div style="display: flex; align-items: center; gap: 0.3rem;">
+                            <span style="font-size: 0.8rem; font-weight: bold; color: #666;">KO:</span>
+                            <input type="time" id="edit-match-kickoff" style="width: 100px; padding: 0.4rem; font-size: 0.9rem;">
+                        </div>
+                    </div>
                 </div>
                 <div
                     style="display: flex; align-items: center; gap: 1rem; padding: 0.5rem; background: #f9f9f9; border-radius: 4px;">
