@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ボアソルチ出欠確認 (Admin)</title>
+    <title>ボアソルチ出欠確認 v2.4 (Admin)</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -39,7 +39,7 @@
 
             try {
                 // Use the backend API to verify
-                const response = await fetch('https://script.google.com/macros/s/AKfycbwqw-5gsFUaPoK9K7IkK9-PXwKL9pDXUjWgPpbNapRSwWtsUUUx2yrrUBLUxTEUyUpDEw/exec', {
+                const response = await fetch('https://script.google.com/macros/s/AKfycbyHzYaWI5X4JHMqza1wsS6KPzm2C9-rwobgyNzX3fp7HDvt4763Eiwo1iuCi7tPqepH7Q/exec', {
                     method: 'POST',
                     body: JSON.stringify({ action: 'verify_admin', password: password })
                 });
@@ -111,6 +111,13 @@
                                 <span style="font-size: 0.8rem; font-weight: bold; color: #666;">KO:</span>
                                 <input type="time" id="new-match-kickoff" style="width: 100px; padding: 0.4rem; font-size: 0.9rem;">
                             </div>
+                        </div>
+                        <div class="input-group" style="margin-top: 0.2rem;">
+                            <input type="text" id="new-match-venue" placeholder="会場 (例: 三協F柏, 埼玉スタ)" style="width: 100%;">
+                        </div>
+                        <div id="new-match-opening-container" class="input-group" style="margin-top: 0.2rem; display: none; align-items: center; gap: 0.5rem; background: #e3f2fd; padding: 0.5rem; border-radius: 4px;">
+                            <span style="font-size: 0.8rem; font-weight: bold; color: #1976d2;">開場時刻 (アウェイのみ入力):</span>
+                            <input type="time" id="new-match-opening" style="width: 100px; padding: 0.4rem; font-size: 0.9rem;">
                         </div>
                         <div
                             style="display: flex; align-items: center; gap: 1rem; padding: 0.5rem; background: #f9f9f9; border-radius: 4px;">
@@ -321,6 +328,14 @@
                     <span style="font-weight: bold; font-size: 0.9rem;">席種:</span>
                     <label><input type="radio" name="edit-match-seat-type" value="free"> 自由席</label>
                     <label><input type="radio" name="edit-match-seat-type" value="reserved"> 指定席</label>
+                </div>
+                <div class="input-group" style="flex-direction: column; align-items: flex-start;">
+                    <label style="font-weight: bold; font-size: 0.9rem;">会場</label>
+                    <input type="text" id="edit-match-venue" style="width: 100%;" placeholder="会場 (例: 三協F柏, 埼玉スタ)">
+                </div>
+                <div id="edit-match-opening-container" class="input-group" style="display: none; flex-direction: column; align-items: flex-start; background: #e3f2fd; padding: 0.5rem; border-radius: 4px;">
+                    <label style="font-weight: bold; font-size: 0.9rem; color: #1976d2;">開場時刻 (アウェイのみ編集)</label>
+                    <input type="time" id="edit-match-opening" style="width: 100px;">
                 </div>
 
                 <!-- Away General Details (Conditionally shown) -->
