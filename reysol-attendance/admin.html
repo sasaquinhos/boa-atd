@@ -4,13 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ボアソルチ出欠確認 v2.4 (Admin)</title>
+        <title>ボアソルチ出欠確認 v2.4 (Admin)</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Sans+JP:wght@400;700&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=2.4">
     <style>
         /* Admin specific highlight */
         .header {
@@ -31,7 +31,7 @@
                 return;
             }
 
-            const password = prompt('管理者パスワードを入力してください:');
+            const password = prompt('邂｡逅・・ヱ繧ｹ繝ｯ繝ｼ繝峨ｒ蜈･蜉帙＠縺ｦ縺上□縺輔＞:');
             if (!password) {
                 window.location.href = '../index.html';
                 return;
@@ -39,7 +39,7 @@
 
             try {
                 // Use the backend API to verify
-                const response = await fetch('https://script.google.com/macros/s/AKfycbyHzYaWI5X4JHMqza1wsS6KPzm2C9-rwobgyNzX3fp7HDvt4763Eiwo1iuCi7tPqepH7Q/exec', {
+                const response = await fetch('https://script.google.com/macros/s/AKfycbyzpE0e8r2jvuyG5nrVoO0AN3qC70v1lmZXNtdyQp0mSGTnsqFmchx0vzY18RLhuUQuwQ/exec', {
                     method: 'POST',
                     body: JSON.stringify({ action: 'verify_admin', password: password })
                 });
@@ -68,8 +68,8 @@
 <body>
     <header class="header">
         <div class="container header-container">
-            <h1 class="app-title">ボアソルチ出欠確認</h1>
-            <a href="../index.html" style="color: #FCD116; font-size: 0.9rem;">トップページへ戻る</a>
+            <h1 class="app-title">繝懊い繧ｽ繝ｫ繝∝・谺遒ｺ隱・/h1>
+            <a href="../index.html" style="color: #FCD116; font-size: 0.9rem;">繝医ャ繝励・繝ｼ繧ｸ縺ｸ謌ｻ繧・/a>
         </div>
     </header>
 
@@ -80,56 +80,56 @@
                 <div class="control-group">
                     <h2
                         style="border-bottom: 2px solid #ccc; padding-bottom: 0.2rem; margin-bottom: 0.8rem; font-size: 1.2rem; color: #333;">
-                        【登録】</h2>
-                    <h3>リーグ名登録</h3>
+                        縲千匳骭ｲ縲・/h2>
+                    <h3>繝ｪ繝ｼ繧ｰ蜷咲匳骭ｲ</h3>
                     <div
                         style="display: flex; flex-direction: column; gap: 0.5rem; background: #e8f5e9; padding: 1rem; border-radius: 8px; border: 1px solid #c8e6c9; margin-bottom: 0.5rem;">
                         <div class="input-group" style="flex-wrap: wrap;">
-                            <input type="text" id="new-league-name" placeholder="リーグ名 (例: 2024 J1)"
+                            <input type="text" id="new-league-name" placeholder="繝ｪ繝ｼ繧ｰ蜷・(萓・ 2024 J1)"
                                 style="flex: 1; min-width: 200px;">
                         </div>
                         <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                            <span style="font-size: 0.9rem; font-weight: bold;">期間:</span>
+                            <span style="font-size: 0.9rem; font-weight: bold;">譛滄俣:</span>
                             <input type="date" id="new-league-start"
                                 style="padding: 0.5rem; border-radius: 4px; border: 1px solid #ddd;">
-                            <span>～</span>
+                            <span>・・/span>
                             <input type="date" id="new-league-end"
                                 style="padding: 0.5rem; border-radius: 4px; border: 1px solid #ddd;">
                             <button id="add-league-btn" class="btn btn-primary"
-                                style="margin-left: auto; min-width: 80px;">登録</button>
+                                style="margin-left: auto; min-width: 80px;">逋ｻ骭ｲ</button>
                         </div>
                     </div>
                 </div>
                 <div class="control-group">
-                    <h3>試合日登録</h3>
+                    <h3>隧ｦ蜷域律逋ｻ骭ｲ</h3>
                     <div
                         style="display: flex; flex-direction: column; gap: 0.5rem; background: #fff3e0; padding: 1rem; border-radius: 8px; border: 1px solid #ffcc80; margin-bottom: 0.5rem;">
                         <div class="input-group">
                             <input type="date" id="new-match-date">
-                            <input type="text" id="new-match-opponent" placeholder="対戦相手 (例: vs 浦和)">
+                            <input type="text" id="new-match-opponent" placeholder="蟇ｾ謌ｦ逶ｸ謇・(萓・ vs 豬ｦ蜥・">
                             <div style="display: flex; align-items: center; gap: 0.3rem;">
                                 <span style="font-size: 0.8rem; font-weight: bold; color: #666;">KO:</span>
                                 <input type="time" id="new-match-kickoff" style="width: 100px; padding: 0.4rem; font-size: 0.9rem;">
                             </div>
                         </div>
                         <div class="input-group" style="margin-top: 0.2rem;">
-                            <input type="text" id="new-match-venue" placeholder="会場 (例: 三協F柏, 埼玉スタ)" style="width: 100%;">
+                            <input type="text" id="new-match-venue" placeholder="莨壼ｴ (萓・ 荳牙鵠F譟・ 蝓ｼ邇峨せ繧ｿ)" style="width: 100%;">
                         </div>
                         <div id="new-match-opening-container" class="input-group" style="margin-top: 0.2rem; display: none; align-items: center; gap: 0.5rem; background: #e3f2fd; padding: 0.5rem; border-radius: 4px;">
-                            <span style="font-size: 0.8rem; font-weight: bold; color: #1976d2;">開場時刻 (アウェイのみ入力):</span>
+                            <span style="font-size: 0.8rem; font-weight: bold; color: #1976d2;">髢句ｴ譎ょ綾 (繧｢繧ｦ繧ｧ繧､縺ｮ縺ｿ蜈･蜉・:</span>
                             <input type="time" id="new-match-opening" style="width: 100px; padding: 0.4rem; font-size: 0.9rem;">
                         </div>
                         <div
                             style="display: flex; align-items: center; gap: 1rem; padding: 0.5rem; background: #f9f9f9; border-radius: 4px;">
-                            <span style="font-weight: bold; font-size: 0.9rem;">開催区分:</span>
-                            <label><input type="radio" name="new-match-location" value="home" checked> ホーム</label>
-                            <label><input type="radio" name="new-match-location" value="away"> アウェイ</label>
+                            <span style="font-weight: bold; font-size: 0.9rem;">髢句ぎ蛹ｺ蛻・</span>
+                            <label><input type="radio" name="new-match-location" value="home" checked> 繝帙・繝</label>
+                            <label><input type="radio" name="new-match-location" value="away"> 繧｢繧ｦ繧ｧ繧､</label>
 
                             <div id="away-seat-type-container"
                                 style="display: none; align-items: center; gap: 1rem; border-left: 1px solid #ccc; padding-left: 1rem; margin-left: 0.5rem;">
-                                <span style="font-weight: bold; font-size: 0.9rem;">席種:</span>
-                                <label><input type="radio" name="new-match-seat-type" value="free" checked> 自由席</label>
-                                <label><input type="radio" name="new-match-seat-type" value="reserved"> 指定席</label>
+                                <span style="font-weight: bold; font-size: 0.9rem;">蟶ｭ遞ｮ:</span>
+                                <label><input type="radio" name="new-match-seat-type" value="free" checked> 閾ｪ逕ｱ蟶ｭ</label>
+                                <label><input type="radio" name="new-match-seat-type" value="reserved"> 謖・ｮ壼ｸｭ</label>
                             </div>
                         </div>
 
@@ -137,7 +137,7 @@
                         <div id="away-general-details"
                             style="display: none; flex-direction: column; gap: 0.8rem; padding: 0.8rem; background: #fffde7; border: 1px solid #fff59d; border-radius: 4px; margin-top: 0.2rem;">
                             <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                                <span style="font-weight: bold; font-size: 0.9rem;">回答期限:</span>
+                                <span style="font-weight: bold; font-size: 0.9rem;">蝗樒ｭ疲悄髯・</span>
                                 <input type="datetime-local" id="new-match-deadline" style="padding: 0.3rem;">
                             </div>
                             <div id="new-match-queue-section"
@@ -145,12 +145,12 @@
                                 <div style="display: flex; align-items: center; gap: 0.5rem;">
                                     <label
                                         style="display: flex; align-items: center; gap: 0.3rem; font-weight: bold; font-size: 0.9rem;">
-                                        <input type="checkbox" id="new-match-queue-flag"> 並び開始（シート貼り）
+                                        <input type="checkbox" id="new-match-queue-flag"> 荳ｦ縺ｳ髢句ｧ具ｼ医す繝ｼ繝郁ｲｼ繧奇ｼ・
                                     </label>
                                 </div>
                                 <div id="queue-time-container"
                                     style="display: none; align-items: center; gap: 0.5rem; padding-left: 1.5rem;">
-                                    <span style="font-size: 0.9rem;">日時:</span>
+                                    <span style="font-size: 0.9rem;">譌･譎・</span>
                                     <input type="datetime-local" id="new-match-queue-time" style="padding: 0.3rem;">
                                 </div>
                             </div>
@@ -159,12 +159,12 @@
                                 <div style="display: flex; align-items: center; gap: 0.5rem;">
                                     <label
                                         style="display: flex; align-items: center; gap: 0.3rem; font-weight: bold; font-size: 0.9rem;">
-                                        <input type="checkbox" id="new-match-line-org-flag"> 列整理
+                                        <input type="checkbox" id="new-match-line-org-flag"> 蛻玲紛逅・
                                     </label>
                                 </div>
                                 <div id="line-org-time-container"
                                     style="display: none; align-items: center; gap: 0.5rem; padding-left: 1.5rem;">
-                                    <span style="font-size: 0.9rem;">日時:</span>
+                                    <span style="font-size: 0.9rem;">譌･譎・</span>
                                     <input type="datetime-local" id="new-match-line-org-time" style="padding: 0.3rem;">
                                 </div>
                             </div>
@@ -173,21 +173,21 @@
                         <!-- Notice (For all matches) -->
                         <div
                             style="display: flex; flex-direction: column; gap: 0.3rem; padding: 0.5rem; background: #fffde7; border: 1px solid #fff59d; border-radius: 4px;">
-                            <span style="font-weight: bold; font-size: 0.9rem;">連絡事項:</span>
-                            <textarea id="new-match-away-notice" rows="2" placeholder="集合場所や持ち物など"
+                            <span style="font-weight: bold; font-size: 0.9rem;">騾｣邨｡莠矩・</span>
+                            <textarea id="new-match-away-notice" rows="2" placeholder="髮・粋蝣ｴ謇繧・戟縺｡迚ｩ縺ｪ縺ｩ"
                                 style="width: 100%; padding: 0.5rem; border-radius: 4px; border: 1px solid #ddd; font-family: inherit; font-size: 0.9rem;"></textarea>
                         </div>
 
                         <button id="add-match-btn" class="btn btn-primary"
-                            style="align-self: flex-end; min-width: 80px;">登録</button>
+                            style="align-self: flex-end; min-width: 80px;">逋ｻ骭ｲ</button>
                     </div>
                 </div>
                 <div class="control-group">
-                    <h3>メンバー登録</h3>
+                    <h3>繝｡繝ｳ繝舌・逋ｻ骭ｲ</h3>
                     <div
                         style="display: flex; flex-direction: column; gap: 0.5rem; background: #e3f2fd; padding: 1rem; border-radius: 8px; border: 1px solid #bbdefb; margin-bottom: 0.5rem;">
                         <div class="input-group" style="flex-wrap: wrap;">
-                            <input type="text" id="new-member-name" placeholder="名前を入力"
+                            <input type="text" id="new-member-name" placeholder="蜷榊燕繧貞・蜉・
                                 style="flex: 1; min-width: 200px;">
                             <div style="display: flex; align-items: center; margin: 0 1rem;">
                                 <label style="margin-right: 0.5rem;"><input type="radio" name="new-member-section"
@@ -195,42 +195,42 @@
                                 <label><input type="radio" name="new-member-section" value="2"> FRONT</label>
                             </div>
                             <button id="add-member-btn" class="btn btn-primary"
-                                style="margin-left: auto; min-width: 80px;">登録</button>
+                                style="margin-left: auto; min-width: 80px;">逋ｻ骭ｲ</button>
                         </div>
                     </div>
                 </div>
                 <div class="control-group">
                     <h2
                         style="border-bottom: 2px solid #ccc; padding-bottom: 0.2rem; margin-top: 1.5rem; margin-bottom: 0.8rem; font-size: 1.2rem; color: #333;">
-                        【管理】</h2>
-                    <h3>登録済みリーグ名管理</h3>
+                        縲千ｮ｡逅・・/h2>
+                    <h3>逋ｻ骭ｲ貂医∩繝ｪ繝ｼ繧ｰ蜷咲ｮ｡逅・/h3>
                     <div
                         style="display: flex; flex-direction: column; gap: 0.5rem; background: #e8f5e9; padding: 1rem; border-radius: 8px; border: 1px solid #c8e6c9; margin-bottom: 0.5rem;">
                         <div class="input-group">
                             <select id="leagues-select-admin"
                                 style="flex: 1; min-width: 0; padding: 0.5rem; border-radius: 4px; border: 1px solid #ddd;">
-                                <option value="">-- リーグ名を選択 --</option>
+                                <option value="">-- 繝ｪ繝ｼ繧ｰ蜷阪ｒ驕ｸ謚・--</option>
                             </select>
                             <button id="edit-league-btn-admin" class="btn"
-                                style="background: #e3f2fd; color: #1976d2;">編集</button>
+                                style="background: #e3f2fd; color: #1976d2;">邱ｨ髮・/button>
                             <button id="delete-league-btn-admin" class="btn"
-                                style="background: #ffebee; color: #d32f2f;">削除</button>
+                                style="background: #ffebee; color: #d32f2f;">蜑企勁</button>
                         </div>
                     </div>
                 </div>
                 <div class="control-group">
-                    <h3>登録済み試合管理</h3>
+                    <h3>逋ｻ骭ｲ貂医∩隧ｦ蜷育ｮ｡逅・/h3>
                     <div
                         style="display: flex; flex-direction: column; gap: 0.5rem; background: #fff3e0; padding: 1rem; border-radius: 8px; border: 1px solid #ffcc80; margin-bottom: 0.5rem;">
                         <div class="input-group">
                             <select id="matches-select-admin"
                                 style="flex: 1; min-width: 0; padding: 0.5rem; border-radius: 4px; border: 1px solid #ddd;">
-                                <option value="">-- 試合を選択 --</option>
+                                <option value="">-- 隧ｦ蜷医ｒ驕ｸ謚・--</option>
                             </select>
                             <button id="edit-match-btn-admin" class="btn"
-                                style="background: #e3f2fd; color: #1976d2;">編集</button>
+                                style="background: #e3f2fd; color: #1976d2;">邱ｨ髮・/button>
                             <button id="delete-match-btn-admin" class="btn"
-                                style="background: #ffebee; color: #d32f2f;">削除</button>
+                                style="background: #ffebee; color: #d32f2f;">蜑企勁</button>
                         </div>
                         <!-- Janken Config Container -->
                         <div id="janken-admin-config"
@@ -240,32 +240,32 @@
                 </div>
 
                 <div class="control-group">
-                    <h3>登録済みメンバー管理</h3>
+                    <h3>逋ｻ骭ｲ貂医∩繝｡繝ｳ繝舌・邂｡逅・/h3>
                     <div
                         style="display: flex; flex-direction: column; gap: 0.5rem; background: #e3f2fd; padding: 1rem; border-radius: 8px; border: 1px solid #bbdefb; margin-bottom: 0.5rem;">
                         <div class="input-group">
                             <select id="members-select-admin"
                                 style="flex: 1; min-width: 0; padding: 0.5rem; border-radius: 4px; border: 1px solid #ddd;">
-                                <option value="">-- メンバーを選択 --</option>
+                                <option value="">-- 繝｡繝ｳ繝舌・繧帝∈謚・--</option>
                             </select>
                             <button id="edit-member-btn-admin" class="btn"
-                                style="background: #e3f2fd; color: #1976d2;">編集</button>
+                                style="background: #e3f2fd; color: #1976d2;">邱ｨ髮・/button>
                             <button id="delete-member-btn-admin" class="btn"
-                                style="background: #ffebee; color: #d32f2f;">削除</button>
+                                style="background: #ffebee; color: #d32f2f;">蜑企勁</button>
                         </div>
                     </div>
                 </div>
 
                 <div class="control-group">
-                    <h3>パスワード変更</h3>
+                    <h3>繝代せ繝ｯ繝ｼ繝牙､画峩</h3>
                     <div
                         style="display: flex; flex-direction: column; gap: 0.5rem; background: #f5f5f5; padding: 1rem; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 0.5rem;">
-                        <input type="password" id="admin-old-password" placeholder="現在のパスワード"
+                        <input type="password" id="admin-old-password" placeholder="迴ｾ蝨ｨ縺ｮ繝代せ繝ｯ繝ｼ繝・
                             style="padding: 0.5rem; border-radius: 4px; border: 1px solid #ddd;">
-                        <input type="password" id="admin-new-password" placeholder="新しいパスワード"
+                        <input type="password" id="admin-new-password" placeholder="譁ｰ縺励＞繝代せ繝ｯ繝ｼ繝・
                             style="padding: 0.5rem; border-radius: 4px; border: 1px solid #ddd;">
                         <button id="update-password-btn" class="btn btn-primary"
-                            style="align-self: flex-end; min-width: 80px;">更新</button>
+                            style="align-self: flex-end; min-width: 80px;">譖ｴ譁ｰ</button>
                     </div>
                 </div>
             </div>
@@ -278,20 +278,20 @@
         style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000;">
         <div class="modal-content"
             style="background: white; padding: 2rem; border-radius: 8px; width: 90%; max-width: 400px;">
-            <h3>メンバー編集</h3>
+            <h3>繝｡繝ｳ繝舌・邱ｨ髮・/h3>
             <div class="input-group" style="margin-bottom: 1rem; flex-direction: column; align-items: flex-start;">
-                <label style="margin-bottom: 0.5rem; font-weight: bold;">名前</label>
+                <label style="margin-bottom: 0.5rem; font-weight: bold;">蜷榊燕</label>
                 <input type="text" id="edit-member-name" style="width: 100%; padding: 0.5rem; margin-bottom: 1rem;">
 
-                <label style="margin-bottom: 0.5rem; font-weight: bold;">区分</label>
+                <label style="margin-bottom: 0.5rem; font-weight: bold;">蛹ｺ蛻・/label>
                 <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
                     <label><input type="radio" name="edit-member-section" value="1"> TOP</label>
                     <label><input type="radio" name="edit-member-section" value="2"> FRONT</label>
                 </div>
             </div>
             <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
-                <button id="cancel-edit-member" class="btn" style="background: #ccc;">キャンセル</button>
-                <button id="save-edit-member" class="btn btn-primary">保存</button>
+                <button id="cancel-edit-member" class="btn" style="background: #ccc;">繧ｭ繝｣繝ｳ繧ｻ繝ｫ</button>
+                <button id="save-edit-member" class="btn btn-primary">菫晏ｭ・/button>
             </div>
         </div>
     </div>
@@ -301,16 +301,16 @@
         style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000;">
         <div class="modal-content"
             style="background: white; padding: 2rem; border-radius: 8px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto;">
-            <h3>試合編集</h3>
+            <h3>隧ｦ蜷育ｷｨ髮・/h3>
             <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem;">
                 <div class="input-group" style="flex-direction: column; align-items: flex-start;">
-                    <label style="font-weight: bold; font-size: 0.9rem;">日付</label>
+                    <label style="font-weight: bold; font-size: 0.9rem;">譌･莉・/label>
                     <input type="date" id="edit-match-date" style="width: 100%;">
                 </div>
                 <div class="input-group" style="flex-direction: column; align-items: flex-start;">
-                    <label style="font-weight: bold; font-size: 0.9rem;">対戦相手</label>
+                    <label style="font-weight: bold; font-size: 0.9rem;">蟇ｾ謌ｦ逶ｸ謇・/label>
                     <div style="display: flex; gap: 0.5rem; width: 100%;">
-                        <input type="text" id="edit-match-opponent" style="flex: 1;" placeholder="対戦相手 (例: vs 浦和)">
+                        <input type="text" id="edit-match-opponent" style="flex: 1;" placeholder="蟇ｾ謌ｦ逶ｸ謇・(萓・ vs 豬ｦ蜥・">
                         <div style="display: flex; align-items: center; gap: 0.3rem;">
                             <span style="font-size: 0.8rem; font-weight: bold; color: #666;">KO:</span>
                             <input type="time" id="edit-match-kickoff" style="width: 100px; padding: 0.4rem; font-size: 0.9rem;">
@@ -319,22 +319,22 @@
                 </div>
                 <div
                     style="display: flex; align-items: center; gap: 1rem; padding: 0.5rem; background: #f9f9f9; border-radius: 4px;">
-                    <span style="font-weight: bold; font-size: 0.9rem;">開催区分:</span>
-                    <label><input type="radio" name="edit-match-location" value="home"> ホーム</label>
-                    <label><input type="radio" name="edit-match-location" value="away"> アウェイ</label>
+                    <span style="font-weight: bold; font-size: 0.9rem;">髢句ぎ蛹ｺ蛻・</span>
+                    <label><input type="radio" name="edit-match-location" value="home"> 繝帙・繝</label>
+                    <label><input type="radio" name="edit-match-location" value="away"> 繧｢繧ｦ繧ｧ繧､</label>
                 </div>
                 <div id="edit-away-seat-type-container"
                     style="display: none; align-items: center; gap: 1rem; padding: 0.5rem; background: #f9f9f9; border-radius: 4px;">
-                    <span style="font-weight: bold; font-size: 0.9rem;">席種:</span>
-                    <label><input type="radio" name="edit-match-seat-type" value="free"> 自由席</label>
-                    <label><input type="radio" name="edit-match-seat-type" value="reserved"> 指定席</label>
+                    <span style="font-weight: bold; font-size: 0.9rem;">蟶ｭ遞ｮ:</span>
+                    <label><input type="radio" name="edit-match-seat-type" value="free"> 閾ｪ逕ｱ蟶ｭ</label>
+                    <label><input type="radio" name="edit-match-seat-type" value="reserved"> 謖・ｮ壼ｸｭ</label>
                 </div>
                 <div class="input-group" style="flex-direction: column; align-items: flex-start;">
-                    <label style="font-weight: bold; font-size: 0.9rem;">会場</label>
-                    <input type="text" id="edit-match-venue" style="width: 100%;" placeholder="会場 (例: 三協F柏, 埼玉スタ)">
+                    <label style="font-weight: bold; font-size: 0.9rem;">莨壼ｴ</label>
+                    <input type="text" id="edit-match-venue" style="width: 100%;" placeholder="莨壼ｴ (萓・ 荳牙鵠F譟・ 蝓ｼ邇峨せ繧ｿ)">
                 </div>
                 <div id="edit-match-opening-container" class="input-group" style="display: none; flex-direction: column; align-items: flex-start; background: #e3f2fd; padding: 0.5rem; border-radius: 4px;">
-                    <label style="font-weight: bold; font-size: 0.9rem; color: #1976d2;">開場時刻 (アウェイのみ編集)</label>
+                    <label style="font-weight: bold; font-size: 0.9rem; color: #1976d2;">髢句ｴ譎ょ綾 (繧｢繧ｦ繧ｧ繧､縺ｮ縺ｿ邱ｨ髮・</label>
                     <input type="time" id="edit-match-opening" style="width: 100px;">
                 </div>
 
@@ -342,19 +342,19 @@
                 <div id="edit-away-general-details"
                     style="display: none; flex-direction: column; gap: 0.8rem; padding: 0.8rem; background: #fffde7; border: 1px solid #fff59d; border-radius: 4px;">
                     <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                        <span style="font-weight: bold; font-size: 0.9rem;">回答期限:</span>
+                        <span style="font-weight: bold; font-size: 0.9rem;">蝗樒ｭ疲悄髯・</span>
                         <input type="datetime-local" id="edit-match-deadline" style="padding: 0.3rem;">
                     </div>
                     <div id="edit-match-queue-section" style="display: flex; flex-direction: column; gap: 0.5rem;">
                         <div style="display: flex; align-items: center; gap: 0.5rem;">
                             <label
                                 style="display: flex; align-items: center; gap: 0.3rem; font-weight: bold; font-size: 0.9rem;">
-                                <input type="checkbox" id="edit-match-queue-flag"> 並び開始（シート貼り）
+                                <input type="checkbox" id="edit-match-queue-flag"> 荳ｦ縺ｳ髢句ｧ具ｼ医す繝ｼ繝郁ｲｼ繧奇ｼ・
                             </label>
                         </div>
                         <div id="edit-queue-time-container"
                             style="display: none; align-items: center; gap: 0.5rem; padding-left: 1.5rem;">
-                            <span style="font-size: 0.9rem;">日時:</span>
+                            <span style="font-size: 0.9rem;">譌･譎・</span>
                             <input type="datetime-local" id="edit-match-queue-time" style="padding: 0.3rem;">
                         </div>
                     </div>
@@ -362,12 +362,12 @@
                         <div style="display: flex; align-items: center; gap: 0.5rem;">
                             <label
                                 style="display: flex; align-items: center; gap: 0.3rem; font-weight: bold; font-size: 0.9rem;">
-                                <input type="checkbox" id="edit-match-line-org-flag"> 列整理
+                                <input type="checkbox" id="edit-match-line-org-flag"> 蛻玲紛逅・
                             </label>
                         </div>
                         <div id="edit-line-org-time-container"
                             style="display: none; align-items: center; gap: 0.5rem; padding-left: 1.5rem;">
-                            <span style="font-size: 0.9rem;">日時:</span>
+                            <span style="font-size: 0.9rem;">譌･譎・</span>
                             <input type="datetime-local" id="edit-match-line-org-time" style="padding: 0.3rem;">
                         </div>
                     </div>
@@ -377,13 +377,13 @@
             <!-- Notice (For all matches) -->
             <div
                 style="display: flex; flex-direction: column; gap: 0.3rem; padding: 0.5rem; background: #fffde7; border: 1px solid #fff59d; border-radius: 4px; margin-bottom: 1.5rem;">
-                <span style="font-weight: bold; font-size: 0.9rem;">連絡事項:</span>
-                <textarea id="edit-match-away-notice" rows="2" placeholder="集合場所や持ち物など"
+                <span style="font-weight: bold; font-size: 0.9rem;">騾｣邨｡莠矩・</span>
+                <textarea id="edit-match-away-notice" rows="2" placeholder="髮・粋蝣ｴ謇繧・戟縺｡迚ｩ縺ｪ縺ｩ"
                     style="width: 100%; padding: 0.5rem; border-radius: 4px; border: 1px solid #ddd; font-family: inherit; font-size: 0.9rem;"></textarea>
             </div>
             <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
-                <button id="cancel-edit-match" class="btn" style="background: #ccc;">キャンセル</button>
-                <button id="save-edit-match" class="btn btn-primary">保存</button>
+                <button id="cancel-edit-match" class="btn" style="background: #ccc;">繧ｭ繝｣繝ｳ繧ｻ繝ｫ</button>
+                <button id="save-edit-match" class="btn btn-primary">菫晏ｭ・/button>
             </div>
         </div>
     </div>
@@ -393,28 +393,28 @@
         style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000;">
         <div class="modal-content"
             style="background: white; padding: 2rem; border-radius: 8px; width: 90%; max-width: 400px;">
-            <h2>リーグ編集</h2>
+            <h2>繝ｪ繝ｼ繧ｰ邱ｨ髮・/h2>
             <input type="hidden" id="edit-league-id">
             <div class="input-group">
-                <label>リーグ名</label>
+                <label>繝ｪ繝ｼ繧ｰ蜷・/label>
                 <input type="text" id="edit-league-name">
             </div>
             <div class="input-group">
-                <label>開始月</label>
+                <label>髢句ｧ区怦</label>
                 <input type="date" id="edit-league-start">
             </div>
             <div class="input-group">
-                <label>終了月</label>
+                <label>邨ゆｺ・怦</label>
                 <input type="date" id="edit-league-end">
             </div>
             <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1rem;">
-                <button id="cancel-edit-league" class="btn" style="background: #ccc;">キャンセル</button>
-                <button id="save-edit-league" class="btn btn-primary">保存</button>
+                <button id="cancel-edit-league" class="btn" style="background: #ccc;">繧ｭ繝｣繝ｳ繧ｻ繝ｫ</button>
+                <button id="save-edit-league" class="btn btn-primary">菫晏ｭ・/button>
             </div>
         </div>
     </div>
 
-    <script src="app.js?v=20260126_V5"></script>
+    <script src="app.js?v=2.4"></script>
 </body>
 
 </html>
