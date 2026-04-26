@@ -379,7 +379,7 @@ function handleAddMatch(doc, data) {
   let sheet = doc.getSheetByName('Matches');
   if (!sheet) {
       sheet = doc.insertSheet('Matches');
-      sheet.appendRow(['ID', 'Date', 'Opponent', 'JankenConfirmed', 'Location', 'SeatType', 'Deadline', 'QueueFlag', 'QueueTime', 'LineOrgFlag', 'LineOrgTime', 'AwayNotice', 'KickoffTime', 'Venue', 'OpeningTime']);
+      sheet.appendRow(['ID', 'Date', 'Opponent', 'JankenConfirmed', 'Location', 'SeatType', 'Deadline', 'QueueFlag', 'QueueTime', 'LineOrgFlag', 'LineOrgTime', 'AwayNotice', 'Kickoff', 'Venue', 'Opening']);
   }
   sheet.appendRow([
       data.id, 
@@ -394,9 +394,9 @@ function handleAddMatch(doc, data) {
       data.lineOrgFlag || false,
       data.lineOrgTime || '',
       data.awayNotice || '',
-      data.kickoffTime || '',
+      data.kickoff || '',
       data.venue || '',
-      data.openingTime || ''
+      data.opening || ''
   ]);
   return { added: true };
 }
@@ -418,9 +418,9 @@ function handleUpdateMatch(doc, data) {
         if (data.lineOrgFlag !== undefined) sheet.getRange(i + 1, 10).setValue(data.lineOrgFlag);
         if (data.lineOrgTime !== undefined) sheet.getRange(i + 1, 11).setValue(data.lineOrgTime);
         if (data.awayNotice !== undefined) sheet.getRange(i + 1, 12).setValue(data.awayNotice);
-        if (data.kickoffTime !== undefined) sheet.getRange(i + 1, 13).setValue(data.kickoffTime);
+        if (data.kickoff !== undefined) sheet.getRange(i + 1, 13).setValue(data.kickoff);
         if (data.venue !== undefined) sheet.getRange(i + 1, 14).setValue(data.venue);
-        if (data.openingTime !== undefined) sheet.getRange(i + 1, 15).setValue(data.openingTime);
+        if (data.opening !== undefined) sheet.getRange(i + 1, 15).setValue(data.opening);
         break;
       }
     }
@@ -568,9 +568,9 @@ function doGet(e) {
                 lineOrgFlag: mRows[i][9] === true || mRows[i][9] === 'true', // Col 10
                 lineOrgTime: mRows[i][10] || '', // Col 11
                 awayNotice: mRows[i][11] || '', // Col 12
-                kickoffTime: mRows[i][12] || '', // Col 13
+                kickoff: mRows[i][12] || '', // Col 13
                 venue: mRows[i][13] || '', // Col 14
-                openingTime: mRows[i][14] || '' // Col 15
+                opening: mRows[i][14] || '' // Col 15
             });
         }
     }
@@ -665,20 +665,7 @@ function setup() {
   }
   if (!doc.getSheetByName('Matches')) {
     const s = doc.insertSheet('Matches');
-    s.appendRow(['ID', 'Date', 'Opponent', 'JankenConfirmed', 'Location', 'SeatType', 'Deadline', 'QueueFlag', 'QueueTime', 'LineOrgFlag', 'LineOrgTime', 'AwayNotice', 'KickoffTime', 'Venue', 'OpeningTime']);
-  } else {
-    // Ensure KickoffTime, Venue and OpeningTime columns exist
-    const s = doc.getSheetByName('Matches');
-    const headers = s.getRange(1, 1, 1, s.getLastColumn()).getValues()[0];
-    if (headers.length < 13) {
-      s.getRange(1, 13).setValue('KickoffTime');
-    }
-    if (headers.length < 14) {
-      s.getRange(1, 14).setValue('Venue');
-    }
-    if (headers.length < 15) {
-      s.getRange(1, 15).setValue('OpeningTime');
-    }
+    s.appendRow(['ID', 'Date', 'Opponent', 'JankenConfirmed']);
   }
   if (!doc.getSheetByName('Members')) {
     const s = doc.insertSheet('Members');
