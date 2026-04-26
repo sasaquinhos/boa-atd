@@ -9,7 +9,7 @@ const state = {
     leagues: []
 };
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbwqw-5gsFUaPoK9K7IkK9-PXwKL9pDXUjWgPpbNapRSwWtsUUUx2yrrUBLUxTEUyUpDEw/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbyZQzakZcCViYrWQOZY7iwdyBfftvLQZu_wJlQMBj-VhUYZKja2Jxy2tX7Cca1no_vgJg/exec';
 
 // DOM Elements
 const matchesContainer = document.getElementById('matches-container');
