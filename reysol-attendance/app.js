@@ -1947,9 +1947,9 @@ function openEditMatchModal(matchId) {
     dateInput.value = formatForInput(match.date);
     opponentInput.value = match.opponent;
 
-    if (editMatchKickoffInput) editMatchKickoffInput.value = match.kickoff || '';
+    if (editMatchKickoffInput) editMatchKickoffInput.value = formatTime(match.kickoff) || '';
     if (editMatchVenueInput) editMatchVenueInput.value = match.venue || '';
-    if (editMatchOpeningInput) editMatchOpeningInput.value = match.opening || '';
+    if (editMatchOpeningInput) editMatchOpeningInput.value = formatTime(match.opening) || '';
 
     // Set radios
     const locRadios = document.getElementsByName('edit-match-location');
