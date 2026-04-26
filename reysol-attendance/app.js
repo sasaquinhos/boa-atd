@@ -17,6 +17,7 @@ const newMemberNameInput = document.getElementById('new-member-name');
 const addMemberBtn = document.getElementById('add-member-btn');
 const newMatchDateInput = document.getElementById('new-match-date');
 const newMatchOpponentInput = document.getElementById('new-match-opponent');
+const newMatchKickoffInput = document.getElementById('new-match-kickoff');
 const addMatchBtn = document.getElementById('add-match-btn');
 const currentUserSelect = document.getElementById('current-user-select');
 
@@ -650,7 +651,10 @@ function renderMatches() {
                 <div class="match-header ${match.location === 'away' ? 'location-away' : 'location-home'}">
                     <div class="match-info">
                         <h2>${match.opponent}</h2>
-                        <span class="match-date">${formatDate(match.date)}</span>
+                        <span class="match-date">
+                            ${formatDate(match.date)}
+                            ${match.kickoffTime ? `<span class="kickoff-time">${match.kickoffTime} KO</span>` : ''}
+                        </span>
                         <span class="match-location-badge ${match.location === 'away' ? 'location-away' : 'location-home'}">
                             ${match.location === 'away' ? 'アウェイ' : 'ホーム'}
                             ${match.location === 'away' ? (match.seatType === 'reserved' ? ' (指定席)' : ' (自由席)') : ''}
@@ -1134,6 +1138,7 @@ function setupEventListeners() {
         addMatchBtn.addEventListener('click', () => {
             const date = newMatchDateInput.value;
             const opponent = newMatchOpponentInput.value.trim();
+            const kickoffTime = newMatchKickoffInput ? newMatchKickoffInput.value : '';
 
             const locationRadio = document.querySelector('input[name="new-match-location"]:checked');
             const location = locationRadio ? locationRadio.value : 'home';
@@ -1154,6 +1159,7 @@ function setupEventListeners() {
                     id: Date.now(),
                     date,
                     opponent,
+                    kickoffTime,
                     location,
                     seatType,
                     deadline: (location === 'away' ? deadline : ''),
@@ -1169,6 +1175,7 @@ function setupEventListeners() {
                 renderMatches();
                 newMatchDateInput.value = '';
                 newMatchOpponentInput.value = '';
+                if (newMatchKickoffInput) newMatchKickoffInput.value = '';
 
                 // Reset radio buttons and fields
                 const homeRadio = document.querySelector('input[name="new-match-location"][value="home"]');
@@ -1870,6 +1877,7 @@ function openEditMatchModal(matchId) {
     const modal = document.getElementById('edit-match-modal');
     const dateInput = document.getElementById('edit-match-date');
     const opponentInput = document.getElementById('edit-match-opponent');
+    const kickoffInput = document.getElementById('edit-match-kickoff');
     const deadlineInput = document.getElementById('edit-match-deadline');
     const queueFlagInput = document.getElementById('edit-match-queue-flag');
     const queueTimeInput = document.getElementById('edit-match-queue-time');
@@ -1896,6 +1904,7 @@ function openEditMatchModal(matchId) {
 
     dateInput.value = formatForInput(match.date);
     opponentInput.value = match.opponent;
+    if (kickoffInput) kickoffInput.value = match.kickoffTime || '';
 
     // Set radios
     const locRadios = document.getElementsByName('edit-match-location');
@@ -1966,6 +1975,7 @@ function openEditMatchModal(matchId) {
             id: matchId,
             date: dateInput.value,
             opponent: opponentInput.value.trim(),
+            kickoffTime: kickoffInput ? kickoffInput.value : '',
             location: loc,
             seatType: (loc === 'away' ? seat : ''),
             deadline: (loc === 'away' ? deadlineInput.value : ''),
