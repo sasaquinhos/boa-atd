@@ -379,7 +379,7 @@ function handleAddMatch(doc, data) {
   let sheet = doc.getSheetByName('Matches');
   if (!sheet) {
       sheet = doc.insertSheet('Matches');
-      sheet.appendRow(['ID', 'Date', 'Opponent', 'JankenConfirmed', 'Location', 'SeatType', 'Deadline', 'QueueFlag', 'QueueTime', 'LineOrgFlag', 'LineOrgTime', 'AwayNotice']);
+      sheet.appendRow(['ID', 'Date', 'Opponent', 'JankenConfirmed', 'Location', 'SeatType', 'Deadline', 'QueueFlag', 'QueueTime', 'LineOrgFlag', 'LineOrgTime', 'AwayNotice', 'KickoffTime']);
   }
   sheet.appendRow([
       data.id, 
@@ -393,7 +393,8 @@ function handleAddMatch(doc, data) {
       data.queueTime || '',
       data.lineOrgFlag || false,
       data.lineOrgTime || '',
-      data.awayNotice || ''
+      data.awayNotice || '',
+      data.kickoffTime || ''
   ]);
   return { added: true };
 }
@@ -415,6 +416,7 @@ function handleUpdateMatch(doc, data) {
         if (data.lineOrgFlag !== undefined) sheet.getRange(i + 1, 10).setValue(data.lineOrgFlag);
         if (data.lineOrgTime !== undefined) sheet.getRange(i + 1, 11).setValue(data.lineOrgTime);
         if (data.awayNotice !== undefined) sheet.getRange(i + 1, 12).setValue(data.awayNotice);
+        if (data.kickoffTime !== undefined) sheet.getRange(i + 1, 13).setValue(data.kickoffTime);
         break;
       }
     }
@@ -561,7 +563,8 @@ function doGet(e) {
                 queueTime: mRows[i][8] || '', // Col 9
                 lineOrgFlag: mRows[i][9] === true || mRows[i][9] === 'true', // Col 10
                 lineOrgTime: mRows[i][10] || '', // Col 11
-                awayNotice: mRows[i][11] || '' // Col 12
+                awayNotice: mRows[i][11] || '', // Col 12
+                kickoffTime: mRows[i][12] || '' // Col 13
             });
         }
     }
@@ -656,7 +659,14 @@ function setup() {
   }
   if (!doc.getSheetByName('Matches')) {
     const s = doc.insertSheet('Matches');
-    s.appendRow(['ID', 'Date', 'Opponent', 'JankenConfirmed']);
+    s.appendRow(['ID', 'Date', 'Opponent', 'JankenConfirmed', 'Location', 'SeatType', 'Deadline', 'QueueFlag', 'QueueTime', 'LineOrgFlag', 'LineOrgTime', 'AwayNotice', 'KickoffTime']);
+  } else {
+    // Ensure KickoffTime column exists
+    const s = doc.getSheetByName('Matches');
+    const headers = s.getRange(1, 1, 1, s.getLastColumn()).getValues()[0];
+    if (headers.length < 13) {
+      s.getRange(1, 13).setValue('KickoffTime');
+    }
   }
   if (!doc.getSheetByName('Members')) {
     const s = doc.insertSheet('Members');
