@@ -9,7 +9,7 @@ const state = {
     leagues: []
 };
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbyZQzakZcCViYrWQOZY7iwdyBfftvLQZu_wJlQMBj-VhUYZKja2Jxy2tX7Cca1no_vgJg/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbyHzYaWI5X4JHMqza1wsS6KPzm2C9-rwobgyNzX3fp7HDvt4763Eiwo1iuCi7tPqepH7Q/exec';
 
 // DOM Elements
 const matchesContainer = document.getElementById('matches-container');
@@ -18,6 +18,8 @@ const addMemberBtn = document.getElementById('add-member-btn');
 const newMatchDateInput = document.getElementById('new-match-date');
 const newMatchOpponentInput = document.getElementById('new-match-opponent');
 const newMatchKickoffInput = document.getElementById('new-match-kickoff');
+const newMatchVenueInput = document.getElementById('new-match-venue');
+const newMatchOpeningInput = document.getElementById('new-match-opening');
 const addMatchBtn = document.getElementById('add-match-btn');
 const currentUserSelect = document.getElementById('current-user-select');
 
@@ -653,7 +655,9 @@ function renderMatches() {
                         <h2>${match.opponent}</h2>
                         <span class="match-date">
                             ${formatDate(match.date)}
-                            ${match.kickoffTime ? `<span class="kickoff-time">${match.kickoffTime} KO</span>` : ''}
+                            ${match.openingTime ? `<span class="opening-time">${formatTime(match.openingTime)} 開場</span>` : ''}
+                            ${match.kickoffTime ? `<span class="kickoff-time">${formatTime(match.kickoffTime)} K.O.</span>` : ''}
+                            ${match.venue ? `<span class="match-venue">@ ${match.venue}</span>` : ''}
                         </span>
                         <span class="match-location-badge ${match.location === 'away' ? 'location-away' : 'location-home'}">
                             ${match.location === 'away' ? 'アウェイ' : 'ホーム'}
@@ -1139,9 +1143,17 @@ function setupEventListeners() {
             const date = newMatchDateInput.value;
             const opponent = newMatchOpponentInput.value.trim();
             const kickoffTime = newMatchKickoffInput ? newMatchKickoffInput.value : '';
-
+            const venue = newMatchVenueInput ? newMatchVenueInput.value.trim() : '';
+            
             const locationRadio = document.querySelector('input[name="new-match-location"]:checked');
             const location = locationRadio ? locationRadio.value : 'home';
+            
+            let openingTime = '';
+            if (location === 'home') {
+                openingTime = calculateHomeOpeningTime(kickoffTime);
+            } else {
+                openingTime = newMatchOpeningInput ? newMatchOpeningInput.value : '';
+            }
             const seatTypeRadio = document.querySelector('input[name="new-match-seat-type"]:checked');
             const seatType = (location === 'away' && seatTypeRadio) ? seatTypeRadio.value : '';
 
@@ -1160,6 +1172,8 @@ function setupEventListeners() {
                     date,
                     opponent,
                     kickoffTime,
+                    openingTime,
+                    venue,
                     location,
                     seatType,
                     deadline: (location === 'away' ? deadline : ''),
@@ -1176,6 +1190,8 @@ function setupEventListeners() {
                 newMatchDateInput.value = '';
                 newMatchOpponentInput.value = '';
                 if (newMatchKickoffInput) newMatchKickoffInput.value = '';
+                if (newMatchVenueInput) newMatchVenueInput.value = '';
+                if (newMatchOpeningInput) newMatchOpeningInput.value = '';
 
                 // Reset radio buttons and fields
                 const homeRadio = document.querySelector('input[name="new-match-location"][value="home"]');
@@ -1216,6 +1232,9 @@ function setupEventListeners() {
 
             const isAway = (loc === 'away');
             const isFree = (seat === 'free');
+
+            const openingContainer = document.getElementById('new-match-opening-container');
+            if (openingContainer) openingContainer.style.display = isAway ? 'flex' : 'none';
 
             const queueSec = document.getElementById('new-match-queue-section');
             const lineSec = document.getElementById('new-match-line-org-section');
@@ -1878,6 +1897,8 @@ function openEditMatchModal(matchId) {
     const dateInput = document.getElementById('edit-match-date');
     const opponentInput = document.getElementById('edit-match-opponent');
     const kickoffInput = document.getElementById('edit-match-kickoff');
+    const venueInput = document.getElementById('edit-match-venue');
+    const openingInput = document.getElementById('edit-match-opening');
     const deadlineInput = document.getElementById('edit-match-deadline');
     const queueFlagInput = document.getElementById('edit-match-queue-flag');
     const queueTimeInput = document.getElementById('edit-match-queue-time');
@@ -1904,7 +1925,9 @@ function openEditMatchModal(matchId) {
 
     dateInput.value = formatForInput(match.date);
     opponentInput.value = match.opponent;
-    if (kickoffInput) kickoffInput.value = match.kickoffTime || '';
+    if (kickoffInput) kickoffInput.value = formatTime(match.kickoffTime);
+    if (venueInput) venueInput.value = match.venue || '';
+    if (openingInput) openingInput.value = formatTime(match.openingTime);
 
     // Set radios
     const locRadios = document.getElementsByName('edit-match-location');
@@ -1933,6 +1956,9 @@ function openEditMatchModal(matchId) {
 
         const isAway = (loc === 'away');
         const isFree = (seat === 'free');
+
+        const openingContainer = document.getElementById('edit-match-opening-container');
+        if (openingContainer) openingContainer.style.display = isAway ? 'flex' : 'none';
 
         const wasAwayFreeVisible = (generalDetails.style.display === 'flex' &&
             queueSec && queueSec.style.display === 'flex');
@@ -1976,6 +2002,8 @@ function openEditMatchModal(matchId) {
             date: dateInput.value,
             opponent: opponentInput.value.trim(),
             kickoffTime: kickoffInput ? kickoffInput.value : '',
+            openingTime: (loc === 'home' ? calculateHomeOpeningTime(kickoffInput.value) : (openingInput ? openingInput.value : '')),
+            venue: venueInput ? venueInput.value.trim() : '',
             location: loc,
             seatType: (loc === 'away' ? seat : ''),
             deadline: (loc === 'away' ? deadlineInput.value : ''),
@@ -2471,6 +2499,41 @@ function updateLeague() {
 function formatDate(dateString) {
     const d = parseDate(dateString);
     return `${d.getMonth() + 1}/${d.getDate()} (${['日', '月', '火', '水', '木', '金', '土'][d.getDay()]})`;
+}
+
+function formatTime(timeStr) {
+    if (!timeStr) return '';
+    // If it's HH:MM already, just return it
+    if (/^\d{1,2}:\d{2}$/.test(timeStr)) return timeStr;
+
+    // Handle ISO string or Date object string
+    const d = new Date(timeStr);
+    if (isNaN(d.getTime())) return timeStr;
+
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+}
+
+function calculateHomeOpeningTime(kickoffTime) {
+    if (!kickoffTime) return '';
+    const parts = kickoffTime.split(':');
+    if (parts.length < 2) return '';
+    const h = parseInt(parts[0]);
+    const m = parseInt(parts[1]);
+    const kickoffMinutes = h * 60 + m;
+    let openingMinutes;
+    if (kickoffMinutes <= 14 * 60) { // 14:00 or earlier
+        openingMinutes = kickoffMinutes - 210; // 3h 30m = 210m
+    } else {
+        openingMinutes = kickoffMinutes - 240; // 4h = 240m
+    }
+    
+    if (openingMinutes < 0) openingMinutes += 24 * 60;
+    
+    const oh = Math.floor(openingMinutes / 60);
+    const om = openingMinutes % 60;
+    return `${String(oh).padStart(2, '0')}:${String(om).padStart(2, '0')}`;
 }
 
 // Start
