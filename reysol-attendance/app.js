@@ -9,7 +9,7 @@ const state = {
     leagues: []
 };
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbyzpE0e8r2jvuyG5nrVoO0AN3qC70v1lmZXNtdyQp0mSGTnsqFmchx0vzY18RLhuUQuwQ/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbyYBnoIPxRRkmt-3LCfZ7lNcgSVPRcN8uR3YMSbYG0O28XmkMytExEgrJx4OuTlyi_spg/exec';
 
 // DOM Elements
 const matchesContainer = document.getElementById('matches-container');
@@ -20,6 +20,13 @@ const newMatchOpponentInput = document.getElementById('new-match-opponent');
 const newMatchKickoffInput = document.getElementById('new-match-kickoff');
 const newMatchVenueInput = document.getElementById('new-match-venue');
 const newMatchOpeningInput = document.getElementById('new-match-opening');
+const newMatchOpeningContainer = document.getElementById('new-match-opening-container');
+
+const editMatchKickoffInput = document.getElementById('edit-match-kickoff');
+const editMatchVenueInput = document.getElementById('edit-match-venue');
+const editMatchOpeningInput = document.getElementById('edit-match-opening');
+const editMatchOpeningContainer = document.getElementById('edit-match-opening-container');
+
 const addMatchBtn = document.getElementById('add-match-btn');
 const currentUserSelect = document.getElementById('current-user-select');
 
@@ -85,6 +92,30 @@ function parseDate(input) {
     return d;
 }
 
+// Helper: Format Time safely for GAS UTC Time
+function formatTime(timeStr) {
+    if (!timeStr) return '';
+    if (timeStr.includes('T')) {
+        const d = new Date(timeStr);
+        if (isNaN(d.getTime())) return timeStr;
+        return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    }
+    return timeStr;
+}
+
+// Helper: Calculate Home Opening Time
+function calculateHomeOpeningTime(kickoffTime) {
+    if (!kickoffTime) return '';
+    const parts = kickoffTime.split(':');
+    if (parts.length !== 2) return '';
+    const h = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10);
+    const koMin = h * 60 + m;
+    let opMin = koMin <= 14 * 60 ? koMin - 210 : koMin - 240;
+    if (opMin < 0) opMin += 1440;
+    return String(Math.floor(opMin / 60)).padStart(2, '0') + ':' + String(opMin % 60).padStart(2, '0');
+}
+
 // Initialization
 async function init() {
     console.log('Current API URL:', API_URL);
@@ -147,10 +178,8 @@ async function loadData() {
         });
         clearTimeout(timeoutId);
 
-        if (!res.ok) {
-            const errorText = await res.text();
-            throw new Error(`HTTP error! status: ${res.status}, body: ${errorText.substring(0, 100)}`);
-        }
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+
         const data = await res.json();
 
         if (data.members) state.members = data.members;
@@ -655,12 +684,7 @@ function renderMatches() {
                 <div class="match-header ${match.location === 'away' ? 'location-away' : 'location-home'}">
                     <div class="match-info">
                         <h2>${match.opponent}</h2>
-                        <span class="match-date">
-                            ${formatDate(match.date)}
-                            ${match.openingTime ? `<span class="opening-time">${formatTime(match.openingTime)} 開場</span>` : ''}
-                            ${match.kickoffTime ? `<span class="kickoff-time">${formatTime(match.kickoffTime)} K.O.</span>` : ''}
-                            ${match.venue ? `<span class="match-venue">@ ${match.venue}</span>` : ''}
-                        </span>
+                        <span class="match-date">${formatDate(match.date)}${match.kickoff ? ' ' + formatTime(match.kickoff) + ' K.O.' : ''}${match.location === 'home' && match.opening ? ' (開場 ' + formatTime(match.opening) + ')' : ''}${match.venue ? ' @ ' + match.venue : ''}</span>
                         <span class="match-location-badge ${match.location === 'away' ? 'location-away' : 'location-home'}">
                             ${match.location === 'away' ? 'アウェイ' : 'ホーム'}
                             ${match.location === 'away' ? (match.seatType === 'reserved' ? ' (指定席)' : ' (自由席)') : ''}
@@ -967,11 +991,9 @@ function createMemberRow(matchId, member, hideName = false) {
                                 </div>
                             </div>
                         </div>
-                        <div class="submit-attendance-container">
-                            <button class="btn btn-register submit-attendance-btn" data-key="${key}">
-                                この内容で登録する
-                            </button>
-                        </div>
+                    </div>
+                    <div style="margin-top: 0.5rem; text-align: center;">
+                        <button class="btn btn-primary submit-attendance-btn" style="width: 100%; padding: 0.75rem;" onclick="submitAttendance('${matchId}', '${memberName}')">この内容で登録する</button>
                     </div>
                 </div>
             </div>
@@ -1084,16 +1106,120 @@ function createMemberRow(matchId, member, hideName = false) {
                                 </div>
                             </div>
                         </div>
-                        <div class="submit-attendance-container">
-                            <button class="btn btn-register submit-attendance-btn" data-key="${key}">
-                                この内容で登録する
-                            </button>
                         </div>
+                    </div>
+                    <div style="margin-top: 0.5rem; text-align: center;">
+                        <button class="btn btn-primary submit-attendance-btn" style="width: 100%; padding: 0.75rem;" onclick="submitAttendance('${matchId}', '${memberName}')">この内容で登録する</button>
                     </div>
                 </div>
             </div>
         </div>
     `;
+}
+
+// Submit Attendance manually
+async function submitAttendance(matchId, memberName) {
+    const key = `${matchId}_${memberName}`;
+    const row = document.querySelector(`.attendance-row[data-key="${key}"]`);
+    if (!row) return;
+
+    if (!state.attendance[key]) {
+        state.attendance[key] = { status: null, guestsMain: '', guestsBack: '', bigFlag: false, jankenParticipate: false, morningWithdraw: false };
+    }
+
+    // Read DOM values
+    const presenceRadio = row.querySelector('.presence-radio:checked');
+    const isAbsent = presenceRadio && presenceRadio.value === 'absence';
+    const isAttending = presenceRadio && presenceRadio.value === 'attendance';
+    
+    if (!isAbsent && !isAttending) {
+        alert('出席か欠席かを選択してください。');
+        return;
+    }
+
+    if (isAbsent) {
+        state.attendance[key].status = 5;
+        state.attendance[key].guestsMain = '';
+        state.attendance[key].guestsBack = '';
+        state.attendance[key].bigFlag = false;
+        state.attendance[key].morningWithdraw = false;
+        state.attendance[key].jankenParticipate = false;
+    } else {
+        const statusRadio = row.querySelector('.status-options input[type="radio"]:checked');
+        const match = state.matches.find(m => m.id == matchId);
+        const isAwayReserved = match && match.location === 'away' && match.seatType === 'reserved';
+        
+        let statusVal = null;
+        if (statusRadio) {
+            statusVal = parseInt(statusRadio.value);
+        } else if (isAwayReserved) {
+            statusVal = 1;
+        }
+
+        if (statusVal === null) {
+            alert('出席時の状態（開場まで、開場後など）を選択してください。');
+            return;
+        }
+        
+        state.attendance[key].status = statusVal;
+
+        const guestInput = row.querySelector('.guest-input-unified');
+        const member = state.members.find(m => m.name === memberName);
+        const section = member ? (member.section || 1) : 1;
+        const guestVal = guestInput ? guestInput.value : '';
+
+        if (section === 2) {
+            state.attendance[key].guestsMain = '';
+            state.attendance[key].guestsBack = guestVal;
+        } else {
+            state.attendance[key].guestsMain = guestVal;
+            state.attendance[key].guestsBack = '';
+        }
+
+        const bigFlagCb = row.querySelector('.big-flag-checkbox');
+        state.attendance[key].bigFlag = bigFlagCb ? bigFlagCb.checked : false;
+
+        const morningCb = row.querySelector('.morning-withdraw-checkbox');
+        state.attendance[key].morningWithdraw = morningCb ? morningCb.checked : false;
+
+        const jankenCb = row.querySelector('.janken-participate-checkbox');
+        state.attendance[key].jankenParticipate = jankenCb ? jankenCb.checked : false;
+    }
+
+    // Save
+    saveToLocal();
+    updateMatchSummary(matchId);
+    
+    const btn = row.querySelector('.submit-attendance-btn');
+    let originalText = 'この内容で登録する';
+    if (btn) {
+        originalText = btn.innerText;
+        btn.innerText = '登録中...';
+        btn.disabled = true;
+    }
+    
+    await apiCall('update_attendance', {
+        matchId: matchId,
+        memberName: memberName,
+        status: state.attendance[key].status,
+        guestsMain: state.attendance[key].guestsMain,
+        guestsBack: state.attendance[key].guestsBack,
+        bigFlag: state.attendance[key].bigFlag,
+        jankenParticipate: state.attendance[key].jankenParticipate,
+        morningWithdraw: state.attendance[key].morningWithdraw
+    });
+
+    if (btn) {
+        btn.innerText = '登録完了！';
+        btn.style.backgroundColor = '#4CAF50';
+        btn.style.color = 'white';
+        setTimeout(() => {
+            btn.innerText = originalText;
+            btn.style.backgroundColor = '';
+            btn.style.color = '';
+            btn.disabled = false;
+        }, 2000);
+    }
 }
 
 // Event Listeners
@@ -1144,18 +1270,9 @@ function setupEventListeners() {
         addMatchBtn.addEventListener('click', () => {
             const date = newMatchDateInput.value;
             const opponent = newMatchOpponentInput.value.trim();
-            const kickoffTime = newMatchKickoffInput ? newMatchKickoffInput.value : '';
-            const venue = newMatchVenueInput ? newMatchVenueInput.value.trim() : '';
-            
+
             const locationRadio = document.querySelector('input[name="new-match-location"]:checked');
             const location = locationRadio ? locationRadio.value : 'home';
-            
-            let openingTime = '';
-            if (location === 'home') {
-                openingTime = calculateHomeOpeningTime(kickoffTime);
-            } else {
-                openingTime = newMatchOpeningInput ? newMatchOpeningInput.value : '';
-            }
             const seatTypeRadio = document.querySelector('input[name="new-match-seat-type"]:checked');
             const seatType = (location === 'away' && seatTypeRadio) ? seatTypeRadio.value : '';
 
@@ -1167,15 +1284,19 @@ function setupEventListeners() {
             const lineOrgTime = document.getElementById('new-match-line-org-time').value;
             const awayNotice = document.getElementById('new-match-away-notice').value;
 
+            const kickoff = newMatchKickoffInput ? newMatchKickoffInput.value : '';
+            const venue = newMatchVenueInput ? newMatchVenueInput.value.trim() : '';
+            const opening = newMatchOpeningInput ? newMatchOpeningInput.value : '';
+
             if (date && opponent) {
                 const isAwayFree = (location === 'away' && seatType === 'free');
                 const newMatch = {
                     id: Date.now(),
                     date,
                     opponent,
-                    kickoffTime,
-                    openingTime,
+                    kickoff,
                     venue,
+                    opening,
                     location,
                     seatType,
                     deadline: (location === 'away' ? deadline : ''),
@@ -1192,7 +1313,7 @@ function setupEventListeners() {
                 newMatchDateInput.value = '';
                 newMatchOpponentInput.value = '';
                 if (newMatchKickoffInput) newMatchKickoffInput.value = '';
-                if (newMatchVenueInput) newMatchVenueInput.value = '';
+                if (newMatchVenueInput) newMatchVenueInput.value = '日立台';
                 if (newMatchOpeningInput) newMatchOpeningInput.value = '';
 
                 // Reset radio buttons and fields
@@ -1222,6 +1343,33 @@ function setupEventListeners() {
             }
         });
 
+        // Auto-calculate Opening Time
+        if (newMatchKickoffInput) {
+            newMatchKickoffInput.addEventListener('input', () => {
+                const locRadio = document.querySelector('input[name="new-match-location"]:checked');
+                const loc = locRadio ? locRadio.value : 'home';
+                if (loc === 'home' && newMatchOpeningInput) {
+                    newMatchOpeningInput.value = calculateHomeOpeningTime(newMatchKickoffInput.value);
+                    
+                    const awayNoticeInput = document.getElementById('new-match-away-notice');
+                    if (awayNoticeInput && newMatchOpeningInput.value) {
+                        const parts = newMatchOpeningInput.value.split(':');
+                        if (parts.length === 2) {
+                            let h = parseInt(parts[0], 10);
+                            let m = parseInt(parts[1], 10);
+                            m += 30;
+                            if (m >= 60) {
+                                m -= 60;
+                                h += 1;
+                            }
+                            const formattedTime = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+                            awayNoticeInput.value = `${formattedTime}～ ビッグフラッグ設置実施`;
+                        }
+                    }
+                }
+            });
+        }
+
         // Toggle Listeners
         const locationRadios = document.querySelectorAll('input[name="new-match-location"]');
         const awaySeatTypeContainer = document.getElementById('away-seat-type-container');
@@ -1234,9 +1382,6 @@ function setupEventListeners() {
 
             const isAway = (loc === 'away');
             const isFree = (seat === 'free');
-
-            const openingContainer = document.getElementById('new-match-opening-container');
-            if (openingContainer) openingContainer.style.display = isAway ? 'flex' : 'none';
 
             const queueSec = document.getElementById('new-match-queue-section');
             const lineSec = document.getElementById('new-match-line-org-section');
@@ -1264,9 +1409,39 @@ function setupEventListeners() {
                         document.getElementById('line-org-time-container').style.display = 'flex';
                     }
                 }
+                
+                if (isManualChange) {
+                    if (newMatchVenueInput) newMatchVenueInput.value = '';
+                    const awayNoticeInput = document.getElementById('new-match-away-notice');
+                    if (awayNoticeInput) awayNoticeInput.value = '';
+                }
+                
+                if (newMatchOpeningContainer) newMatchOpeningContainer.style.display = 'flex';
             } else {
                 awaySeatTypeContainer.style.display = 'none';
                 awayGeneralDetails.style.display = 'none';
+                if (newMatchOpeningContainer) newMatchOpeningContainer.style.display = 'none';
+                
+                if (isManualChange) {
+                    if (newMatchVenueInput) newMatchVenueInput.value = '日立台';
+                    const awayNoticeInput = document.getElementById('new-match-away-notice');
+                    if (awayNoticeInput && newMatchOpeningInput && newMatchOpeningInput.value) {
+                        const parts = newMatchOpeningInput.value.split(':');
+                        if (parts.length === 2) {
+                            let h = parseInt(parts[0], 10);
+                            let m = parseInt(parts[1], 10);
+                            m += 30;
+                            if (m >= 60) {
+                                m -= 60;
+                                h += 1;
+                            }
+                            const formattedTime = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+                            awayNoticeInput.value = `${formattedTime}～ ビッグフラッグ設置実施`;
+                        }
+                    } else if (awayNoticeInput) {
+                        awayNoticeInput.value = '';
+                    }
+                }
             }
         }
 
@@ -1558,21 +1733,6 @@ function attachMatchListeners() {
 
             if (!state.attendance[key]) state.attendance[key] = { status: null, guestsMain: '', guestsBack: '', bigFlag: false, jankenParticipate: false, morningWithdraw: false };
             state.attendance[key].status = status;
-
-            saveToLocal();
-            // updateMatchSummary(matchId);
-
-            // API Call removed to improve lag - handled by Register button
-            /*
-            apiCall('update_attendance', {
-                matchId: matchId,
-                memberName: memberName,
-                status: status,
-                guestsMain: state.attendance[key].guestsMain,
-                guestsBack: state.attendance[key].guestsBack,
-                morningWithdraw: state.attendance[key].morningWithdraw
-            });
-            */
         });
     });
 
@@ -1616,30 +1776,12 @@ function attachMatchListeners() {
                 details.classList.remove('disabled-section');
                 details.querySelectorAll('input').forEach(input => input.disabled = false);
 
-                // Ensure the correct sub-status radio is checked visually, or uncheck all if 0
                 const currentStatus = state.attendance[key].status;
                 const subRadios = row.querySelectorAll('.status-options input[type="radio"]');
                 subRadios.forEach(r => {
                     r.checked = (parseInt(r.value) === currentStatus);
                 });
             }
-
-            saveToLocal();
-            // updateMatchSummary(matchId);
-
-            // API Call removed to improve lag - handled by Register button
-            /*
-            apiCall('update_attendance', {
-                matchId: matchId,
-                memberName: namePart,
-                status: state.attendance[key].status,
-                guestsMain: state.attendance[key].guestsMain,
-                guestsBack: state.attendance[key].guestsBack,
-                bigFlag: state.attendance[key].bigFlag,
-                jankenParticipate: state.attendance[key].jankenParticipate,
-                morningWithdraw: state.attendance[key].morningWithdraw
-            });
-            */
         });
     });
 
@@ -1665,21 +1807,6 @@ function attachMatchListeners() {
                 state.attendance[key].guestsMain = val;
                 state.attendance[key].guestsBack = '';
             }
-
-            saveToLocal();
-            // updateMatchSummary(matchId);
-
-            // API Call removed to improve lag - handled by Register button
-            /*
-            apiCall('update_attendance', {
-                matchId: matchId,
-                memberName: namePart,
-                status: state.attendance[key].status,
-                guestsMain: state.attendance[key].guestsMain,
-                guestsBack: state.attendance[key].guestsBack,
-                morningWithdraw: state.attendance[key].morningWithdraw
-            });
-            */
         });
     });
 
@@ -1693,23 +1820,6 @@ function attachMatchListeners() {
 
             if (!state.attendance[key]) state.attendance[key] = { status: null, guestsMain: '', guestsBack: '', bigFlag: false, jankenParticipate: false, morningWithdraw: false };
             state.attendance[key].bigFlag = e.target.checked;
-
-            saveToLocal();
-            // updateMatchSummary(matchId);
-
-            // API Call removed to improve lag - handled by Register button
-            /*
-            apiCall('update_attendance', {
-                matchId: matchId,
-                memberName: namePart,
-                status: state.attendance[key].status,
-                guestsMain: state.attendance[key].guestsMain,
-                guestsBack: state.attendance[key].guestsBack,
-                bigFlag: state.attendance[key].bigFlag,
-                jankenParticipate: state.attendance[key].jankenParticipate,
-                morningWithdraw: state.attendance[key].morningWithdraw
-            });
-            */
         });
     });
 
@@ -1723,23 +1833,6 @@ function attachMatchListeners() {
 
             if (!state.attendance[key]) state.attendance[key] = { status: null, guestsMain: '', guestsBack: '', bigFlag: false, jankenParticipate: false, morningWithdraw: false };
             state.attendance[key].jankenParticipate = e.target.checked;
-
-            saveToLocal();
-            // updateMatchSummary(matchId);
-
-            // API Call removed to improve lag - handled by Register button
-            /*
-            apiCall('update_attendance', {
-                matchId: matchId,
-                memberName: namePart,
-                status: state.attendance[key].status,
-                guestsMain: state.attendance[key].guestsMain,
-                guestsBack: state.attendance[key].guestsBack,
-                bigFlag: state.attendance[key].bigFlag,
-                jankenParticipate: state.attendance[key].jankenParticipate,
-                morningWithdraw: state.attendance[key].morningWithdraw
-            });
-            */
         });
     });
 
@@ -1753,23 +1846,6 @@ function attachMatchListeners() {
 
             if (!state.attendance[key]) state.attendance[key] = { status: null, guestsMain: '', guestsBack: '', bigFlag: false, jankenParticipate: false, morningWithdraw: false };
             state.attendance[key].morningWithdraw = e.target.checked;
-
-            saveToLocal();
-            // updateMatchSummary(matchId);
-
-            // API Call removed to improve lag - handled by Register button
-            /*
-            apiCall('update_attendance', {
-                matchId: matchId,
-                memberName: namePart,
-                status: state.attendance[key].status,
-                guestsMain: state.attendance[key].guestsMain,
-                guestsBack: state.attendance[key].guestsBack,
-                bigFlag: state.attendance[key].bigFlag,
-                jankenParticipate: state.attendance[key].jankenParticipate,
-                morningWithdraw: state.attendance[key].morningWithdraw
-            });
-            */
         });
     });
 
@@ -1815,60 +1891,6 @@ function attachMatchListeners() {
         });
     });
 
-    // Register Button Click
-    document.querySelectorAll('.submit-attendance-btn').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            const row = e.target.closest('.attendance-row');
-            const key = row.dataset.key;
-            const matchId = key.split('_')[0];
-            const namePart = key.substring(matchId.length + 1);
-            
-            const attendance = state.attendance[key] || { status: null, guestsMain: '', guestsBack: '', bigFlag: false, jankenParticipate: false, morningWithdraw: false };
-            
-            // Show loading state
-            const originalText = e.target.innerText;
-            e.target.disabled = true;
-            e.target.innerText = '登録中...';
-            
-            try {
-                await apiCall('update_attendance', {
-                    matchId: matchId,
-                    memberName: namePart,
-                    status: attendance.status,
-                    guestsMain: attendance.guestsMain,
-                    guestsBack: attendance.guestsBack,
-                    bigFlag: attendance.bigFlag,
-                    jankenParticipate: attendance.jankenParticipate,
-                    morningWithdraw: attendance.morningWithdraw
-                });
-                
-                // Final confirm in summary
-                updateMatchSummary(matchId);
-                
-                e.target.innerText = '登録完了！';
-                e.target.style.backgroundColor = '#4caf50';
-                e.target.style.color = 'white';
-                
-                setTimeout(() => {
-                    e.target.innerText = originalText;
-                    e.target.disabled = false;
-                    e.target.style.backgroundColor = '';
-                    e.target.style.color = '';
-                }, 2000);
-            } catch (err) {
-                e.target.innerText = '失敗';
-                e.target.style.backgroundColor = '#f44336';
-                e.target.style.color = 'white';
-                setTimeout(() => {
-                    e.target.innerText = originalText;
-                    e.target.disabled = false;
-                    e.target.style.backgroundColor = '';
-                    e.target.style.color = '';
-                }, 2000);
-            }
-        });
-    });
-
     // Delete Match
     document.querySelectorAll('.delete-match-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -1898,9 +1920,6 @@ function openEditMatchModal(matchId) {
     const modal = document.getElementById('edit-match-modal');
     const dateInput = document.getElementById('edit-match-date');
     const opponentInput = document.getElementById('edit-match-opponent');
-    const kickoffInput = document.getElementById('edit-match-kickoff');
-    const venueInput = document.getElementById('edit-match-venue');
-    const openingInput = document.getElementById('edit-match-opening');
     const deadlineInput = document.getElementById('edit-match-deadline');
     const queueFlagInput = document.getElementById('edit-match-queue-flag');
     const queueTimeInput = document.getElementById('edit-match-queue-time');
@@ -1927,9 +1946,10 @@ function openEditMatchModal(matchId) {
 
     dateInput.value = formatForInput(match.date);
     opponentInput.value = match.opponent;
-    if (kickoffInput) kickoffInput.value = formatTime(match.kickoffTime);
-    if (venueInput) venueInput.value = match.venue || '';
-    if (openingInput) openingInput.value = formatTime(match.openingTime);
+
+    if (editMatchKickoffInput) editMatchKickoffInput.value = match.kickoff || '';
+    if (editMatchVenueInput) editMatchVenueInput.value = match.venue || '';
+    if (editMatchOpeningInput) editMatchOpeningInput.value = match.opening || '';
 
     // Set radios
     const locRadios = document.getElementsByName('edit-match-location');
@@ -1945,6 +1965,22 @@ function openEditMatchModal(matchId) {
     lineOrgFlagInput.checked = !!match.lineOrgFlag;
     lineOrgTimeInput.value = formatForInput(match.lineOrgTime, true);
     document.getElementById('edit-match-away-notice').value = match.awayNotice || '';
+    
+    // Auto-populate notice if empty for home matches
+    if (match.location !== 'away' && !match.awayNotice && match.opening) {
+        const parts = match.opening.split(':');
+        if (parts.length === 2) {
+            let h = parseInt(parts[0], 10);
+            let m = parseInt(parts[1], 10);
+            m += 30;
+            if (m >= 60) {
+                m -= 60;
+                h += 1;
+            }
+            const formattedTime = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+            document.getElementById('edit-match-away-notice').value = `${formattedTime}～ ビッグフラッグ設置実施`;
+        }
+    }
 
     // Function for modal UI updates
     const updateModalUI = (isManualChange = false) => {
@@ -1958,9 +1994,6 @@ function openEditMatchModal(matchId) {
 
         const isAway = (loc === 'away');
         const isFree = (seat === 'free');
-
-        const openingContainer = document.getElementById('edit-match-opening-container');
-        if (openingContainer) openingContainer.style.display = isAway ? 'flex' : 'none';
 
         const wasAwayFreeVisible = (generalDetails.style.display === 'flex' &&
             queueSec && queueSec.style.display === 'flex');
@@ -1976,9 +2009,39 @@ function openEditMatchModal(matchId) {
                 queueFlagInput.checked = true;
                 lineOrgFlagInput.checked = true;
             }
+            
+            if (isManualChange) {
+                if (editMatchVenueInput) editMatchVenueInput.value = '';
+                const editNoticeInput = document.getElementById('edit-match-away-notice');
+                if (editNoticeInput) editNoticeInput.value = '';
+            }
+            
+            if (editMatchOpeningContainer) editMatchOpeningContainer.style.display = 'flex';
         } else {
             seatContainer.style.display = 'none';
             generalDetails.style.display = 'none';
+            if (editMatchOpeningContainer) editMatchOpeningContainer.style.display = 'none';
+            
+            if (isManualChange) {
+                if (editMatchVenueInput) {
+                    if (!editMatchVenueInput.value) editMatchVenueInput.value = '日立台';
+                }
+                const editNoticeInput = document.getElementById('edit-match-away-notice');
+                if (editNoticeInput && editMatchOpeningInput && editMatchOpeningInput.value) {
+                    const parts = editMatchOpeningInput.value.split(':');
+                    if (parts.length === 2) {
+                        let h = parseInt(parts[0], 10);
+                        let m = parseInt(parts[1], 10);
+                        m += 30;
+                        if (m >= 60) {
+                            m -= 60;
+                            h += 1;
+                        }
+                        const formattedTime = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+                        editNoticeInput.value = `${formattedTime}～ ビッグフラッグ設置実施`;
+                    }
+                }
+            }
         }
 
         document.getElementById('edit-queue-time-container').style.display = queueFlagInput.checked ? 'flex' : 'none';
@@ -1992,6 +2055,31 @@ function openEditMatchModal(matchId) {
     lineOrgFlagInput.onchange = () => updateModalUI(false);
 
     updateModalUI(false);
+
+    if (editMatchKickoffInput) {
+        editMatchKickoffInput.oninput = () => {
+            const loc = Array.from(locRadios).find(r => r.checked)?.value || 'home';
+            if (loc === 'home' && editMatchOpeningInput) {
+                editMatchOpeningInput.value = calculateHomeOpeningTime(editMatchKickoffInput.value);
+                
+                const editNoticeInput = document.getElementById('edit-match-away-notice');
+                if (editNoticeInput && editMatchOpeningInput.value) {
+                    const parts = editMatchOpeningInput.value.split(':');
+                    if (parts.length === 2) {
+                        let h = parseInt(parts[0], 10);
+                        let m = parseInt(parts[1], 10);
+                        m += 30;
+                        if (m >= 60) {
+                            m -= 60;
+                            h += 1;
+                        }
+                        const formattedTime = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+                        editNoticeInput.value = `${formattedTime}～ ビッグフラッグ設置実施`;
+                    }
+                }
+            }
+        };
+    }
     modal.style.display = 'flex';
 
     // Save/Cancel
@@ -2003,9 +2091,9 @@ function openEditMatchModal(matchId) {
             id: matchId,
             date: dateInput.value,
             opponent: opponentInput.value.trim(),
-            kickoffTime: kickoffInput ? kickoffInput.value : '',
-            openingTime: (loc === 'home' ? calculateHomeOpeningTime(kickoffInput.value) : (openingInput ? openingInput.value : '')),
-            venue: venueInput ? venueInput.value.trim() : '',
+            kickoff: editMatchKickoffInput ? editMatchKickoffInput.value : '',
+            venue: editMatchVenueInput ? editMatchVenueInput.value.trim() : '',
+            opening: editMatchOpeningInput ? editMatchOpeningInput.value : '',
             location: loc,
             seatType: (loc === 'away' ? seat : ''),
             deadline: (loc === 'away' ? deadlineInput.value : ''),
@@ -2258,9 +2346,9 @@ function generateMatchSummaryContent(matchId) {
     const renderUnansweredItem = () => {
         if (unansweredMembers.length > 0) {
             html += `
-                <div class="summary-item active">
-                    <span class="summary-count" style="color: red;">未回答: ${unansweredMembers.length}名</span>
-                    <span class="summary-names" style="color: red;">(${unansweredMembers.join(', ')})</span>
+                <div class="summary-item active" style="opacity: 0.8;">
+                    <span class="summary-count" style="color:red; font-weight:bold;">未回答: ${unansweredMembers.length}名</span>
+                    <span class="summary-names" style="color:red;">(${unansweredMembers.join(', ')})</span>
                 </div>
             `;
         }
@@ -2340,13 +2428,11 @@ function generateAttendanceTable(matchId) {
 
         // Row highlighting based on status
         let rowClass = '';
-        let rowStyle = '';
         if (data.status === 5) rowClass = 'status-absent'; // 欠席
         else if (data.status) rowClass = 'status-attending'; // 出席
-        else rowStyle = 'color: red;';
 
         html += `
-            <tr class="${rowClass}" style="${rowStyle}">
+            <tr class="${rowClass}">
                 <td>${member.name}</td>
                 <td><span class="badge section-${member.section}">${sectionLabel}</span></td>
                 <td>${statusLabel}</td>
@@ -2501,41 +2587,6 @@ function updateLeague() {
 function formatDate(dateString) {
     const d = parseDate(dateString);
     return `${d.getMonth() + 1}/${d.getDate()} (${['日', '月', '火', '水', '木', '金', '土'][d.getDay()]})`;
-}
-
-function formatTime(timeStr) {
-    if (!timeStr) return '';
-    // If it's HH:MM already, just return it
-    if (/^\d{1,2}:\d{2}$/.test(timeStr)) return timeStr;
-
-    // Handle ISO string or Date object string
-    const d = new Date(timeStr);
-    if (isNaN(d.getTime())) return timeStr;
-
-    const hours = String(d.getHours()).padStart(2, '0');
-    const minutes = String(d.getMinutes()).padStart(2, '0');
-    return `${hours}:${minutes}`;
-}
-
-function calculateHomeOpeningTime(kickoffTime) {
-    if (!kickoffTime) return '';
-    const parts = kickoffTime.split(':');
-    if (parts.length < 2) return '';
-    const h = parseInt(parts[0]);
-    const m = parseInt(parts[1]);
-    const kickoffMinutes = h * 60 + m;
-    let openingMinutes;
-    if (kickoffMinutes <= 14 * 60) { // 14:00 or earlier
-        openingMinutes = kickoffMinutes - 210; // 3h 30m = 210m
-    } else {
-        openingMinutes = kickoffMinutes - 240; // 4h = 240m
-    }
-    
-    if (openingMinutes < 0) openingMinutes += 24 * 60;
-    
-    const oh = Math.floor(openingMinutes / 60);
-    const om = openingMinutes % 60;
-    return `${String(oh).padStart(2, '0')}:${String(om).padStart(2, '0')}`;
 }
 
 // Start
