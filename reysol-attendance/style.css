@@ -295,6 +295,20 @@ input[type="number"] {
     font-size: 0.9rem;
 }
 
+.opening-time {
+    margin-right: 0.5rem;
+    font-weight: bold;
+    color: #1976d2;
+    background: rgba(227, 242, 253, 0.6);
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+}
+
+.match-header.location-away .opening-time {
+    color: #90caf9;
+    background: rgba(0, 0, 0, 0.3);
+}
+
 .kickoff-time {
     margin-left: 0.5rem;
     font-weight: bold;
@@ -307,6 +321,18 @@ input[type="number"] {
 .match-header.location-away .kickoff-time {
     color: var(--reysol-yellow);
     background: rgba(0, 0, 0, 0.3);
+}
+
+.match-venue {
+    font-size: 0.85rem;
+    color: #555;
+    margin-left: 0.5rem;
+    font-style: italic;
+    display: inline-block;
+}
+
+.match-header.location-away .match-venue {
+    color: #eee;
 }
 
 .match-location-badge {
