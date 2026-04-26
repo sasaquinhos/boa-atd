@@ -9,7 +9,7 @@ const state = {
     leagues: []
 };
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbyHzYaWI5X4JHMqza1wsS6KPzm2C9-rwobgyNzX3fp7HDvt4763Eiwo1iuCi7tPqepH7Q/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbyzpE0e8r2jvuyG5nrVoO0AN3qC70v1lmZXNtdyQp0mSGTnsqFmchx0vzY18RLhuUQuwQ/exec';
 
 // DOM Elements
 const matchesContainer = document.getElementById('matches-container');
@@ -147,8 +147,10 @@ async function loadData() {
         });
         clearTimeout(timeoutId);
 
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-
+        if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(`HTTP error! status: ${res.status}, body: ${errorText.substring(0, 100)}`);
+        }
         const data = await res.json();
 
         if (data.members) state.members = data.members;
