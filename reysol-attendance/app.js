@@ -439,6 +439,21 @@ function renderMatches() {
                 jankenConfig.innerHTML = '';
                 jankenConfig.style.display = 'none';
             }
+            // Handle Helper Config for selected match
+            const helperConfig = document.getElementById('attendance-helper-admin-config');
+            if (currentVal && helperConfig) {
+                const selectedMatch = sortedMatches.find(m => m.id == currentVal);
+                if (selectedMatch) {
+                    renderAttendanceHelperAdminConfig(selectedMatch, helperConfig);
+                    helperConfig.style.display = 'block';
+                } else {
+                    helperConfig.innerHTML = '';
+                    helperConfig.style.display = 'none';
+                }
+            } else if (helperConfig) {
+                helperConfig.innerHTML = '';
+                helperConfig.style.display = 'none';
+            }
         }
 
         renderMembersAdmin();
@@ -891,6 +906,178 @@ function renderJankenAdminConfig(match, container) {
             }
         });
     });
+}
+
+function renderAttendanceHelperAdminConfig(match, container) {
+    const matchId = match.id;
+
+    // メンバー行を生成
+    const rowsHtml = state.members.map(member => {
+        const key = `${matchId}_${member.name}`;
+        const att = state.attendance[key] || { status: null, guestsMain: '', guestsBack: '', bigFlag: false, jankenParticipate: false, morningWithdraw: false };
+        const isAttending = att.status !== null && att.status !== undefined && att.status !== '' && att.status != 5;
+        const isAbsent = att.status == 5;
+        
+        let statusBadge = '<span style="color: #888; font-size: 0.8rem; background: #eee; padding: 2px 6px; border-radius: 4px;">未回答</span>';
+        if (isAttending) {
+            statusBadge = '<span style="color: #2e7d32; font-size: 0.8rem; background: #e8f5e9; padding: 2px 6px; border-radius: 4px; font-weight: bold;">出席</span>';
+        } else if (isAbsent) {
+            statusBadge = '<span style="color: #c62828; font-size: 0.8rem; background: #ffebee; padding: 2px 6px; border-radius: 4px;">欠席</span>';
+        }
+
+        const isMorning = !!att.morningWithdraw;
+        const isBigFlag = !!att.bigFlag;
+
+        return `
+            <tr style="border-bottom: 1px solid #eee;">
+                <td style="padding: 0.5rem 0.3rem; font-weight: 600; font-size: 0.9rem;">
+                    ${member.name}
+                    <div style="margin-top: 2px;">${statusBadge}</div>
+                </td>
+                <td style="padding: 0.5rem 0.3rem; text-align: center;">
+                    <label style="cursor: pointer; display: inline-flex; align-items: center; gap: 4px; font-size: 0.85rem;">
+                        <input type="checkbox" class="helper-admin-morning-cb" data-member="${member.name}" ${isMorning ? 'checked' : ''}>
+                        <span style="font-size: 0.8rem; color: #555;">引き込み</span>
+                    </label>
+                </td>
+                <td style="padding: 0.5rem 0.3rem; text-align: center;">
+                    <label style="cursor: pointer; display: inline-flex; align-items: center; gap: 4px; font-size: 0.85rem;">
+                        <input type="checkbox" class="helper-admin-bigflag-cb" data-member="${member.name}" ${isBigFlag ? 'checked' : ''}>
+                        <span style="font-size: 0.8rem; color: #555;">搬入</span>
+                    </label>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    container.innerHTML = `
+        <div style="font-weight: bold; font-size: 0.95rem; color: #e65100; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+            <span>【実績修正】朝の引き込み / ビッグフラッグ手伝い</span>
+            <span style="font-size: 0.8rem; font-weight: normal; color: #666;">（過去の試合も修正可能）</span>
+        </div>
+        <div style="max-height: 280px; overflow-y: auto; background: #fff; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 0.8rem;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                <thead>
+                    <tr style="background: #fff8e1; border-bottom: 2px solid #ffe082; position: sticky; top: 0; z-index: 1;">
+                        <th style="padding: 0.5rem 0.3rem; text-align: left; font-size: 0.8rem;">メンバー</th>
+                        <th style="padding: 0.5rem 0.3rem; text-align: center; font-size: 0.8rem;">朝の引き込み(9:00)</th>
+                        <th style="padding: 0.5rem 0.3rem; text-align: center; font-size: 0.8rem;">ビッグフラッグ搬入</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rowsHtml}
+                </tbody>
+            </table>
+        </div>
+        <div style="display: flex; justify-content: flex-end; align-items: center; gap: 0.8rem;">
+            <span id="helper-admin-status-msg" style="font-size: 0.85rem; color: #666;"></span>
+            <button id="save-helper-admin-btn" class="btn btn-primary" style="padding: 0.5rem 1.2rem; min-width: 150px; background: #e65100; border-color: #e65100;">手伝い実績を保存</button>
+        </div>
+    `;
+
+    // 保存ボタンのイベントリスナー
+    const saveBtn = container.querySelector('#save-helper-admin-btn');
+    const statusMsg = container.querySelector('#helper-admin-status-msg');
+
+    if (saveBtn) {
+        saveBtn.addEventListener('click', async () => {
+            // 変更差分を収集
+            const updates = [];
+            state.members.forEach(member => {
+                const name = member.name;
+                const key = `${matchId}_${name}`;
+                const att = state.attendance[key] || { status: null, guestsMain: '', guestsBack: '', bigFlag: false, jankenParticipate: false, morningWithdraw: false };
+                
+                const morningCb = container.querySelector(`.helper-admin-morning-cb[data-member="${name}"]`);
+                const bigflagCb = container.querySelector(`.helper-admin-bigflag-cb[data-member="${name}"]`);
+
+                const newMorning = morningCb ? morningCb.checked : false;
+                const newBigFlag = bigflagCb ? bigflagCb.checked : false;
+
+                const oldMorning = !!att.morningWithdraw;
+                const oldBigFlag = !!att.bigFlag;
+
+                if (newMorning !== oldMorning || newBigFlag !== oldBigFlag) {
+                    updates.push({
+                        member: name,
+                        key: key,
+                        att: att,
+                        morningWithdraw: newMorning,
+                        bigFlag: newBigFlag
+                    });
+                }
+            });
+
+            if (updates.length === 0) {
+                alert('変更された項目はありません。');
+                return;
+            }
+
+            saveBtn.disabled = true;
+            saveBtn.textContent = '保存中...';
+            if (statusMsg) statusMsg.textContent = `${updates.length} 件の変更を保存しています...`;
+
+            try {
+                for (let i = 0; i < updates.length; i++) {
+                    const u = updates[i];
+                    if (statusMsg) statusMsg.textContent = `保存中... (${i + 1}/${updates.length})`;
+
+                    if (!state.attendance[u.key]) {
+                        state.attendance[u.key] = {
+                            status: null,
+                            guestsMain: '',
+                            guestsBack: '',
+                            bigFlag: u.bigFlag,
+                            jankenParticipate: false,
+                            morningWithdraw: u.morningWithdraw
+                        };
+                    } else {
+                        state.attendance[u.key].morningWithdraw = u.morningWithdraw;
+                        state.attendance[u.key].bigFlag = u.bigFlag;
+                    }
+
+                    const targetAtt = state.attendance[u.key];
+                    await apiCall('update_attendance', {
+                        matchId: matchId,
+                        memberName: u.member,
+                        status: targetAtt.status,
+                        guestsMain: targetAtt.guestsMain || '',
+                        guestsBack: targetAtt.guestsBack || '',
+                        bigFlag: u.bigFlag,
+                        jankenParticipate: targetAtt.jankenParticipate || false,
+                        morningWithdraw: u.morningWithdraw
+                    });
+                }
+
+                saveToLocal();
+                saveBtn.textContent = '保存完了！';
+                saveBtn.style.backgroundColor = '#4CAF50';
+                saveBtn.style.borderColor = '#4CAF50';
+                if (statusMsg) {
+                    statusMsg.textContent = '全件保存が完了しました';
+                    statusMsg.style.color = '#2e7d32';
+                }
+
+                setTimeout(() => {
+                    saveBtn.textContent = '手伝い実績を保存';
+                    saveBtn.style.backgroundColor = '#e65100';
+                    saveBtn.style.borderColor = '#e65100';
+                    saveBtn.disabled = false;
+                    if (statusMsg) statusMsg.textContent = '';
+                }, 3000);
+
+            } catch (err) {
+                console.error(err);
+                alert('保存中にエラーが発生しました: ' + err.message);
+                saveBtn.textContent = '手伝い実績を保存';
+                saveBtn.disabled = false;
+                if (statusMsg) {
+                    statusMsg.textContent = '保存失敗';
+                    statusMsg.style.color = '#c62828';
+                }
+            }
+        });
+    }
 }
 
 function createMemberRow(matchId, member, hideName = false) {
