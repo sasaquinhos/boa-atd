@@ -1302,7 +1302,7 @@ function createMemberRow(matchId, member, hideName = false) {
                             <div class="big-flag-section">
                                 <label class="checkbox-label">
                                     <input type="checkbox" class="big-flag-checkbox" ${data.bigFlag ? 'checked' : ''} ${!isAttending ? 'disabled' : ''}>
-                                    ビッグフラッグ搬入手伝い
+                                    ビッグフラッグ搬入手伝い（小旗配布含む）
                                 </label>
                                 <div class="big-flag-note" style="font-size: 0.8rem; color: #666; margin-left: 1.6rem;">
                                     （開場30分後にGATE9前集合）
